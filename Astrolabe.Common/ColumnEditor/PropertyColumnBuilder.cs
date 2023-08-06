@@ -22,7 +22,8 @@ public record PropertyColumnBuilder<TEdit, TDb, T, T2>(string Property, Expressi
     public IOrderedQueryable<TDb> AddSort(IQueryable<TDb> query, bool desc) => desc ? query.OrderByDescending(GetDbExpression) : query.OrderBy(GetDbExpression);
 
     public IOrderedQueryable<TDb> AddExtraSort(IOrderedQueryable<TDb> query, bool desc) => desc ? query.ThenByDescending(GetDbExpression) : query.ThenBy(GetDbExpression);
-    
+    public Type DbValueType => typeof(T2);
+
 
     public Dictionary<string, object> Attributes { get; } = new();
     

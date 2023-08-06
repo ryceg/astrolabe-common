@@ -40,8 +40,7 @@ public class EntityColumnsWithJson<TEDIT, TDB> : EntityColumns<TEDIT, TDB>
         var setterDb = MakeDbJsonSetter(jsonField, toJson);
         var fieldPath = "$.\"" + jsonField + "\"";
         var (getterExpression, jsonType) = _jsonValueMethod(_jsonFieldExpression, typeof(T), fieldPath);
-        // var converter = StringConverter(jsonType);
-        var col = new JsonColumnBuilder<TEDIT, TDB, T, T>(jsonField, getterDb, getterExpression, setterDb,
+        var col = new JsonColumnBuilder<TEDIT, TDB, T, T>(jsonField, getterDb, getterExpression, jsonType, setterDb,
             (edit, ctx) =>
             {
                 var existing = getterDb(ctx);

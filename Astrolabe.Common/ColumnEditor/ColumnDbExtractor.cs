@@ -15,4 +15,6 @@ public interface ColumnDbExtractor<TDb>
     public IOrderedQueryable<TDb> AddExtraSort(IOrderedQueryable<TDb> query, bool desc);
     
     public string Property { get; }
+    
+    public Type DbValueType { get; }
 }
