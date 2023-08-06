@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
 using FluentValidation;
 
@@ -11,13 +12,13 @@ namespace Astrolabe.Common.ColumnEditor;
 
 public abstract class EntityColumns<TEDIT, TDB>
 {
-    public readonly List<Column<TEDIT, TDB>> Columns = new();
+    public readonly List<ColumnEditor<TEDIT, TDB>> Columns = new();
 
     protected EntityColumns()
     {
     }
 
-    public Column<TEDIT, TDB> FindColumn(string field)
+    public ColumnEditor<TEDIT, TDB> FindColumn(string field)
     {
         return Columns.Find(x =>
             string.Equals(x.Property, field, StringComparison.CurrentCultureIgnoreCase));
@@ -60,7 +61,7 @@ public abstract class EntityColumns<TEDIT, TDB>
         return null;
     }
     
-    protected ColumnBuilder<TEDIT, TDB, T, T> Add<T>(Expression<Func<TEDIT, T>> property)
+    protected PropertyColumnBuilder<TEDIT, TDB, T, T> Add<T>(Expression<Func<TEDIT, T>> property)
     {
         var propInfo = property.GetPropertyInfo();
         var dbPropInfo = typeof(TDB).GetProperty(propInfo.Name);
@@ -75,54 +76,32 @@ public abstract class EntityColumns<TEDIT, TDB>
         return Add(property, getDbLambdaExpr, SetterDb);
     }
 
-    protected ColumnBuilder<TEDIT, TDB, T, T> Add<T>(Expression<Func<TEDIT, T>> property,
+    protected PropertyColumnBuilder<TEDIT, TDB, T, T> Add<T>(Expression<Func<TEDIT, T>> property,
         Expression<Func<TDB, T>> getDbLambdaExpr, Action<TDB, T> setterDb)
     {
         var propInfo = property.GetPropertyInfo();
-        var getter = property.Compile();
-        var getterDb = getDbLambdaExpr.Compile();
-        var converter = StringConverter(typeof(T));
-        var col = new ColumnBuilder<TEDIT, TDB, T, T>
+        var getDbValue = getDbLambdaExpr.Compile();
+        var getEditValue = property.Compile();
+        var col = new PropertyColumnBuilder<TEDIT, TDB, T, T>(propInfo.Name, property, getDbLambdaExpr, (edit, ctx) =>
         {
-            Property = propInfo.Name,
-            GetValueExpression = property,
-            GetValue = getter,
-            SetDbValue = (ctx, v) => setterDb(ctx.Entity, v),
-            GetDbValue = ctx => getterDb(ctx.Entity),
-            GetDbValueObject = (x) => getterDb(x.Entity),
-            AddSort = (q, desc) => desc ? q.OrderByDescending(getDbLambdaExpr) : q.OrderBy(getDbLambdaExpr),
-            AddExtraSort = (q, desc) => desc ? q.ThenByDescending(getDbLambdaExpr) : q.ThenBy(getDbLambdaExpr),
-            ToStringValue = e => getter(e)?.ToString() ?? "",
-            GetDbValueExpression =
-                Expression.Lambda<Func<TDB, object>>(Expression.Convert(getDbLambdaExpr.Body, typeof(object)),
-                    getDbLambdaExpr.Parameters)
-        };
-        col.Edit = col.StandardEdit();
+            var existing = getDbValue(ctx.Entity);
+            var newVal = getEditValue(edit);
+            var changed = !Equals(existing, newVal);
+            if (changed) setterDb(ctx.Entity, newVal);
+            ctx.Edited |= changed;
+            return Task.FromResult(ctx);
+        });
         Columns.Add(col);
         return col;
     }
 
-    protected ColumnBuilder<TEDIT, TDB, T, T2> Add<T, T2>(Expression<Func<TEDIT, T>> property,
+    protected ColumnEditorBuilder<TEDIT, TDB, T, T2> Add<T, T2>(Expression<Func<TEDIT, T>> property,
         Expression<Func<TDB, T2>> getterDbExpr,
         Func<Func<TEDIT, T>, Func<TEDIT, ColumnContext<TDB>, Task<ColumnContext<TDB>>>> makeEdit)
         where T2 : class
     {
         var propInfo = property.GetPropertyInfo();
-        var getter = property.Compile();
-        var getterDb = getterDbExpr.Compile();
-        var col = new ColumnBuilder<TEDIT, TDB, T, T2>
-        {
-            Property = propInfo.Name,
-            GetValueExpression = property,
-            GetValue = getter,
-            GetDbValue = x => getterDb(x.Entity),
-            GetDbValueObject = (x) => getterDb(x.Entity),
-            GetDbValueExpression =
-                Expression.Lambda<Func<TDB, object>>(Expression.Convert(getterDbExpr.Body, typeof(object)),
-                    getterDbExpr.Parameters),
-            Edit = makeEdit(getter),
-            ToStringValue = e => getter(e)?.ToString() ?? ""
-        };
+        var col = new PropertyColumnBuilder<TEDIT, TDB, T, T2>(propInfo.Name, property, getterDbExpr, makeEdit(property.Compile()));
         Columns.Add(col);
         return col;
     }
@@ -141,7 +120,7 @@ public abstract class EntityColumns<TEDIT, TDB>
     {
         foreach (var col in Columns)
         {
-            col.AddValidation?.Invoke(validator);
+            validator.ApplyValidation(col);
         }
     }
 }

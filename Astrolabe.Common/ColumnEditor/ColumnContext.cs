@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace Astrolabe.Common.ColumnEditor;
 
-public class ColumnContext<TDB>
+public class ColumnContext<TDb>
 {
-    public TDB Entity { get; init; }
+    public TDb Entity { get; init; }
     
-    public ColumnContext(TDB entity)
+    public ColumnContext(TDb entity)
     {
         Entity = entity;
     }
@@ -16,7 +16,7 @@ public class ColumnContext<TDB>
     
     public IDictionary<string, object> Props { get; set; } = new Dictionary<string, object>();
 
-    public ColumnContext<TDB> WithProp(string name, object prop)
+    public ColumnContext<TDb> WithProp(string name, object prop)
     {
         Props[name] = prop;
         return this;
@@ -24,9 +24,9 @@ public class ColumnContext<TDB>
 
     public T GetProp<T>(string propName, Func<T> initProp)
     {
-        if (Props.ContainsKey(propName))
+        if (Props.TryGetValue(propName, out var prop))
         {
-            return (T)Props[propName];
+            return (T)prop;
         }
 
         var res = initProp();

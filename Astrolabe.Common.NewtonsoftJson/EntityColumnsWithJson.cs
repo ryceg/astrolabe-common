@@ -9,7 +9,7 @@ namespace Astrolabe.Common.NewtonsoftJson;
 public class EntityColumnsWithJson<TEDIT, TDB> : EntityColumns<TEDIT, TDB>
 {
     private readonly Expression<Func<TDB, string>> _jsonFieldExpression;
-    private readonly Func<Expression<Func<TDB, string>>, Type, string, (Expression<Func<TDB, object>>, Type)> _jsonValueMethod;
+    private readonly Func<Expression<Func<TDB, string>>, Type, string, (Expression<Func<TDB, object?>>, Type)> _jsonValueMethod;
     private Func<TEDIT, string, JToken> GetEditJsonField { get; }
 
     private Func<TDB, string> GetJsonString { get; }
@@ -20,7 +20,7 @@ public class EntityColumnsWithJson<TEDIT, TDB> : EntityColumns<TEDIT, TDB>
 
     protected EntityColumnsWithJson(Expression<Func<TDB, string>> jsonField,
         Func<TEDIT, string, JToken> getEditJsonField,
-        Func<Expression<Func<TDB, string>>, Type, string, (Expression<Func<TDB, object>>, Type)> jsonValueMethod)
+        Func<Expression<Func<TDB, string>>, Type, string, (Expression<Func<TDB, object?>>, Type)> jsonValueMethod)
     {
         _jsonFieldExpression = jsonField;
         _jsonValueMethod = jsonValueMethod;
@@ -32,29 +32,28 @@ public class EntityColumnsWithJson<TEDIT, TDB> : EntityColumns<TEDIT, TDB>
         SetJsonString = (db, jsonString) => setObj.Invoke(db, new object[] { jsonString });
     }
 
-    public ColumnBuilder<TEDIT, TDB, T, T> AddJson<T>(string jsonField, Func<JToken, T> fromJson = null,
-        Func<T, JToken> toJson = null)
+    public JsonColumnBuilder<TEDIT, TDB, T, T> AddJson<T>(string jsonField, Func<JToken, T>? fromJson = null,
+        Func<T, JToken>? toJson = null, Func<JsonColumnBuilder<TEDIT, TDB, T, T>, JsonColumnBuilder<TEDIT, TDB, T, T>>? configure = null)
     {
         var getterDb = MakeDbJsonGetter(jsonField, fromJson);
         var getter = MakeJsonGetter<T>(jsonField);
         var setterDb = MakeDbJsonSetter(jsonField, toJson);
         var fieldPath = "$.\"" + jsonField + "\"";
-        var (getMethod, jsonType) = _jsonValueMethod(_jsonFieldExpression, typeof(T), fieldPath);
-        var converter = StringConverter(jsonType);
-        var col = new ColumnBuilder<TEDIT, TDB, T, T>
-        {
-            Property = jsonField,
-            GetValue = getter,
-            GetValueExpression = null,
-            GetDbValue = getterDb,
-            GetDbValueObject = (x) => getterDb(x),
-            SetDbValue = setterDb,
-            AddSort = (q, desc) => desc ? q.OrderByDescending(getMethod) : q.OrderBy(getMethod),
-            AddExtraSort = (q, desc) => desc ? q.ThenByDescending(getMethod) : q.ThenBy(getMethod),
-            ToStringValue = e => getter(e)?.ToString() ?? "",
-            GetDbValueExpression = getMethod
-        };
-        col.Edit = col.StandardEdit();
+        var (getterExpression, jsonType) = _jsonValueMethod(_jsonFieldExpression, typeof(T), fieldPath);
+        // var converter = StringConverter(jsonType);
+        var col = new JsonColumnBuilder<TEDIT, TDB, T, T>(jsonField, getterDb, getterExpression, setterDb,
+            (edit, ctx) =>
+            {
+                var existing = getterDb(ctx);
+                var newVal = getter(edit);
+                var changed = !Equals(existing, newVal);
+                if (changed) setterDb(ctx, newVal);
+                ctx.Edited |= changed;
+                return Task.FromResult(ctx);
+            }
+        );
+        if (configure != null) 
+            col = configure(col);
         Columns.Add(col);
         return col;
     }
@@ -94,7 +93,7 @@ public class EntityColumnsWithJson<TEDIT, TDB> : EntityColumns<TEDIT, TDB>
     }
 
     protected virtual Func<ColumnContext<TDB>, T> MakeDbJsonGetter<T>(string jsonField,
-        Func<JToken, T> fromJson)
+        Func<JToken, T>? fromJson)
     {
         return db =>
         {
@@ -115,7 +114,7 @@ public class EntityColumnsWithJson<TEDIT, TDB> : EntityColumns<TEDIT, TDB>
         };
     }
 
-    protected virtual Action<ColumnContext<TDB>, T> MakeDbJsonSetter<T>(string jsonField, Func<T, JToken> toJson)
+    protected virtual Action<ColumnContext<TDB>, T> MakeDbJsonSetter<T>(string jsonField, Func<T, JToken>? toJson)
     {
         return (db, newVal) => SetJsonField(db, jsonField, toJson != null ? toJson(newVal) :
             newVal != null ? JToken.FromObject(newVal) : null);
