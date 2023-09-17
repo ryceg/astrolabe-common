@@ -30,7 +30,11 @@ public abstract class TypeVisitor<T>
             return Add(VisitEnumerable(type, nullable, () =>
             {
                 if (elemType != null)
-                    VisitType(elemType.ToContextualType());
+                    return VisitType(elemType.ToContextualType());
+                if (ctype.GenericArguments.Length != 1)
+                {
+                    throw new Exception("Unknown enumerable: " + ctype);
+                }
                 return VisitType(ctype.GenericArguments[0]);
             }));
         }
@@ -69,13 +73,15 @@ public abstract class TypeVisitor<T>
 
     protected bool IsPrimitive(Type type)
     {
-        return type.IsEnum || type.IsPrimitive || _primitives.Contains(type);
+        return type.IsEnum || type.IsPrimitive || _primitives.Contains(type) || 
+               (type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition()));
     }
 
     protected bool IsEnumerable(Type type)
     {
         return typeof(IEnumerable).IsAssignableFrom(type);
     }
+    
 }
 
 public record TypeMember<T>(string FieldName, PropertyInfo Property, Type Type, Func<T> Data);

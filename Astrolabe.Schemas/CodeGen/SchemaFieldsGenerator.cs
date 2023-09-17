@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
+using Astrolabe.Annotation;
 using Astrolabe.CodeGen.Typescript;
 
 namespace Astrolabe.Schemas.CodeGen;
@@ -31,6 +32,33 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 
     private static readonly TsRawExpr MakeCompoundField = new TsRawExpr("makeCompoundField",
         new TsImport("@react-typed-forms/schemas", "makeCompoundField"));
+
+    private static readonly HashSet<string> FormLibTypes = new()
+    {
+        "FieldType",
+        "ControlDefinitionType",
+        "DisplayDataType",
+        "ExpressionType",
+        "DynamicPropertyType",
+        "ControlAdornmentType",
+        "DataRenderType",
+        "SyncTextType",
+        "GroupRenderType",
+        "DisplayDataType",
+        "ControlDefinitionType",
+        "ControlDefinition",
+        "SchemaFieldType",
+        "SchemaField",
+        "IconMapping",
+        "RenderOptions",
+        "GroupRenderOptions",
+        "DisplayData",
+        "FieldOption",
+        "EntityExpression",
+        "DynamicProperty",
+        "ControlAdornment",
+        "SchemaRestrictions"
+    };
 
     private static string FormTypeName(Type type)
     {
@@ -69,9 +97,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
     }
 
 
-    private TsImport ClientImport(Type type)
+    private  TsImport ClientImport(Type type)
     {
-        return new TsImport($"{_clientPath}", type.Name);
+        return new TsImport(FormLibTypes.Contains(type.Name) ? "@react-typed-forms/schemas": _clientPath, type.Name);
     }
 
     protected override IEnumerable<TsDeclaration> ToDeclarations(SimpleTypeData typeData)
@@ -160,7 +188,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             return new TsTypeRef("number");
         if (type == typeof(bool))
             return new TsTypeRef("boolean");
-
+        if  (type == typeof(object) || (type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition())))
+            return new TsTypeRef("any");
         return new TsTypeRef(FormTypeName(type));
     }
     
@@ -237,9 +266,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 
     private static bool IsStringEnum(Type type)
     {
-        var converterAttr = ((JsonConverterAttribute?)Attribute.GetCustomAttribute(type,
-            typeof(JsonConverterAttribute)));
-        return (converterAttr?.ConverterType == typeof(JsonStringEnumConverter));
+        return type.GetCustomAttribute<JsonStringAttribute>() != null;
     }
 
     private static IEnumerable<FieldOption> EnumOptions(Type type, bool stringEnum)
