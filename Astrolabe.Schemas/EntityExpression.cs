@@ -12,9 +12,9 @@ public enum ExpressionType
 }
 
 [JsonBaseType("type", typeof(SimpleExpression))]
-[JsonSubType(typeof(FieldValueExpression), "FieldValue")]
-[JsonSubType(typeof(JsonataExpression), "Jsonata")]
-[JsonSubType(typeof(UserMatchExpression), "UserMatch")]
+[JsonSubType("FieldValue", typeof(FieldValueExpression))]
+[JsonSubType("Jsonata", typeof(JsonataExpression))]
+[JsonSubType("UserMatch", typeof(UserMatchExpression))]
 public abstract record EntityExpression(string Type)
 {
     [JsonExtensionData]

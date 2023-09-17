@@ -7,7 +7,7 @@ public class JsonSubTypeAttribute : Attribute
     
     public string Discriminator { get; }
 
-    public JsonSubTypeAttribute(Type subType, string discriminator)
+    public JsonSubTypeAttribute(string discriminator, Type subType)
     {
         SubType = subType;
         Discriminator = discriminator;

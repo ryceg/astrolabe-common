@@ -15,9 +15,9 @@ public enum ControlDefinitionType
 }
 
 [JsonBaseType("type", typeof(DataControlDefinition))]
-[JsonSubType(typeof(GroupedControlsDefinition), "Group")]
-[JsonSubType(typeof(DisplayControlDefinition), "Display")]
-[JsonSubType(typeof(ActionControlDefinition), "Action")]
+[JsonSubType("Group", typeof(GroupedControlsDefinition))]
+[JsonSubType("Display", typeof(DisplayControlDefinition))]
+[JsonSubType("Action", typeof(ActionControlDefinition))]
 public abstract record ControlDefinition(string Type)
 {
     public string? Title { get; set; }
@@ -71,11 +71,11 @@ public enum DataRenderType
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
-[JsonSubType(typeof(HtmlEditorRenderOptions), "HtmlEditor")]
-[JsonSubType(typeof(IconListRenderOptions), "IconList")]
-[JsonSubType(typeof(SynchronisedRenderOptions), "Synchronised")]
-[JsonSubType(typeof(UserSelectionRenderOptions), "UserSelection")]
-[JsonSubType(typeof(DateTimeRenderOptions), "DateTime")]
+[JsonSubType("HtmlEditor", typeof(HtmlEditorRenderOptions))]
+[JsonSubType("IconList", typeof(IconListRenderOptions))]
+[JsonSubType("Synchronised", typeof(SynchronisedRenderOptions))]
+[JsonSubType("UserSelection", typeof(UserSelectionRenderOptions))]
+[JsonSubType("DateTime", typeof(DateTimeRenderOptions))]
 public abstract record RenderOptions([property: DefaultValue("Standard")] string Type)
 {
     [JsonExtensionData]
@@ -111,8 +111,8 @@ public enum DisplayDataType
 }
 
 [JsonBaseType("type", typeof(SimpleDisplayData))]
-[JsonSubType(typeof(TextDisplay), "Text")]
-[JsonSubType(typeof(HtmlDisplay), "Html")]
+[JsonSubType("Text", typeof(TextDisplay))]
+[JsonSubType("Html", typeof(HtmlDisplay))]
 public abstract record DisplayData(string Type)
 {
     [JsonExtensionData]
@@ -143,8 +143,8 @@ public enum GroupRenderType
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
-[JsonSubType(typeof(GroupElementRenderer), "GroupElement")]
-[JsonSubType(typeof(GridRenderer), "Grid")]
+[JsonSubType("GroupElement", typeof(GroupElementRenderer))]
+[JsonSubType("Grid", typeof(GridRenderer))]
 public abstract record GroupRenderOptions([property: DefaultValue("Standard")] string Type)
 {
     public bool? HideTitle { get; set; }
@@ -164,7 +164,7 @@ public enum ControlAdornmentType
 }
 
 [JsonBaseType("type", typeof(TooltipAdornment))]
-[JsonSubType(typeof(AccordionAdornment), "Accordion")]
+[JsonSubType("Accordion", typeof(AccordionAdornment))]
 public abstract record ControlAdornment(string Type)
 {
     [JsonExtensionData]
