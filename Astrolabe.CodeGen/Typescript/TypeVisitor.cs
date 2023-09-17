@@ -1,0 +1,83 @@
+using System.Collections;
+using System.Reflection;
+using CaseExtensions;
+using Namotion.Reflection;
+
+namespace Astrolabe.CodeGen.Typescript;
+
+public abstract class TypeVisitor<T>
+{
+    private Dictionary<(Type, bool), T> _visited = new();
+
+    protected HashSet<Type> _primitives = new()
+        { typeof(string), typeof(Guid), typeof(DateTime), typeof(bool), typeof(long), typeof(object), typeof(int) };
+
+    public T VisitType(ContextualType ctype)
+    {
+        var nullable = ctype.Nullability == Nullability.Nullable;
+        var type = ctype.Type;
+        if (_visited.TryGetValue((type, nullable), out var value))
+        {
+            return value;
+        }
+
+        if (IsPrimitive(type))
+            return Add(VisitPrimitive(type, nullable));
+
+        if (IsEnumerable(type))
+        {
+            var elemType = type.GetElementType();
+            return Add(VisitEnumerable(type, nullable, () =>
+            {
+                if (elemType != null)
+                    VisitType(elemType.ToContextualType());
+                return VisitType(ctype.GenericArguments[0]);
+            }));
+        }
+
+        var allMembers = type.Assembly.GetTypes()
+            .Where(x => x.BaseType == type || x == type).SelectMany(x =>
+                x.GetProperties().Select(p => new FlattenedProperty(p.Name.ToCamelCase(), p, x))).ToList();
+        var onlyForTypeLookup = allMembers.ToLookup(x => x.Name);
+
+        var members = onlyForTypeLookup.Select(x =>
+        {
+            var fieldName = x.Key;
+            var firstProp = x.First();
+            var firstPropInfo = firstProp.Info;
+            var firstCType = firstPropInfo.ToContextualProperty();
+            var contextualType = firstCType.PropertyType;
+            return new TypeMember<T>(fieldName, firstPropInfo, contextualType.Type,
+                () => VisitType(contextualType));
+        }).ToList();
+
+        return Add(VisitObject(type, nullable, members));
+
+        T Add(T t)
+        {
+            _visited.Add((type, nullable), t);
+            return t;
+        }
+    }
+
+    protected abstract T VisitEnumerable(Type type, bool nullable, Func<T> elemData);
+
+    protected abstract T VisitPrimitive(Type type, bool nullable);
+
+    protected abstract T VisitObject(Type type, bool nullable, IEnumerable<TypeMember<T>> members);
+
+
+    protected bool IsPrimitive(Type type)
+    {
+        return type.IsEnum || type.IsPrimitive || _primitives.Contains(type);
+    }
+
+    protected bool IsEnumerable(Type type)
+    {
+        return typeof(IEnumerable).IsAssignableFrom(type);
+    }
+}
+
+public record TypeMember<T>(string FieldName, PropertyInfo Property, Type Type, Func<T> Data);
+
+public record FlattenedProperty(string Name, PropertyInfo Info, Type Type);
