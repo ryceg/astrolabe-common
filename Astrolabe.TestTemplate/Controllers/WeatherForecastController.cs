@@ -1,4 +1,4 @@
-using Astrolabe.Common.Schema;
+using Astrolabe.Schemas;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Astrolabe.TestTemplate.Controllers;
@@ -17,8 +17,19 @@ public class WeatherForecastController : ControllerBase
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<SchemaField> Get()
     {
-        return new List<SchemaField> { new ScalarField("Cool", "Real Cool", FieldType.Bool, 
-            Array.Empty<string>(), "", false, true, false, "", false, null, false, 
-            Array.Empty<string>(), null) };
+        return new List<SchemaField>
+        {
+            new SimpleSchemaField(FieldType.Bool.ToString(), "Cool")
+            {
+                DisplayName = "Real Cool"
+            }
+        };
     }
+    
+    [HttpPost("PostO")]
+    public ControlDefinition PostControl(ControlDefinition controlDefinition)
+    {
+        return controlDefinition;
+    }
+
 }

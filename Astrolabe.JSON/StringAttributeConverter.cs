@@ -1,10 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Astrolabe.Common.Annotation;
+using Astrolabe.Annotation;
 
-namespace Astrolabe.TestTemplate;
+namespace Astrolabe.JSON;
 
-public class TestConverter : JsonConverterFactory
+public class StringAttributeConverter : JsonConverterFactory
 {
     private readonly JsonStringEnumConverter _inner = new();
 

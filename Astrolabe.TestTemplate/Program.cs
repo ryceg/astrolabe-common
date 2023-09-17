@@ -1,11 +1,13 @@
-using System.Text.Json.Serialization;
-using Astrolabe.TestTemplate;
+using Astrolabe.JSON.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.Converters.Add(new TestConverter()));
+builder.Services.AddControllers().AddJsonOptions(x =>
+{
+    x.JsonSerializerOptions.AddStandardOptions();
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
