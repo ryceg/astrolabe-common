@@ -43,6 +43,8 @@ public record DataControlDefinition(string Field) : ControlDefinition(ControlDef
 
 public record GroupedControlsDefinition([property: SchemaTag(SchemaTags.NoControl)]  IEnumerable<ControlDefinition> Children) : ControlDefinition(ControlDefinitionType.Group.ToString()) 
 {
+    public static readonly ControlDefinition Default = new GroupedControlsDefinition(Array.Empty<ControlDefinition>());
+
     [SchemaTag(SchemaTags.NestedSchemaField)]
     public string? CompoundField { get; set; }
     
@@ -153,10 +155,6 @@ public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
 public record GridRenderer(int? Columns) : GroupRenderOptions(GroupRenderType.Grid.ToString());
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value) : GroupRenderOptions(GroupRenderType.GroupElement.ToString());
-
-public record ControlSnippet(string Name, string? MaterialIcon, [property: SchemaTag(SchemaTags.NoControl)] ControlDefinition Control);
-
-public record ControlSnippetCategory(string Name, IEnumerable<ControlSnippet> Snippets);
 
 [JsonString]
 public enum ControlAdornmentType

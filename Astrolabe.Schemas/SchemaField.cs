@@ -32,6 +32,11 @@ public abstract record SchemaField(string Type, string Field)
     
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
+
+    public FieldType GetFieldType()
+    {
+        return Enum.Parse<FieldType>(Type);
+    }
 }
 
 public record SimpleSchemaField(string Type, string Field) : SchemaField(Type, Field);
