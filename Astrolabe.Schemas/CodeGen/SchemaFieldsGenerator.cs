@@ -69,7 +69,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
     {
         return type.Name + "Schema";
     }
-    
+
     private static TsRawExpr BuildSchema(string schemaType)
     {
         return new TsRawExpr("buildSchema<" + schemaType + ">",
@@ -97,9 +97,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
     }
 
 
-    private  TsImport ClientImport(Type type)
+    private TsImport ClientImport(Type type)
     {
-        return new TsImport(FormLibTypes.Contains(type.Name) ? "@react-typed-forms/schemas": _clientPath, type.Name);
+        return new TsImport(FormLibTypes.Contains(type.Name) ? "@react-typed-forms/schemas" : _clientPath, type.Name);
     }
 
     protected override IEnumerable<TsDeclaration> ToDeclarations(SimpleTypeData typeData)
@@ -151,10 +151,12 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
                 controlsInterface,
                 new TsAssignment(tsConstName,
                     new TsCallExpression(BuildSchema(tsAllName),
-                        new List<TsExpr> { new TsObjectExpr(objectTypeData.Members.Select(FieldForMember)) })),
+                        new List<TsExpr>
+                        {
+                            new TsObjectExpr(objectTypeData.Members.Select(x => FieldForMember(x, objectTypeData)))
+                        })),
                 CreateDefaultFormConst(objectTypeData.Type),
                 CreateConvertFunction(objectTypeData.Type)
-
             });
         }
 
@@ -174,7 +176,6 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
     }
 
 
-
     private TsType TsTypeOnly(Type type)
     {
         if (type.IsEnum)
@@ -188,11 +189,12 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             return new TsTypeRef("number");
         if (type == typeof(bool))
             return new TsTypeRef("boolean");
-        if  (type == typeof(object) || (type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition())))
+        if (type == typeof(object) ||
+            (type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition())))
             return new TsTypeRef("any");
         return new TsTypeRef(FormTypeName(type));
     }
-    
+
     private TsCallExpression SetOptions(TsCallExpression call, IDictionary<string, object> options)
     {
         var argObject = (TsObjectExpr)call.Args.ToList()[0];
@@ -223,22 +225,36 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         };
     }
 
-    private TsObjectField FieldForMember(TypeMember<SimpleTypeData> member)
+    private TsObjectField FieldForMember(TypeMember<SimpleTypeData> member, ObjectTypeData parent)
     {
-        return TsObjectField.NamedField(member.FieldName, FieldForType(member.Data()));
+        return TsObjectField.NamedField(member.FieldName, FieldForType(member.Data(), parent));
     }
 
-    private TsCallExpression FieldForType(SimpleTypeData simpleType)
+    private TsCallExpression FieldForType(SimpleTypeData simpleType, ObjectTypeData parentObject)
     {
         return simpleType switch
         {
-            EnumerableTypeData enumerableTypeData => SetOption(FieldForType(enumerableTypeData.Element()), "collection",
+            EnumerableTypeData enumerableTypeData => SetOption(FieldForType(enumerableTypeData.Element(), parentObject),
+                "collection",
                 true),
-            ObjectTypeData objectTypeData => TsCallExpression.Make(
-                MakeCompoundField, TsObjectExpr.Make(
-                    TsObjectField.NamedField("children", new TsRawExpr(SchemaConstName(objectTypeData.Type))))),
+            ObjectTypeData objectTypeData => DoObject(objectTypeData),
             _ => FieldForTypeOnly(simpleType.Type)
         };
+
+        TsCallExpression DoObject(ObjectTypeData objectTypeData)
+        {
+            var fields = objectTypeData == parentObject
+                ? new[]
+                {
+                    TsObjectField.NamedField("treeChildren",
+                        new TsConstExpr(true))
+                }
+                : new[]
+                {
+                    TsObjectField.NamedField("children", new TsRawExpr(SchemaConstName(objectTypeData.Type)))
+                };
+            return TsCallExpression.Make(MakeCompoundField, TsObjectExpr.Make(fields));
+        }
     }
 
     private TsCallExpression ScalarWithOptions(FieldType fieldType, IEnumerable<FieldOption>? options)
@@ -250,13 +266,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
                     new TsRawExpr("FieldType." + fieldType, FieldTypeImport))
             )
         );
-        if (options != null)
-        {
-            return SetOption(makeCall, "restrictions",
-                new TsObjectExpr(new[] { TsObjectField.NamedField("options", new TsConstExpr(options)) }));
-        }
-
-        return makeCall;
+        return options != null ? SetOption(makeCall, "options", new TsConstExpr(options)) : makeCall;
     }
 
     private TsCallExpression SetOption(TsCallExpression call, string field, object value)

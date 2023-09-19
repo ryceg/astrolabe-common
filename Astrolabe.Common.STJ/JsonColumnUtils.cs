@@ -5,9 +5,9 @@ namespace Astrolabe.Common.STJ;
 
 public static class JsonColumnUtils
 {
-    public static IDictionary<string, JsonNode?> ParseJson(string? strValue)
+    public static JsonObject ParseJson(string? strValue)
     {
-        return (string.IsNullOrEmpty(strValue) ? new JsonObject() : (JsonObject) JsonNode.Parse(strValue))!;
+        return string.IsNullOrEmpty(strValue) ? new JsonObject() : (JsonObject) JsonNode.Parse(strValue);
     }
     
     public static IDictionary<string, object?>? ParseJsonElement(string? strValue)
