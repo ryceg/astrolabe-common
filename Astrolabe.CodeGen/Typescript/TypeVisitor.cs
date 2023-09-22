@@ -51,7 +51,7 @@ public abstract class TypeVisitor<T>
             var firstPropInfo = firstProp.Info;
             var firstCType = firstPropInfo.ToContextualProperty();
             var contextualType = firstCType.PropertyType;
-            return new TypeMember<T>(fieldName, firstPropInfo, contextualType.Type,
+            return new TypeMember<T>(fieldName, x.Select(p => p.Info), contextualType.Type,
                 () => VisitType(contextualType));
         }).ToList();
 
@@ -84,6 +84,9 @@ public abstract class TypeVisitor<T>
     
 }
 
-public record TypeMember<T>(string FieldName, PropertyInfo Property, Type Type, Func<T> Data);
+public record TypeMember<T>(string FieldName, IEnumerable<PropertyInfo> Properties, Type Type, Func<T> Data)
+{ 
+    
+}
 
 public record FlattenedProperty(string Name, PropertyInfo Info, Type Type);

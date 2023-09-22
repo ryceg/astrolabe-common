@@ -1,9 +1,9 @@
 namespace Astrolabe.Annotation;
 
-[System.AttributeUsage(System.AttributeTargets.Property, AllowMultiple = true)]
-public class SchemaTagAttribute : System.Attribute
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+public class SchemaTagAttribute : Attribute
 {
-    public string Tag;
+    public string Tag { get; }
 
     public SchemaTagAttribute(string tag)
     {

@@ -15,6 +15,7 @@ public enum ControlDefinitionType
 }
 
 [JsonBaseType("type", typeof(DataControlDefinition))]
+[JsonSubType("Data", typeof(DataControlDefinition))]
 [JsonSubType("Group", typeof(GroupedControlsDefinition))]
 [JsonSubType("Display", typeof(DisplayControlDefinition))]
 [JsonSubType("Action", typeof(ActionControlDefinition))]
@@ -143,6 +144,7 @@ public enum GroupRenderType
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
+[JsonSubType("Standard", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("GroupElement", typeof(GroupElementRenderer))]
 [JsonSubType("Grid", typeof(GridRenderer))]
 public abstract record GroupRenderOptions([property: DefaultValue("Standard")] string Type)
@@ -164,6 +166,7 @@ public enum ControlAdornmentType
 }
 
 [JsonBaseType("type", typeof(TooltipAdornment))]
+[JsonSubType("Tooltip", typeof(TooltipAdornment))]
 [JsonSubType("Accordion", typeof(AccordionAdornment))]
 public abstract record ControlAdornment(string Type)
 {

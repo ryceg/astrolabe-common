@@ -57,7 +57,8 @@ public enum FieldType
     EntityRef,
     Compound,
     AutoId,
-    Image
+    Image,
+    Any
 }
 
 public record SchemaRestrictions(IEnumerable<FieldOption>? Options = null);
