@@ -31,7 +31,7 @@ public abstract record ControlDefinition(string Type)
     public IDictionary<string, object?>? Extensions { get; set; }
 }
 
-public record DataControlDefinition(string Field) : ControlDefinition(ControlDefinitionType.Data.ToString())
+public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)] string Field) : ControlDefinition(ControlDefinitionType.Data.ToString())
 {
     public bool? Required { get; set; }
     
