@@ -61,12 +61,12 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         "SchemaRestrictions"
     };
 
-    private static string FormTypeName(Type type)
+    public static string FormTypeName(Type type)
     {
         return type.Name + "Form";
     }
 
-    private static string SchemaConstName(Type type)
+    public static string SchemaConstName(Type type)
     {
         return type.Name + "Schema";
     }
