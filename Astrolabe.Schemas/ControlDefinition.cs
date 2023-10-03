@@ -19,7 +19,7 @@ public enum ControlDefinitionType
 [JsonSubType("Group", typeof(GroupedControlsDefinition))]
 [JsonSubType("Display", typeof(DisplayControlDefinition))]
 [JsonSubType("Action", typeof(ActionControlDefinition))]
-public abstract record ControlDefinition(string Type)
+public abstract record ControlDefinition([property: SchemaOptions(typeof(ControlDefinitionType))] string Type)
 {
     public string? Title { get; set; }
     
@@ -77,7 +77,7 @@ public enum DataRenderType
 [JsonSubType("Synchronised", typeof(SynchronisedRenderOptions))]
 [JsonSubType("UserSelection", typeof(UserSelectionRenderOptions))]
 [JsonSubType("DateTime", typeof(DateTimeRenderOptions))]
-public abstract record RenderOptions([property: DefaultValue("Standard")] string Type)
+public abstract record RenderOptions([property: DefaultValue("Standard")] [property: SchemaOptions(typeof(DataRenderType))] string Type)
 {
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
@@ -114,7 +114,7 @@ public enum DisplayDataType
 [JsonBaseType("type", typeof(SimpleDisplayData))]
 [JsonSubType("Text", typeof(TextDisplay))]
 [JsonSubType("Html", typeof(HtmlDisplay))]
-public abstract record DisplayData(string Type)
+public abstract record DisplayData([property: SchemaOptions(typeof(DisplayDataType))] string Type)
 {
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
@@ -133,7 +133,7 @@ public enum DynamicPropertyType
     DefaultValue
 }
 
-public record DynamicProperty(string Type, EntityExpression Expr);
+public record DynamicProperty([property: SchemaOptions(typeof(DynamicPropertyType))] string Type, EntityExpression Expr);
 
 [JsonString]
 public enum GroupRenderType
@@ -147,7 +147,7 @@ public enum GroupRenderType
 [JsonSubType("Standard", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("GroupElement", typeof(GroupElementRenderer))]
 [JsonSubType("Grid", typeof(GridRenderer))]
-public abstract record GroupRenderOptions([property: DefaultValue("Standard")] string Type)
+public abstract record GroupRenderOptions([property: SchemaOptions(typeof(GroupRenderType))] [property: DefaultValue("Standard")] string Type)
 {
     public bool? HideTitle { get; set; }
 }
@@ -168,7 +168,7 @@ public enum ControlAdornmentType
 [JsonBaseType("type", typeof(TooltipAdornment))]
 [JsonSubType("Tooltip", typeof(TooltipAdornment))]
 [JsonSubType("Accordion", typeof(AccordionAdornment))]
-public abstract record ControlAdornment(string Type)
+public abstract record ControlAdornment([property: SchemaOptions(typeof(ControlAdornmentType))] string Type)
 {
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }

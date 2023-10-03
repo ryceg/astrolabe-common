@@ -125,7 +125,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 
             var tsConstName = SchemaConstName(type);
             var tsAllName = FormTypeName(type);
-            
+
             var baseType = type.GetCustomAttribute<JsonBaseTypeAttribute>();
             var subTypes = type.GetCustomAttributes<JsonSubTypeAttribute>();
 
@@ -149,7 +149,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             return new TsFieldType(member.FieldName, false, FormType(member.Data()));
         }
     }
-    
+
     private TsObjectField FieldForMember(TypeMember<SimpleTypeData> member, ObjectTypeData parent,
         JsonBaseTypeAttribute? baseType, IEnumerable<JsonSubTypeAttribute> subTypes)
     {
@@ -159,14 +159,21 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         var memberData = member.Data();
         var firstProp = member.Properties.First();
         var tags = firstProp.GetCustomAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
+        var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType;
+        if (enumType == null && memberData.Type.IsEnum)
+        {
+            enumType = memberData.Type;
+        }
+        var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         var buildFieldCall = SetOptions(FieldForType(memberData, parent), new Dictionary<string, object?>
         {
             { "isTypeField", baseType != null && baseType.TypeField == member.FieldName ? true : null },
             { "onlyForTypes", onlyForTypes.Count > 0 ? onlyForTypes : null },
-            { "required", memberData.Nullable ? null : true},
-            { "defaultValue", firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value},
+            { "required", memberData.Nullable ? null : true },
+            { "defaultValue", firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value },
             { "displayName", firstProp.GetCustomAttribute<DisplayAttribute>()?.Name ?? firstProp.Name },
-            { "tags", tags.Count > 0 ? tags : null}
+            { "tags", tags.Count > 0 ? tags : null },
+            { "options", options != null ? new TsConstExpr(options) : null }
         });
         return TsObjectField.NamedField(member.FieldName, buildFieldCall);
     }
@@ -176,7 +183,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
     {
         return data switch
         {
-            EnumerableTypeData enumerableTypeData => new TsArrayType(FormType(enumerableTypeData.Element()), Nullable: data.Nullable),
+            EnumerableTypeData enumerableTypeData => new TsArrayType(FormType(enumerableTypeData.Element()),
+                Nullable: data.Nullable),
             _ => TsTypeOnly(data.Type) with { Nullable = data.Nullable }
         };
     }
@@ -213,24 +221,23 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         return call with { Args = args };
     }
 
-    private TsCallExpression FieldForTypeOnly(Type type)
+    private static FieldType FieldTypeForTypeOnly(Type type)
     {
         return type switch
         {
-            { IsEnum: true } when IsStringEnum(type) is var stringEnum => ScalarWithOptions(
-                stringEnum ? FieldType.String : FieldType.Int, EnumOptions(type, stringEnum)),
-            _ when type == typeof(DateTime) => ScalarWithOptions(FieldType.DateTime, null),
-            _ when type == typeof(DateTimeOffset) => ScalarWithOptions(FieldType.DateTime, null),
-            _ when type == typeof(DateOnly) => ScalarWithOptions(FieldType.Date, null),
-            _ when type == typeof(string) || type == typeof(Guid) => ScalarWithOptions(FieldType.String, null),
-            _ when type == typeof(int) || type == typeof(long) => ScalarWithOptions(FieldType.Int, null),
-            _ when type == typeof(double) => ScalarWithOptions(FieldType.Double, null),
-            _ when type == typeof(bool) => ScalarWithOptions(FieldType.Bool, null),
-            _ when type == typeof(object) => ScalarWithOptions(FieldType.Any, null),
-            _ => ScalarWithOptions(FieldType.Any, null)
+            { IsEnum: true } when IsStringEnum(type) is var stringEnum => stringEnum ? FieldType.String : FieldType.Int,
+            _ when type == typeof(DateTime) => FieldType.DateTime,
+            _ when type == typeof(DateTimeOffset) => FieldType.DateTime,
+            _ when type == typeof(DateOnly) => FieldType.Date,
+            _ when type == typeof(string) || type == typeof(Guid) => FieldType.String,
+            _ when type == typeof(int) || type == typeof(long) => FieldType.Int,
+            _ when type == typeof(double) => FieldType.Double,
+            _ when type == typeof(bool) => FieldType.Bool,
+            _ when type == typeof(object) => FieldType.Any,
+            _ => FieldType.Any
         };
     }
-    
+
     private TsCallExpression FieldForType(SimpleTypeData simpleType, ObjectTypeData parentObject)
     {
         return simpleType switch
@@ -238,7 +245,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             EnumerableTypeData enumerableTypeData => SetOption(FieldForType(enumerableTypeData.Element(), parentObject),
                 "collection", true),
             ObjectTypeData objectTypeData => DoObject(objectTypeData),
-            _ => FieldForTypeOnly(simpleType.Type)
+            _ => MakeScalar(FieldTypeForTypeOnly(simpleType.Type))
         };
 
         TsCallExpression DoObject(ObjectTypeData objectTypeData)
@@ -257,16 +264,13 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         }
     }
 
-    private TsCallExpression ScalarWithOptions(FieldType fieldType, IEnumerable<FieldOption>? options)
+    private TsCallExpression MakeScalar(FieldType fieldType)
     {
-        var makeCall = TsCallExpression.Make(
-            MakeScalarField,
-            TsObjectExpr.Make(
-                TsObjectField.NamedField("type",
-                    new TsRawExpr("FieldType." + fieldType, FieldTypeImport))
+        return TsCallExpression.Make(
+            MakeScalarField, TsObjectExpr.Make(
+                TsObjectField.NamedField("type", new TsRawExpr("FieldType." + fieldType, FieldTypeImport))
             )
         );
-        return options != null ? SetOption(makeCall, "options", new TsConstExpr(options)) : makeCall;
     }
 
     private static TsCallExpression SetOption(TsCallExpression call, string field, object value)
