@@ -127,7 +127,7 @@ export type GridItemsSpan =
 	  };
 
 export interface GridElementRendererProps<T, D> {
-	column: ColumnDef<any, D>;
+	column: ColumnDef<T, D>;
 	className: string;
 	lastRow: boolean;
 	content: GridItemsRenderer;

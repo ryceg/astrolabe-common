@@ -16,7 +16,7 @@ import {
 	TableViewClasses,
 	GridItemsRenderer,
 	ChildColumns,
-	RowPlacementProps,
+	RowPlacementProps, ColumnBodyRenderer,
 } from "./index";
 import clsx from "clsx";
 import { Pagination } from "../Pagination";
@@ -105,6 +105,7 @@ export function DataTableView<T, D = unknown>(props: DataTableViewProps<T, D>) {
 			rowSpan,
 		};
 	};
+	const bodyDivRenderer : ColumnBodyRenderer<any, any> = divRenderer;
 
 	function renderHeaderItems(col: ColumnDef<T, D>): GridItemsSpan {
 		if (col.children) {
@@ -205,7 +206,7 @@ export function DataTableView<T, D = unknown>(props: DataTableViewProps<T, D>) {
 					cri !== childRows.length - 1
 				)
 			);
-			return (c.renderBodyElement ?? divRenderer)({
+			return (c.renderBodyElement ?? bodyDivRenderer)({
 				column: c,
 				className: clsx(c.cellClass, c.bodyCellClass),
 				lastRow,
@@ -221,7 +222,7 @@ export function DataTableView<T, D = unknown>(props: DataTableViewProps<T, D>) {
 				row,
 			});
 		}
-		return (c.renderBodyElement ?? divRenderer)({
+		return (c.renderBodyElement ?? bodyDivRenderer)({
 			column: c,
 			className: clsx(c.cellClass, c.bodyCellClass, cellClass, bodyCellClass),
 			lastRow,
