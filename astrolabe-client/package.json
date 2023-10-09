@@ -29,6 +29,8 @@
 		"build": "tsc"
 	},
 	"devDependencies": {
+		"react-dnd": "^16.0.1",
+		"react-dnd-html5-backend": "^16.0.1",
 		"typescript": "^5.2.2",
 		"@types/react": "^18.2.23",
 		"@types/shallowequal": "1.1.2",
