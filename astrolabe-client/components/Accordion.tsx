@@ -55,7 +55,7 @@ AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 function Accordion({
   children,
   type = "single",
-  collapsible = true,
+  collapsible,
   itemClass,
   ...props
 }: {
