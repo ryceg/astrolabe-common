@@ -59,6 +59,7 @@ function Accordion({
   itemClass,
   ...props
 }: {
+  className?: string;
   children: {
     contents: React.ReactNode;
     title: React.ReactNode;
