@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Threading.Tasks;
+using Astrolabe.Common;
 using FluentValidation;
 
-namespace Astrolabe.Common.ColumnEditor;
+namespace Astrolabe.ColumnEditor;
 
 public abstract class EntityColumns<TEDIT, TDB>
 {
@@ -120,7 +116,7 @@ public abstract class EntityColumns<TEDIT, TDB>
     {
         foreach (var col in Columns)
         {
-            validator.ApplyValidation(col);
+            ColumnValidationExtensions.ApplyValidation(validator, col);
         }
     }
 }

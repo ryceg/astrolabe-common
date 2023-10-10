@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace Astrolabe.Common.NewtonsoftJson;
+namespace Astrolabe.ColumnEditor.NewtonsoftJson;
 
 public static class JsonColumnUtils
 {

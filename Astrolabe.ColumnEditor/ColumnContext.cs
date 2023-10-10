@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace Astrolabe.Common.ColumnEditor;
+namespace Astrolabe.ColumnEditor;
 
 public class ColumnContext<TDb>
 {

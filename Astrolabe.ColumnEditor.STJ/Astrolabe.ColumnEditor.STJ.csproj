@@ -1,17 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+        <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>Astrolabe.ColumnEditor.STJ</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.ColumnEditor\Astrolabe.ColumnEditor.csproj" />
       <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="ClosedXML" Version="0.93.0" />
     </ItemGroup>
 
 </Project>

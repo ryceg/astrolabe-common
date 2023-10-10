@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Astrolabe.Common.ColumnEditor;
+namespace Astrolabe.ColumnEditor;
 
 public interface ColumnEditor<TEdit, TDb> : ColumnDbExtractor<TDb>
 {

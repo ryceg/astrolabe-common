@@ -1,8 +1,6 @@
-using System;
-using System.Linq;
 using System.Linq.Expressions;
 
-namespace Astrolabe.Common.ColumnEditor;
+namespace Astrolabe.ColumnEditor;
 
 public interface ColumnDbExtractor<TDb>
 {

@@ -1,6 +1,4 @@
-using System;
-
-namespace Astrolabe.Common.ColumnEditor;
+namespace Astrolabe.ColumnEditor;
 
 public interface ColumnEditorBuilder<TEdit, TDb, T, T2> : ColumnEditor<TEdit, TDb>
 {

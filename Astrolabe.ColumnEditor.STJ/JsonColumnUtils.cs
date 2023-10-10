@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Astrolabe.Common.STJ;
+namespace Astrolabe.ColumnEditor.STJ;
 
 public static class JsonColumnUtils
 {

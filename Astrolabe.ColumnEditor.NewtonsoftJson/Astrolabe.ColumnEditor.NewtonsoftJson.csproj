@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Astrolabe.ColumnEditor.NewtonsoftJson</AssemblyName>
+        <RootNamespace>Astrolabe.ColumnEditor.NewtonsoftJson</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.ColumnEditor\Astrolabe.ColumnEditor.csproj" />
+      <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
+    </ItemGroup>
+
+</Project>

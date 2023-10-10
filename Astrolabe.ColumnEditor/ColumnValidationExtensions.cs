@@ -1,7 +1,6 @@
-using System;
 using FluentValidation;
 
-namespace Astrolabe.Common.ColumnEditor;
+namespace Astrolabe.ColumnEditor;
 
 public static class ColumnValidationExtensions
 {

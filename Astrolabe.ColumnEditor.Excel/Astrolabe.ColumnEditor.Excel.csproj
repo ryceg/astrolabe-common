@@ -4,10 +4,17 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <AssemblyName>Astrolabe.ColumnEditor.Excel</AssemblyName>
+        <RootNamespace>Astrolabe.ColumnEditor.Excel</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.ColumnEditor\Astrolabe.ColumnEditor.csproj" />
       <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="ClosedXML" Version="0.93.0" />
     </ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
-using Astrolabe.Common.ColumnEditor;
 
-namespace Astrolabe.Common.NewtonsoftJson;
+namespace Astrolabe.ColumnEditor.STJ;
 
 public record JsonColumnBuilder<TEdit, TDb, T, T2>(string Property, Func<ColumnContext<TDb>, T2> GetDbValue,
     Expression<Func<TDb, object?>> GetDbValueExpression, Type DbValueType, 

@@ -1,7 +1,6 @@
-using Astrolabe.Common.ColumnEditor;
 using ClosedXML.Excel;
 
-namespace Astrolabe.Common.Excel;
+namespace Astrolabe.ColumnEditor.Excel;
 
 public static class ExcelExtension
 {

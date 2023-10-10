@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 
-namespace Astrolabe.Common.ColumnEditor;
+namespace Astrolabe.ColumnEditor;
 
 public record PropertyColumnBuilder<TEdit, TDb, T, T2>(string Property, Expression<Func<TEdit, T>> EditValueExpression, Expression<Func<TDb, T2>> GetDbExpression,
     Func<TEdit, ColumnContext<TDb>, Task<ColumnContext<TDb>>> Edit) : ColumnEditorBuilder<TEdit, TDb, T, T2>
