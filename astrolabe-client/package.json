@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"dependencies": {
-		"@react-typed-forms/core": "^3.0.0-dev.106",
+		"@react-typed-forms/core": "^3.0.0-dev.107",
 		"@react-typed-forms/schemas": "^1.0.0-dev.12",
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
@@ -13,7 +13,7 @@
 		"@radix-ui/react-slot": "1.0.2",
 		"@radix-ui/react-progress": "1.0.3",
 		"@radix-ui/react-accordion": "1.1.2",
-		"class-variance-authority": "0.7.0",
+		"class-variance-authority": "^0.7.0",
 		"focus-trap-react": "10.2.2",
 		"tailwind-merge": "1.14.0",
 		"querystring": "0.2.1",
@@ -27,10 +27,10 @@
 		"build": "tsc"
 	},
 	"devDependencies": {
-		"typescript": "^5.2.2",
-		"@types/react": "^18.2.12",
+		"typescript": "5.2.2",
+		"@types/react": "^18.2.28",
 		"@types/shallowequal": "^1.1.2",
-		"@types/node": "^20.8.3",
+		"@types/node": "^20.8.4",
 		"prettier": "^3.0.3"
 	}
 }
