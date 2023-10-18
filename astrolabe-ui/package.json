@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"dependencies": {
+		"@astrolabe/client": "workspace:^0.1.0",
 		"@react-typed-forms/core": "^3.0.0-dev.107",
 		"@react-typed-forms/schemas": "^1.0.0-dev.12",
 		"@radix-ui/react-tabs": "1.0.4",

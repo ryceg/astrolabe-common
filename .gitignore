@@ -3,5 +3,12 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
-.rush/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+**/.rush/temp/
 
