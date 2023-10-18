@@ -5,42 +5,7 @@ importers:
   .:
     specifiers: {}
 
-  ../../Astrolabe.TestTemplate/ClientApp:
-    specifiers:
-      '@astrolabe/client': workspace:*
-      '@astrolabe/ui': workspace:*
-      '@remix-run/css-bundle': ^2.1.0
-      '@remix-run/dev': ^2.1.0
-      '@remix-run/eslint-config': ^2.1.0
-      '@remix-run/node': ^2.1.0
-      '@remix-run/react': ^2.1.0
-      '@remix-run/serve': ^2.1.0
-      '@types/react': ^18.2.20
-      '@types/react-dom': ^18.2.7
-      eslint: ^8.38.0
-      isbot: ^3.6.8
-      react: ^18.2.0
-      react-dom: ^18.2.0
-      typescript: ^5.1.6
-    dependencies:
-      '@astrolabe/client': link:../../astrolabe-client
-      '@astrolabe/ui': link:../../astrolabe-ui
-      '@remix-run/css-bundle': 2.1.0
-      '@remix-run/node': 2.1.0_typescript@5.2.2
-      '@remix-run/react': 2.1.0_vegmnuvoswdxuttpuhvewcem44
-      '@remix-run/serve': 2.1.0_typescript@5.2.2
-      isbot: 3.7.0
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
-    devDependencies:
-      '@remix-run/dev': 2.1.0_vuvvlng2nue5zj34p6wvmzxy5e
-      '@remix-run/eslint-config': 2.1.0_5vuzlno3r6tgrbyvemg7oiwqje
-      '@types/react': 18.2.28
-      '@types/react-dom': 18.2.13
-      eslint: 8.51.0
-      typescript: 5.2.2
-
-  ../../astrolabe-client:
+  ../../../astrolabe-client:
     specifiers:
       '@react-typed-forms/core': ^3.0.0-dev.107
       '@types/node': ^20.8.4
@@ -65,7 +30,7 @@ importers:
       prettier: 3.0.3
       typescript: 5.2.2
 
-  ../../astrolabe-ui:
+  ../../../astrolabe-ui:
     specifiers:
       '@astrolabe/client': workspace:^0.1.0
       '@radix-ui/react-accordion': 1.1.2
@@ -118,6 +83,41 @@ importers:
       '@types/react': 18.2.28
       '@types/shallowequal': 1.1.2
       prettier: 3.0.3
+      typescript: 5.2.2
+
+  ../../ClientApp:
+    specifiers:
+      '@astrolabe/client': workspace:*
+      '@astrolabe/ui': workspace:*
+      '@remix-run/css-bundle': ^2.1.0
+      '@remix-run/dev': ^2.1.0
+      '@remix-run/eslint-config': ^2.1.0
+      '@remix-run/node': ^2.1.0
+      '@remix-run/react': ^2.1.0
+      '@remix-run/serve': ^2.1.0
+      '@types/react': ^18.2.20
+      '@types/react-dom': ^18.2.7
+      eslint: ^8.38.0
+      isbot: ^3.6.8
+      react: ^18.2.0
+      react-dom: ^18.2.0
+      typescript: ^5.1.6
+    dependencies:
+      '@astrolabe/client': link:../../astrolabe-client
+      '@astrolabe/ui': link:../../astrolabe-ui
+      '@remix-run/css-bundle': 2.1.0
+      '@remix-run/node': 2.1.0_typescript@5.2.2
+      '@remix-run/react': 2.1.0_vegmnuvoswdxuttpuhvewcem44
+      '@remix-run/serve': 2.1.0_typescript@5.2.2
+      isbot: 3.7.0
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    devDependencies:
+      '@remix-run/dev': 2.1.0_vuvvlng2nue5zj34p6wvmzxy5e
+      '@remix-run/eslint-config': 2.1.0_5vuzlno3r6tgrbyvemg7oiwqje
+      '@types/react': 18.2.28
+      '@types/react-dom': 18.2.13
+      eslint: 8.51.0
       typescript: 5.2.2
 
 packages:

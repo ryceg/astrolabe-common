@@ -418,15 +418,15 @@
     // 
      {
        "packageName": "@astrolabe/ui",
-       "projectFolder": "astrolabe-ui"
+       "projectFolder": "../astrolabe-ui"
      },
      {
        "packageName": "@astrolabe/client",
-       "projectFolder": "astrolabe-client"
+       "projectFolder": "../astrolabe-client"
      },
     {
       "packageName": "clientapp",
-      "projectFolder": "Astrolabe.TestTemplate/ClientApp"
+      "projectFolder": "ClientApp"
     }
   ]
 }
