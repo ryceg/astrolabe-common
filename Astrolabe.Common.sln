@@ -2,7 +2,20 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Common", "Astrolabe.Common\Astrolabe.Common.csproj", "{89795D0C-1C96-4DB4-B663-5D0529A43CFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Common.NewtonsoftJson", "Astrolabe.Common.NewtonsoftJson\Astrolabe.Common.NewtonsoftJson.csproj", "{25379DFE-C604-4856-9E6A-3C677082FF94}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.TestTemplate", "Astrolabe.TestTemplate\Astrolabe.TestTemplate.csproj", "{8241904A-41CC-4237-938E-8D46871CDDA0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.JSON", "Astrolabe.JSON\Astrolabe.JSON.csproj", "{E9BE0EAE-0C99-438D-9D47-EAAC8699EE0F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Schemas", "Astrolabe.Schemas\Astrolabe.Schemas.csproj", "{39C9C809-8975-4EF9-92A8-1D59F19E5172}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.CodeGen", "Astrolabe.CodeGen\Astrolabe.CodeGen.csproj", "{D82D4F5A-7D6E-4715-AE19-EDB97A98FDAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Annotation", "Astrolabe.Annotation\Astrolabe.Annotation.csproj", "{80E5A635-030B-48E3-AE5B-471618DB85B6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{F1048700-D091-4618-8A2F-78ABC9A66637}"
+	ProjectSection(SolutionItems) = preProject
+		rush.json = rush.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,9 +27,25 @@ Global
 		{89795D0C-1C96-4DB4-B663-5D0529A43CFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89795D0C-1C96-4DB4-B663-5D0529A43CFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89795D0C-1C96-4DB4-B663-5D0529A43CFA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{25379DFE-C604-4856-9E6A-3C677082FF94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{25379DFE-C604-4856-9E6A-3C677082FF94}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{25379DFE-C604-4856-9E6A-3C677082FF94}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{25379DFE-C604-4856-9E6A-3C677082FF94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8241904A-41CC-4237-938E-8D46871CDDA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8241904A-41CC-4237-938E-8D46871CDDA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8241904A-41CC-4237-938E-8D46871CDDA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8241904A-41CC-4237-938E-8D46871CDDA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9BE0EAE-0C99-438D-9D47-EAAC8699EE0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9BE0EAE-0C99-438D-9D47-EAAC8699EE0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9BE0EAE-0C99-438D-9D47-EAAC8699EE0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9BE0EAE-0C99-438D-9D47-EAAC8699EE0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39C9C809-8975-4EF9-92A8-1D59F19E5172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39C9C809-8975-4EF9-92A8-1D59F19E5172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39C9C809-8975-4EF9-92A8-1D59F19E5172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39C9C809-8975-4EF9-92A8-1D59F19E5172}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D82D4F5A-7D6E-4715-AE19-EDB97A98FDAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D82D4F5A-7D6E-4715-AE19-EDB97A98FDAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D82D4F5A-7D6E-4715-AE19-EDB97A98FDAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D82D4F5A-7D6E-4715-AE19-EDB97A98FDAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80E5A635-030B-48E3-AE5B-471618DB85B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80E5A635-030B-48E3-AE5B-471618DB85B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80E5A635-030B-48E3-AE5B-471618DB85B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80E5A635-030B-48E3-AE5B-471618DB85B6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

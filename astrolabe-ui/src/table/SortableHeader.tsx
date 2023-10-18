@@ -1,41 +1,41 @@
-import { findSortField, SearchingState } from "../../app/searching";
+import { findSortField, SearchingState } from "@astrolabe/client/app/searching";
 import { ColumnDef, rotateSort } from "./index";
 import { ReactNode } from "react";
 import clsx from "clsx";
 
 export function SortableHeader({
-	state,
-	column,
-	sortField,
-	children,
+  state,
+  column,
+  sortField,
+  children,
 }: {
-	state: SearchingState;
-	column: ColumnDef<any, unknown>;
-	sortField: string;
-	children: ReactNode;
+  state: SearchingState;
+  column: ColumnDef<any, unknown>;
+  sortField: string;
+  children: ReactNode;
 }) {
-	const { sort, page } = state.fields;
+  const { sort, page } = state.fields;
 
-	const sorts = sort.value;
-	const currentSort = findSortField(sorts, sortField);
-	const currentDir = currentSort?.[1];
-	return (
-		<button
-			className="w-full"
-			onClick={() => {
-				sort.setValue(rotateSort(column));
-				page.value = 0;
-			}}
-		>
-			{children}
-			{currentDir && (
-				<i
-					className={clsx(
-						"fa-light ml-2 h-4 w-2",
-						currentDir === "asc" ? "fa-arrow-up" : "fa-arrow-down"
-					)}
-				/>
-			)}
-		</button>
-	);
+  const sorts = sort.value;
+  const currentSort = findSortField(sorts, sortField);
+  const currentDir = currentSort?.[1];
+  return (
+    <button
+      className="w-full"
+      onClick={() => {
+        sort.setValue(rotateSort(column));
+        page.value = 0;
+      }}
+    >
+      {children}
+      {currentDir && (
+        <i
+          className={clsx(
+            "fa-light ml-2 h-4 w-2",
+            currentDir === "asc" ? "fa-arrow-up" : "fa-arrow-down",
+          )}
+        />
+      )}
+    </button>
+  );
 }

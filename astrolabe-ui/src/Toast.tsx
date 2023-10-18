@@ -7,8 +7,8 @@ import {
 	useControl,
 } from "@react-typed-forms/core";
 import * as ToastPrim from "@radix-ui/react-toast";
-import { Toast, ToastService, ToastSettings } from "../service/toast";
-import { AppProvider } from "../service";
+import { Toast, ToastService, ToastSettings } from "@astrolabe/client/service/toast";
+import { AppProvider } from "@astrolabe/client/service";
 import { cva } from "class-variance-authority";
 import { Button } from "./Button";
 

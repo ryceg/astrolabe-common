@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 
-import { cn } from "../util/utils";
+import { cn } from "@astrolabe/client/util/utils";
 
 const AccordionRoot = AccordionPrimitive.Root;
 
@@ -101,8 +101,4 @@ function AccordionItems({
 
 export {
   Accordion,
-  AccordionRoot,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
 };
