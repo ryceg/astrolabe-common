@@ -101,4 +101,8 @@ function AccordionItems({
 
 export {
   Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionRoot,
+  AccordionTrigger,
 };
