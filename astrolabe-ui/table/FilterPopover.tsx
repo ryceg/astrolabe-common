@@ -1,4 +1,4 @@
-import { Popover } from "@/Popover";
+import { Popover } from "../Popover";
 import { SearchingState } from "@astrolabe/client/app/searching";
 import { ColumnDef, setFilterValue } from "./index";
 import {
