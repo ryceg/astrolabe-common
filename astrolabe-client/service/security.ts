@@ -51,7 +51,7 @@ export function createAccessTokenFetcher(
   getToken: () => Promise<string | null | undefined>,
 ): (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> {
   return async (url, init) => {
-    const token = await getToken;
+    const token = await getToken();
     if (token) {
       const request = new Request(url, init);
       request.headers.set("Authorization", "Bearer " + token);
@@ -63,7 +63,7 @@ export function createAccessTokenFetcher(
 
 export function useControlTokenSecurity(): TokenSecurityService {
   const user = useControl<UserState>(() => {
-    const accessToken = localStorage.getItem("token");
+    const accessToken = getTokenStorage().getItem("token");
     return {
       busy: false,
       accessToken: accessToken,
@@ -80,7 +80,7 @@ export function useControlTokenSecurity(): TokenSecurityService {
     async authCallback() {},
     async login() {},
     async setToken(accessToken: string) {
-      localStorage.setItem("token", accessToken);
+      getTokenStorage().setItem("token", accessToken);
       user.setValue((v) => ({
         ...v,
         loggedIn: true,
@@ -88,4 +88,11 @@ export function useControlTokenSecurity(): TokenSecurityService {
       }));
     },
   };
+}
+
+function getTokenStorage(): Pick<Storage, "getItem" | "setItem"> {
+  if (typeof localStorage === "undefined") {
+    return { getItem: () => null, setItem: () => {} };
+  }
+  return localStorage;
 }
