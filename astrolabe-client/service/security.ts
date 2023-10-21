@@ -1,6 +1,8 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "./index";
 import { Control, newControl, useControl } from "@react-typed-forms/core";
+import { RouteData } from "../app/routeData";
+import { useNavigationService } from "./navigation";
 
 export interface UserState {
   busy: boolean;
@@ -62,14 +64,15 @@ export function createAccessTokenFetcher(
 }
 
 export function useControlTokenSecurity(): TokenSecurityService {
-  const user = useControl<UserState>(() => {
-    const accessToken = getTokenStorage().getItem("token");
-    return {
-      busy: false,
-      accessToken: accessToken,
-      loggedIn: Boolean(accessToken),
-    };
+  const user = useControl<UserState>({
+    busy: true,
+    accessToken: null,
+    loggedIn: false,
   });
+  useEffect(() => {
+    const accessToken = getTokenStorage().getItem("token");
+    user.value = { busy: false, accessToken, loggedIn: !!accessToken };
+  }, []);
   return {
     checkAuthentication() {},
     currentUser: user,
@@ -95,4 +98,36 @@ function getTokenStorage(): Pick<Storage, "getItem" | "setItem"> {
     return { getItem: () => null, setItem: () => {} };
   }
   return localStorage;
+}
+
+export interface PageSecurity {
+  allowGuests?: boolean;
+  forwardAuthenticated?: boolean;
+  dontWaitForAuth?: boolean;
+}
+
+export function usePageSecurity(
+  route: RouteData<PageSecurity>,
+  loginHref: string = "/login",
+  defaultHref: string = "/",
+): boolean {
+  const security = useSecurityService();
+  const nav = useNavigationService();
+  const fields = security.currentUser.fields;
+  const busy = fields.busy.value && !route.dontWaitForAuth;
+  const loggedIn = fields.loggedIn.value;
+  const forwardLogin = !busy && !loggedIn && !route.allowGuests;
+  const forwardAuth = !busy && loggedIn && route.forwardAuthenticated;
+
+  useEffect(() => {
+    if (forwardLogin) {
+      nav.push(loginHref);
+    }
+  }, [forwardLogin]);
+  useEffect(() => {
+    if (forwardAuth) {
+      nav.replace(defaultHref);
+    }
+  }, [forwardAuth]);
+  return busy || forwardAuth || forwardLogin;
 }

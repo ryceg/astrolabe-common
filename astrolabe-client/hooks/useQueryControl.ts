@@ -1,19 +1,18 @@
 import {
+  type Control,
   useControl,
   useValueChangeEffect,
-  type Control,
 } from "@react-typed-forms/core";
 import { useEffect } from "react";
 import shallowEqual from "shallowequal";
-import { ParsedUrlQuery } from "querystring";
+import { NavigationService, useNavigationService } from "../service/navigation";
 
 /**
  * A hook that returns a query control object that can be used to manage the query parameters of the current URL.
- * @returns {Control<typeof ParsedUrlQuery>} The query control object.
+ * @returns {Control<typeof URLSearchParams>} The query control object.
  */
-export function useQueryControl(
-  router: RouterInterface
-): Control<ParsedUrlQuery> {
+export function useQueryControl(): Control<URLSearchParams> {
+  const router = useNavigationService();
   const parsedQuery = router.query;
   const queryControl = useControl(parsedQuery, { equals: shallowEqual });
 
@@ -28,21 +27,13 @@ export function useQueryControl(
     (q) => {
       // if there's no query, we want to remove the query string from the URL
       if (Object.values(q).some((arg) => !!arg?.length)) {
-        router.replace({ query: q });
+        router.replace(router.pathname + "?" + q.toString());
       } else {
         router.push(router.pathname);
       }
     },
-    200
+    200,
   );
 
   return queryControl;
-}
-
-interface RouterInterface {
-  query: ParsedUrlQuery;
-  pathname: string;
-  isReady: boolean;
-  replace(q: { query: ParsedUrlQuery }): void;
-  push(path: string): void;
 }

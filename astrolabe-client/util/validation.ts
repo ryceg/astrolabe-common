@@ -143,3 +143,30 @@ export function isApiResponse(
 ): exception is ApiRequestResponse {
   return !!exception && typeof exception === "object" && "status" in exception;
 }
+
+export async function validateAndRun<A = void>(
+  control: Control<any>,
+  action: () => Promise<A>,
+  handleError?: (e: any) => boolean,
+): Promise<[boolean, A | undefined]> {
+  control.validate();
+  control.touched = true;
+  if (control.valid) {
+    try {
+      return [true, await action()];
+    } catch (e) {
+      if (!handleError || !handleError(e)) {
+        badRequestToErrors(e, control);
+      }
+    }
+  }
+  return [false, undefined];
+}
+
+export function validateAndRunResult<A = void>(
+  control: Control<any>,
+  action: () => Promise<A>,
+  handleError?: (e: any) => boolean,
+): Promise<boolean> {
+  return validateAndRun(control, action, handleError).then((x) => x[0]);
+}

@@ -8,18 +8,7 @@ import {
 import { Button } from "../Button";
 import clsx from "clsx";
 import { LoginContainer } from "./LoginContainer";
-
-export interface LoginFormData {
-  username: string;
-  password: string;
-  rememberMe: boolean;
-}
-
-export const emptyLoginForm: LoginFormData = {
-  password: "",
-  username: "",
-  rememberMe: false,
-};
+import { LoginFormData } from "@astrolabe/client/app/user";
 
 export function LoginForm({
   className,

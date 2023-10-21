@@ -1,16 +1,8 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
-import clsx from "clsx";
 import { Button } from "../Button";
 import { LoginContainer } from "./LoginContainer";
-
-export interface ResetPasswordFormData {
-  email: string;
-}
-
-export const emptyResetPasswordForm = {
-  email: "",
-};
+import { ResetPasswordFormData } from "@astrolabe/client/app/user";
 
 export function ResetPasswordForm({
   className,

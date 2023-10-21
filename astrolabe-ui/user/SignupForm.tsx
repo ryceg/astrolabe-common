@@ -1,20 +1,8 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
-import clsx from "clsx";
 import { Button } from "../Button";
 import { LoginContainer } from "./LoginContainer";
-
-export interface SignupFormData {
-  email: string;
-  password: string;
-  confirm: string;
-}
-
-export const emptySignupForm: SignupFormData = {
-  password: "",
-  confirm: "",
-  email: "",
-};
+import { SignupFormData } from "@astrolabe/client/app/user";
 
 export function SignupForm({
   className,

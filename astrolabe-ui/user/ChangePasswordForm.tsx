@@ -2,18 +2,7 @@ import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import { LoginContainer } from "./LoginContainer";
-
-export interface ChangePasswordFormData {
-  oldPassword: string;
-  password: string;
-  confirm: string;
-}
-
-export const emptyChangePasswordForm: ChangePasswordFormData = {
-  password: "",
-  confirm: "",
-  oldPassword: "",
-};
+import { ChangePasswordFormData } from "@astrolabe/client/app/user";
 
 export function ChangePasswordForm({
   className,

@@ -53,15 +53,15 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
 
     protected abstract Task<string?> VerifyAccountCode(string code);
 
-    public async Task<string> Authenticate(string username, string password)
+    public async Task<string> Authenticate(AuthenticateRequest authenticateRequest)
     {
-        var hashed = _passwordHasher.Hash(password);
-        var token = await AuthenticatedHashed(username, hashed);
+        var hashed = _passwordHasher.Hash(authenticateRequest.Password);
+        var token = await AuthenticatedHashed(authenticateRequest, hashed);
         if (token == null) throw new UnauthorizedException();
         return token;
     }
 
-    protected abstract Task<string> AuthenticatedHashed(string username, string hashedPassword);
+    protected abstract Task<string> AuthenticatedHashed(AuthenticateRequest authenticateRequest, string hashedPassword);
 
     public async Task ForgotPassword(string email)
     {

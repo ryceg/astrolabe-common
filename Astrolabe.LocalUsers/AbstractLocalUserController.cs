@@ -27,9 +27,9 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     }
 
     [HttpPost("authenticate")]
-    public Task<string> Authenticate([FromForm] string username, [FromForm] string password)
+    public Task<string> Authenticate([FromBody] AuthenticateRequest authenticateRequest)
     {
-        return _localUserService.Authenticate(username, password);
+        return _localUserService.Authenticate(authenticateRequest);
     }
 
     [HttpPost("forgotPassword")]
@@ -53,7 +53,7 @@ public interface ILocalUserService<TNewUser, TUserId> where TNewUser : ICreateNe
 {
     Task CreateAccount(TNewUser newUser);
     Task<string> VerifyAccount(string code);
-    Task<string> Authenticate(string username, string password);
+    Task<string> Authenticate(AuthenticateRequest authenticateRequest);
     Task ForgotPassword(string email);
     Task<string> ChangePassword(ChangePassword change, string? resetCode, Func<TUserId> userId);
 }
