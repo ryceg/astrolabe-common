@@ -6,16 +6,18 @@ namespace Astrolabe.LocalUsers;
 public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserService<TNewUser, TUserId> where TNewUser : ICreateNewUser
 {
     private readonly IPasswordHasher _passwordHasher;
+    private readonly LocalUserMessages _localUserMessages;
 
-    protected AbstractLocalUserService(IPasswordHasher passwordHasher)
+    protected AbstractLocalUserService(IPasswordHasher passwordHasher, LocalUserMessages? localUserMessages)
     {
         _passwordHasher = passwordHasher;
+        _localUserMessages = localUserMessages ?? new LocalUserMessages();
     }
     
     public async Task CreateAccount(TNewUser newUser)
     {
         var existingAccounts = await CountExisting(newUser);
-        var validator = new CreateNewUserValidator<TNewUser>(existingAccounts);
+        var validator = new CreateNewUserValidator<TNewUser>(existingAccounts, _localUserMessages);
         await ApplyCreationRules(validator);
         ApplyPasswordRules(validator);
         await validator.ValidateAndThrowAsync(newUser);
@@ -87,7 +89,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         if (applyChange == null)
             throw new NotFoundException();
         
-        var validator = new ChangePasswordValidator(passwordOk);
+        var validator = new ChangePasswordValidator(passwordOk, _localUserMessages);
         ApplyPasswordRules(validator);
         await validator.ValidateAndThrowAsync(change);
         return await applyChange(_passwordHasher.Hash(change.Password));
