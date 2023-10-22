@@ -3,6 +3,7 @@ import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import { LoginContainer } from "./LoginContainer";
 import { ResetPasswordFormData } from "@astrolabe/client/app/user";
+import { CircularProgress } from "../CircularProgress";
 
 export function ResetPasswordForm({
   className,
@@ -13,7 +14,10 @@ export function ResetPasswordForm({
   control: Control<ResetPasswordFormData>;
   resetPassword: () => Promise<boolean>;
 }) {
-  const { email } = control.fields;
+  const {
+    fields: { email },
+    disabled,
+  } = control;
   const hasBeenReset = useControl(false);
   return (
     <LoginContainer className={className}>
@@ -32,17 +36,27 @@ export function ResetPasswordForm({
             Don't fret! Just type in your email and we will send you a code to
             reset your password!
           </p>
-          <div className="space-y-4 md:space-y-6">
-            <Textfield control={email} label="Email" />
-            <Button className="w-full" onClick={doReset}>
+          <form
+            className="space-y-4 md:space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              doReset();
+            }}
+          >
+            <Textfield control={email} label="Email" autoComplete="username" />
+            {disabled && <CircularProgress />}
+            <Button className="w-full" onClick={doReset} disabled={disabled}>
               Reset Password
             </Button>
-          </div>
+          </form>
         </>
       )}
     </LoginContainer>
   );
   async function doReset() {
-    hasBeenReset.value = await resetPassword();
+    control.disabled = true;
+    const wasReset = await resetPassword();
+    hasBeenReset.value = wasReset;
+    if (!wasReset) control.disabled = false;
   }
 }

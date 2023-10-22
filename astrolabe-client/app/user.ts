@@ -1,9 +1,54 @@
 import { Control, notEmpty, useControl } from "@react-typed-forms/core";
 import { isApiResponse, validateAndRunResult } from "../util/validation";
 import { useNavigationService } from "../service/navigation";
-import { useEffect } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { RouteData } from "./routeData";
 import { PageSecurity } from "../service/security";
+
+export interface AuthPageSetup {
+  hrefs: {
+    login: string;
+    signup: string;
+    resetPassword: string;
+    changePassword: string;
+  };
+  errors: {
+    emptyEmail?: string;
+    emptyUsername: string;
+    emptyPassword: string;
+    credentials: string;
+    verify: string;
+  };
+  queryParams: {
+    verifyCode: string;
+    resetCode: string;
+  };
+}
+
+export const defaultUserAuthPageSetup: AuthPageSetup = {
+  hrefs: {
+    login: "/login",
+    signup: "/signup",
+    resetPassword: "/resetPassword",
+    changePassword: "/changePassword",
+  },
+  errors: {
+    emptyUsername: "Please enter your email address",
+    emptyPassword: "Please enter your password",
+    credentials: "Incorrect username/password",
+    verify: "You could not be verified",
+  },
+  queryParams: {
+    verifyCode: "verificationCode",
+    resetCode: "resetCode",
+  },
+};
+
+export const AuthPageSetupContext = createContext(defaultUserAuthPageSetup);
+
+export function useAuthPageSetup() {
+  return useContext(AuthPageSetupContext);
+}
 
 export interface LoginFormData {
   username: string;
@@ -63,8 +108,11 @@ export function useChangePasswordPage(
 ): PasswordChangeProps {
   const control = useControl(emptyChangePasswordForm);
 
+  const {
+    queryParams: { resetCode: rcp },
+  } = useAuthPageSetup();
   const searchParams = useNavigationService().query;
-  const resetCode = searchParams.get("resetCode");
+  const resetCode = searchParams.get(rcp);
 
   return {
     control,
@@ -76,16 +124,19 @@ export function useChangePasswordPage(
 
 export interface LoginProps {
   control: Control<LoginFormData>;
-  authenticate: () => void;
+  authenticate: () => Promise<boolean>;
 }
 
 export function useLoginPage(
   runAuthenticate: (login: LoginFormData) => Promise<any>,
 ): LoginProps {
+  const {
+    errors: { emptyUsername, emptyPassword, credentials },
+  } = useAuthPageSetup();
   const control = useControl(emptyLoginForm, {
     fields: {
-      username: { validator: notEmpty("Please enter your email address") },
-      password: { validator: notEmpty("Please enter your password") },
+      username: { validator: notEmpty(emptyUsername) },
+      password: { validator: notEmpty(emptyPassword) },
     },
   });
 
@@ -97,7 +148,7 @@ export function useLoginPage(
         () => runAuthenticate(control.value),
         (e) => {
           if (isApiResponse(e) && e.status === 401) {
-            control.error = "Incorrect username/password";
+            control.error = credentials;
             return true;
           } else return false;
         },
@@ -113,8 +164,11 @@ export interface ResetPasswordProps {
 export function useResetPasswordPage(
   runResetPassword: (email: string) => Promise<any>,
 ): ResetPasswordProps {
+  const {
+    errors: { emptyUsername, emptyEmail },
+  } = useAuthPageSetup();
   const control = useControl(emptyResetPasswordForm, {
-    fields: { email: { validator: notEmpty("Please enter your email") } },
+    fields: { email: { validator: notEmpty(emptyEmail ?? emptyUsername) } },
   });
 
   return {
@@ -144,20 +198,43 @@ export function useSignupPage<A extends SignupFormData = SignupFormData>(
   };
 }
 
-export function useVerifyPage(runVerify: (code: string) => Promise<any>) {
+export function useVerifyPage(
+  runVerify: (code: string) => Promise<unknown>,
+): Control<unknown> {
+  const {
+    errors: { verify },
+    queryParams: { verifyCode },
+  } = useAuthPageSetup();
+
   const searchParams = useNavigationService().query;
-  const verificationCode = searchParams.get("verificationCode");
+  const verificationCode = searchParams.get(verifyCode);
+
+  const control = useControl(undefined);
 
   useEffect(() => {
-    if (verificationCode) {
-      runVerify(verificationCode);
-    }
+    doVerify();
   }, [verificationCode]);
+
+  return control;
+
+  async function doVerify() {
+    if (verificationCode) {
+      try {
+        await runVerify(verificationCode);
+      } catch (e) {
+        if (isApiResponse(e) && e.status === 401) {
+          control.error = verify;
+        } else throw e;
+      }
+    } else {
+      control.error = verify;
+    }
+  }
 }
 
-export const defaultUserRoutes: Record<string, RouteData<PageSecurity>> = {
+export const defaultUserRoutes = {
   login: { label: "Login", allowGuests: true, forwardAuthenticated: true },
-  changePassword: { label: "Change password" },
+  changePassword: { label: "Change password", allowGuests: true },
   resetPassword: {
     label: "Reset password",
     allowGuests: true,
@@ -168,5 +245,9 @@ export const defaultUserRoutes: Record<string, RouteData<PageSecurity>> = {
     allowGuests: true,
     forwardAuthenticated: true,
   },
-  verify: { label: "Verify email", allowGuests: true },
-};
+  verify: {
+    label: "Verify email",
+    allowGuests: true,
+    forwardAuthenticated: true,
+  },
+} satisfies Record<string, RouteData<PageSecurity>>;

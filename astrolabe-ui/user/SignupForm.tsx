@@ -2,20 +2,28 @@ import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import { LoginContainer } from "./LoginContainer";
-import { SignupFormData } from "@astrolabe/client/app/user";
+import { SignupFormData, useAuthPageSetup } from "@astrolabe/client/app/user";
+import { CircularProgress } from "../CircularProgress";
+import { ReactNode } from "react";
 
 export function SignupForm({
   className,
-  loginHref = "/login",
   control,
   createAccount,
+  children,
 }: {
   className?: string;
-  loginHref?: string;
   control: Control<SignupFormData>;
   createAccount: () => Promise<boolean>;
+  children?: ReactNode;
 }) {
-  const { password, confirm, email } = control.fields;
+  const {
+    fields: { password, confirm, email },
+    disabled,
+  } = control;
+  const {
+    hrefs: { login },
+  } = useAuthPageSetup();
   const accountCreated = useControl(false);
   return (
     <LoginContainer className={className}>
@@ -29,27 +37,41 @@ export function SignupForm({
       ) : (
         <>
           <h2>Create an account</h2>
-          <div className="space-y-4 md:space-y-6">
-            <Textfield control={email} label="Email" />
-            <Textfield control={password} label="Password" type="password" />
+          <form
+            className="space-y-4 md:space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              doCreate();
+            }}
+          >
+            <Textfield control={email} label="Email" autoComplete="username" />
+            <Textfield
+              control={password}
+              label="Password"
+              type="password"
+              autoComplete="new-password"
+            />
             <Textfield
               control={confirm}
               label="Confirm Password"
               type="password"
+              autoComplete="new-password"
             />
-            <Button className="w-full" onClick={doCreate}>
+            {children}
+            {disabled && <CircularProgress />}
+            <Button className="w-full" onClick={doCreate} disabled={disabled}>
               Create an account
             </Button>
             <p className="text-sm font-light text-gray-500 dark:text-gray-400">
               Already have an account?{" "}
               <a
-                href={loginHref}
+                href={login}
                 className="font-medium text-primary-600 hover:underline dark:text-primary-500"
               >
                 Login here
               </a>
             </p>
-          </div>
+          </form>
         </>
       )}
     </LoginContainer>

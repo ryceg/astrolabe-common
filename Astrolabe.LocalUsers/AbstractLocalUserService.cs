@@ -18,6 +18,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         var validator = new CreateNewUserValidator<TNewUser>(existingAccounts);
         await ApplyCreationRules(validator);
         ApplyPasswordRules(validator);
+        await validator.ValidateAndThrowAsync(newUser);
         var emailCode = CreateEmailCode();
         await CreateUnverifiedAccount(newUser, _passwordHasher.Hash(newUser.Password), emailCode);
         await SendVerificationEmail(newUser, emailCode);
@@ -47,7 +48,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
     public async Task<string> VerifyAccount(string code)
     {
         var token = await VerifyAccountCode(code);
-        if (token == null) throw new ForbiddenException();
+        if (token == null) throw new UnauthorizedException();
         return token;
     }
 

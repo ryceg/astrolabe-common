@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Astrolabe.LocalUsers;
 
-[ApiController]
 public abstract class AbstractLocalUserController<TNewUser, TUserId> : ControllerBase 
     where TNewUser : ICreateNewUser 
 {

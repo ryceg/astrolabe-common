@@ -1,29 +1,28 @@
 import { Textfield } from "../Textfield";
-import {
-  Control,
-  Fcheckbox,
-  useControl,
-  useControlEffect,
-} from "@react-typed-forms/core";
+import { Control, Fcheckbox, useControlEffect } from "@react-typed-forms/core";
 import { Button } from "../Button";
 import clsx from "clsx";
 import { LoginContainer } from "./LoginContainer";
-import { LoginFormData } from "@astrolabe/client/app/user";
+import { LoginFormData, useAuthPageSetup } from "@astrolabe/client/app/user";
+import { CircularProgress } from "../CircularProgress";
 
 export function LoginForm({
   className,
   control,
-  signupHref = "/signup",
-  resetPasswordHref = "/resetPassword",
   authenticate,
 }: {
   className?: string;
-  signupHref?: string;
-  resetPasswordHref?: string;
   control: Control<LoginFormData>;
-  authenticate: () => void;
+  authenticate: () => Promise<boolean>;
 }) {
-  const { password, username, rememberMe } = control.fields;
+  const {
+    hrefs: { signup, resetPassword },
+  } = useAuthPageSetup();
+
+  const {
+    fields: { password, username, rememberMe },
+    disabled,
+  } = control;
   const { error } = control;
   useControlEffect(
     () => [username.value, password.value],
@@ -34,30 +33,46 @@ export function LoginForm({
   return (
     <LoginContainer className={className}>
       <h2>Login</h2>
-      <div className="my-2 space-y-4">
+      <form
+        className="my-2 space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          authenticate();
+        }}
+      >
         <div className="flex">
           <div>Do you have an account yet?</div>
-          <a className={clsx("ml-1 ", linkStyle)} href={signupHref}>
+          <a className={clsx("ml-1 ", linkStyle)} href={signup}>
             Signup
           </a>
         </div>
-        <Textfield control={username} label="Username" />
-        <Textfield control={password} label="Password" type="password" />
+        <Textfield
+          control={username}
+          label="Username"
+          autoComplete="username"
+        />
+        <Textfield
+          control={password}
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+        />
         <div className="flex justify-between text-sm">
           <div>
             <Fcheckbox control={rememberMe} /> <label>Remember me</label>
           </div>
           <div>
-            <a href={resetPasswordHref} className={linkStyle}>
+            <a href={resetPassword} className={linkStyle}>
               Forgot your password?
             </a>
           </div>
         </div>
         {error && <p className="text-danger">{error}</p>}
-        <Button className="w-full" onClick={authenticate}>
+        {disabled && <CircularProgress />}
+        <Button className="w-full" onClick={authenticate} disabled={disabled}>
           Login
         </Button>
-      </div>
+      </form>
     </LoginContainer>
   );
 }

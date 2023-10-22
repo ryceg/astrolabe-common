@@ -3,6 +3,7 @@ import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import { LoginContainer } from "./LoginContainer";
 import { ChangePasswordFormData } from "@astrolabe/client/app/user";
+import { CircularProgress } from "../CircularProgress";
 
 export function ChangePasswordForm({
   className,
@@ -11,12 +12,14 @@ export function ChangePasswordForm({
   confirmPrevious,
 }: {
   className?: string;
-  loginHref?: string;
   confirmPrevious?: boolean;
   control: Control<ChangePasswordFormData>;
   changePassword: () => Promise<boolean>;
 }) {
-  const { password, confirm, oldPassword } = control.fields;
+  const {
+    fields: { password, confirm, oldPassword },
+    disabled,
+  } = control;
   const passwordChanged = useControl(false);
   return (
     <LoginContainer className={className}>
@@ -30,28 +33,38 @@ export function ChangePasswordForm({
       ) : (
         <>
           <h2>Change your password</h2>
-          <div className="space-y-4 md:space-y-6">
+          <form
+            className="space-y-4 md:space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              doChange();
+            }}
+          >
             {confirmPrevious && (
               <Textfield
                 control={oldPassword}
                 label="Old Password"
                 type="password"
+                autoComplete="current-password"
               />
             )}
             <Textfield
               control={password}
               label="New Password"
               type="password"
+              autoComplete="new-password"
             />
             <Textfield
               control={confirm}
               label="Confirm Password"
               type="password"
+              autoComplete="new-password"
             />
-            <Button className="w-full" onClick={doChange}>
+            {disabled && <CircularProgress />}
+            <Button className="w-full" onClick={doChange} disabled={disabled}>
               Change password
             </Button>
-          </div>
+          </form>
         </>
       )}
     </LoginContainer>

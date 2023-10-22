@@ -148,13 +148,18 @@ export async function validateAndRun<A = void>(
   control: Control<any>,
   action: () => Promise<A>,
   handleError?: (e: any) => boolean,
+  dontDisable?: boolean,
 ): Promise<[boolean, A | undefined]> {
   control.validate();
   control.touched = true;
   if (control.valid) {
+    if (!dontDisable) control.disabled = true;
     try {
-      return [true, await action()];
+      const result = await action();
+      if (!dontDisable) control.disabled = false;
+      return [true, result];
     } catch (e) {
+      if (!dontDisable) control.disabled = false;
       if (!handleError || !handleError(e)) {
         badRequestToErrors(e, control);
       }
@@ -167,6 +172,7 @@ export function validateAndRunResult<A = void>(
   control: Control<any>,
   action: () => Promise<A>,
   handleError?: (e: any) => boolean,
+  dontDisable?: boolean,
 ): Promise<boolean> {
   return validateAndRun(control, action, handleError).then((x) => x[0]);
 }

@@ -94,10 +94,10 @@ export function useControlTokenSecurity(): TokenSecurityService {
 }
 
 function getTokenStorage(): Pick<Storage, "getItem" | "setItem"> {
-  if (typeof localStorage === "undefined") {
+  if (typeof sessionStorage === "undefined") {
     return { getItem: () => null, setItem: () => {} };
   }
-  return localStorage;
+  return sessionStorage;
 }
 
 export interface PageSecurity {
