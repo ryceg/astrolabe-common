@@ -1,8 +1,11 @@
 import { useContext } from "react";
 import { AppContext } from "./index";
+import { ParsedUrlQuery } from "querystring";
 
 export interface NavigationService {
-  query: URLSearchParams;
+  query: ParsedUrlQuery;
+  get(queryParam: string): string | null;
+  getAll(queryParam: string[]): string[];
   pathname: string;
   isReady: boolean;
   replace(path: string): void;

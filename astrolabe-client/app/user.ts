@@ -111,7 +111,7 @@ export function useChangePasswordPage(
   const {
     queryParams: { resetCode: rcp },
   } = useAuthPageSetup();
-  const searchParams = useNavigationService().query;
+  const searchParams = useNavigationService();
   const resetCode = searchParams.get(rcp);
 
   return {
@@ -206,7 +206,7 @@ export function useVerifyPage(
     queryParams: { verifyCode },
   } = useAuthPageSetup();
 
-  const searchParams = useNavigationService().query;
+  const searchParams = useNavigationService();
   const verificationCode = searchParams.get(verifyCode);
 
   const control = useControl(undefined);

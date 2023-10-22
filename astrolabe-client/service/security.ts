@@ -43,7 +43,7 @@ const guestUserState = newControl<UserState>({ busy: true, loggedIn: false });
 export const guestSecurityService: SecurityService = {
   checkAuthentication() {},
   currentUser: guestUserState,
-  fetch,
+  fetch: typeof window === "undefined" ? fetch : window.fetch.bind(window),
   async logout() {},
   async authCallback() {},
   async login() {},

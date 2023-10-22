@@ -6,12 +6,13 @@ import {
 import { useEffect } from "react";
 import shallowEqual from "shallowequal";
 import { NavigationService, useNavigationService } from "../service/navigation";
+import { ParsedUrlQuery } from "querystring";
 
 /**
  * A hook that returns a query control object that can be used to manage the query parameters of the current URL.
- * @returns {Control<typeof URLSearchParams>} The query control object.
+ * @returns {Control<typeof ParsedUrlQuery>} The query control object.
  */
-export function useQueryControl(): Control<URLSearchParams> {
+export function useQueryControl(): Control<ParsedUrlQuery> {
   const router = useNavigationService();
   const parsedQuery = router.query;
   const queryControl = useControl(parsedQuery, { equals: shallowEqual });
