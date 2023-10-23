@@ -6,9 +6,9 @@ import { AnchorHTMLAttributes, FC } from "react";
 
 export function useNextNavigationService(): NavigationService {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const segments = pathname.split("/").filter((x) => x.length);
+  const searchParams = useSearchParams()!;
+  const pathname = usePathname()!;
+  const segments = pathname ? pathname.split("/").filter((x) => x.length) : [];
 
   const query = parse(searchParams.toString());
   return {
