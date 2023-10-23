@@ -45,7 +45,7 @@ export function ResetPasswordForm({
           >
             <Textfield control={email} label="Email" autoComplete="username" />
             {disabled && <CircularProgress />}
-            <Button className="w-full" onClick={doReset} disabled={disabled}>
+            <Button className="w-full" type="submit" disabled={disabled}>
               Reset Password
             </Button>
           </form>

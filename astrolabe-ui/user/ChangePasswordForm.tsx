@@ -61,7 +61,7 @@ export function ChangePasswordForm({
               autoComplete="new-password"
             />
             {disabled && <CircularProgress />}
-            <Button className="w-full" onClick={doChange} disabled={disabled}>
+            <Button className="w-full" type="submit" disabled={disabled}>
               Change password
             </Button>
           </form>

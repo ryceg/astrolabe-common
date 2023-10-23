@@ -69,7 +69,7 @@ export function LoginForm({
         </div>
         {error && <p className="text-danger">{error}</p>}
         {disabled && <CircularProgress />}
-        <Button className="w-full" onClick={authenticate} disabled={disabled}>
+        <Button className="w-full" type="submit" disabled={disabled}>
           Login
         </Button>
       </form>

@@ -59,7 +59,7 @@ export function SignupForm({
             />
             {children}
             {disabled && <CircularProgress />}
-            <Button className="w-full" onClick={doCreate} disabled={disabled}>
+            <Button className="w-full" type="submit" disabled={disabled}>
               Create an account
             </Button>
             <p className="text-sm font-light text-gray-500 dark:text-gray-400">
