@@ -15,13 +15,9 @@ export interface SecurityService {
 
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
 
-  checkAuthentication(): void;
-
   login(): Promise<void>;
 
   logout(): Promise<void>;
-
-  authCallback(): Promise<void>;
 }
 
 export interface TokenSecurityService extends SecurityService {
@@ -32,7 +28,9 @@ export interface SecurityServiceContext {
   security: SecurityService;
 }
 
-export function useSecurityService(): SecurityService {
+export function useSecurityService<
+  T extends SecurityService = SecurityService,
+>(): T {
   const sc = useContext(AppContext).security;
   if (!sc) throw "No SecurityService present";
   return sc;
@@ -41,11 +39,9 @@ export function useSecurityService(): SecurityService {
 const guestUserState = newControl<UserState>({ busy: true, loggedIn: false });
 
 export const guestSecurityService: SecurityService = {
-  checkAuthentication() {},
   currentUser: guestUserState,
   fetch: typeof window === "undefined" ? fetch : window.fetch.bind(window),
   async logout() {},
-  async authCallback() {},
   async login() {},
 };
 
@@ -74,13 +70,11 @@ export function useControlTokenSecurity(): TokenSecurityService {
     user.value = { busy: false, accessToken, loggedIn: !!accessToken };
   }, []);
   return {
-    checkAuthentication() {},
     currentUser: user,
     fetch: createAccessTokenFetcher(
       async () => user.fields.accessToken.current.value,
     ),
     async logout() {},
-    async authCallback() {},
     async login() {},
     async setToken(accessToken: string) {
       getTokenStorage().setItem("token", accessToken);

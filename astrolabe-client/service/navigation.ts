@@ -1,16 +1,17 @@
-import { useContext } from "react";
+import { AnchorHTMLAttributes, FC, useContext } from "react";
 import { AppContext } from "./index";
 import { ParsedUrlQuery } from "querystring";
 
 export interface NavigationService {
   query: ParsedUrlQuery;
   get(queryParam: string): string | null;
-  getAll(queryParam: string[]): string[];
+  getAll(queryParam: string): string[];
   pathname: string;
   isReady: boolean;
   replace(path: string): void;
   push(path: string): void;
   pathSegments: string[];
+  Link: FC<AnchorHTMLAttributes<HTMLAnchorElement>>;
 }
 
 export interface NavigationServiceContext {

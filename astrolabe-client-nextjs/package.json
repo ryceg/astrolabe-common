@@ -1,0 +1,18 @@
+{
+	"name": "@astrolabe/client-nextjs",
+	"version": "0.1.0",
+	"private": true,
+	"dependencies": {
+		"@astrolabe/client": "workspace:^0.1.0",
+		"next": "13.5.4"
+	},
+	"scripts": {
+		"build": "tsc"
+	},
+	"devDependencies": {
+		"typescript": "5.2.2",
+		"@types/react": "^18.2.28",
+		"@types/node": "^20.8.4",
+		"prettier": "^3.0.3"
+	}
+}
