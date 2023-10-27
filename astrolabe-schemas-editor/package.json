@@ -9,6 +9,7 @@
 	"dependencies": {
 		"@react-typed-forms/core": "^3.0.0-dev.108",
 		"@react-typed-forms/schemas": "^1.0.0-dev.13",
+		"@astrolabe/client": "workspace:*",
 		"@dnd-kit/core": "^6.0.5",
 		"framer-motion": "^10.16.4",
 		"react": "^18.2.0",

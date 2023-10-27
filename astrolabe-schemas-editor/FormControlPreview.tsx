@@ -1,9 +1,13 @@
-import { ControlForm, useFindScalarField, useSnippetDroppable } from "./index";
 import { Control, newControl, useControlValue } from "@react-typed-forms/core";
-import React, { Key, ReactElement, useMemo } from "react";
-import { Visibility } from "@mui/icons-material";
-import { isNullOrEmpty } from "../../arrayUtils";
-import { useIsSelected } from "./tree";
+import React, {
+  createContext,
+  Key,
+  ReactElement,
+  ReactNode,
+  useContext,
+  useMemo,
+} from "react";
+import { isNullOrEmpty } from "@astrolabe/client/util/arrays";
 import { SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import { LayoutGroup, motion } from "framer-motion";
@@ -14,60 +18,68 @@ import {
   DataControlDefinition,
   DisplayControlDefinition,
   DynamicPropertyType,
+  FormEditHooks,
   getDefaultScalarControlProperties,
   GroupedControlsDefinition,
   useFormRendererComponents,
 } from "@react-typed-forms/schemas";
-import { defaultFormEditHooks, useFieldLookup } from "../../internalForm";
-import { DragData, DropData } from "./dragndrop";
 import { useScrollIntoView } from "./useScrollIntoView";
+import {
+  ControlDragState,
+  controlDropData,
+  ControlForm,
+  DragData,
+  DropData,
+  useFieldLookup,
+  useFindScalarField,
+} from ".";
 
-export interface ControlDragState {
-  draggedFrom?: [Control<any>, number];
-  targetIndex: number;
-  draggedControl: ControlForm;
-  targetParent: ControlForm;
-  dragFields?: Control<SchemaFieldForm[]>;
-}
-
-export interface FormControlPreviewContext {
+export interface FormControlPreviewProps {
   item: ControlForm;
   parent?: ControlForm;
   dropIndex: number;
-  selected: Control<Control<any> | undefined>;
-  fields: Control<SchemaFieldForm[]>;
-  treeDrag: Control<ControlDragState | undefined>;
   noDrop?: boolean;
-  dropSuccess: (drag: DragData, drop: DropData) => void;
-  readonly?: boolean;
+  fields: Control<SchemaFieldForm[]>;
 }
 
-export interface FormControlPreviewData {
+export interface FormControlPreviewContext {
+  selected: Control<Control<any> | undefined>;
+  treeDrag: Control<ControlDragState | undefined>;
+  dropSuccess: (drag: DragData, drop: DropData) => void;
+  readonly?: boolean;
+  VisibilityIcon: ReactNode;
+  hooks: FormEditHooks;
+}
+
+export interface FormControlPreviewDataProps extends FormControlPreviewProps {
   isSelected: boolean;
   isOver: boolean;
 }
 
 const defaultLayoutChange = "position";
 
-export function FormControlPreview({
-  context,
-}: {
-  context: FormControlPreviewContext;
-}) {
-  const { item, selected, parent, dropIndex, noDrop, dropSuccess } = context;
+const PreviewContext = createContext<FormControlPreviewContext | undefined>(
+  undefined,
+);
+export const PreviewContextProvider = PreviewContext.Provider;
+
+function usePreviewContext() {
+  const pc = useContext(PreviewContext);
+  if (!pc) throw "Must supply a PreviewContextProvider";
+  return pc;
+}
+
+export function FormControlPreview(props: FormControlPreviewProps) {
+  const { item, parent, dropIndex, noDrop } = props;
+  const { selected, dropSuccess } = usePreviewContext();
   const type = item.fields.type.value;
-  const isSelected = useIsSelected(selected, item);
+  const isSelected = selected.value === item;
   const scrollRef = useScrollIntoView(isSelected);
-  const controlDrop = useSnippetDroppable(parent, dropIndex, dropSuccess);
   const { setNodeRef, isOver } = useDroppable({
     id: item.uniqueId,
     disabled: Boolean(noDrop),
-    data: controlDrop,
+    data: controlDropData(parent, dropIndex, dropSuccess),
   });
-  const data: FormControlPreviewData = {
-    isSelected,
-    isOver,
-  };
   return (
     <div
       ref={(e) => {
@@ -80,15 +92,16 @@ export function FormControlPreview({
   );
 
   function contents() {
+    const allProps = { ...props, isSelected, isOver };
     switch (type) {
       case ControlDefinitionType.Data:
-        return <DataControlPreview context={context} data={data} />;
+        return <DataControlPreview {...allProps} />;
       case ControlDefinitionType.Display:
-        return <DisplayControlPreview context={context} data={data} />;
+        return <DisplayControlPreview {...allProps} />;
       case ControlDefinitionType.Group:
-        return <GroupedControlPreview context={context} data={data} />;
+        return <GroupedControlPreview {...allProps} />;
       case ControlDefinitionType.Action:
-        return <ActionControlPreview context={context} data={data} />;
+        return <ActionControlPreview {...allProps} />;
       default:
         return <h1>Unknown {type}</h1>;
     }
@@ -96,12 +109,10 @@ export function FormControlPreview({
 }
 
 function ActionControlPreview({
-  context: { item, fields, selected },
-  data: { isSelected },
-}: {
-  context: FormControlPreviewContext;
-  data: FormControlPreviewData;
-}) {
+  isSelected,
+  item,
+}: FormControlPreviewDataProps) {
+  const { selected } = usePreviewContext();
   const { renderAction } = useFormRendererComponents();
 
   return (
@@ -118,20 +129,21 @@ function ActionControlPreview({
     >
       {renderAction({
         definition: item.value as ActionControlDefinition,
-        properties: { visible: true, onClick: () => {} },
+        properties: {
+          visible: true,
+          onClick: () => {},
+        },
       })}
     </motion.div>
   );
 }
 
 function DisplayControlPreview({
-  context: { item, selected },
-  data: { isSelected },
-}: {
-  context: FormControlPreviewContext;
-  data: FormControlPreviewData;
-}) {
+  isSelected,
+  item,
+}: FormControlPreviewDataProps) {
   const { renderDisplay } = useFormRendererComponents();
+  const { selected } = usePreviewContext();
   return (
     <motion.div
       layout={defaultLayoutChange}
@@ -153,18 +165,19 @@ function DisplayControlPreview({
 }
 
 function DataControlPreview({
-  context: { item, fields, selected, dropIndex, readonly },
-  data: { isSelected, isOver },
-}: {
-  context: FormControlPreviewContext;
-  data: FormControlPreviewData;
-}) {
+  isSelected,
+  isOver,
+  item,
+  fields,
+  dropIndex,
+}: FormControlPreviewDataProps) {
+  const { selected, readonly, VisibilityIcon } = usePreviewContext();
   const fieldDetails = item.value;
   const schemaField = useFindScalarField(fields, fieldDetails.field!);
   const isCollection = Boolean(schemaField?.collection);
   const fc = useMemo(
     () => newControl(isCollection ? [] : undefined),
-    [isCollection]
+    [isCollection],
   );
   const hasVisibilityScripting =
     !isNullOrEmpty(schemaField?.onlyForTypes) ||
@@ -196,12 +209,7 @@ function DataControlPreview({
         {/*  </div>*/}
         {/*</div>*/}
         {hasVisibilityScripting && (
-          <div style={{ position: "relative" }}>
-            <Visibility
-              fontSize={"small"}
-              style={{ position: "absolute", right: "0px" }}
-            />
-          </div>
+          <div style={{ position: "relative" }}>{VisibilityIcon}</div>
         )}
 
         {schemaField ? (
@@ -215,12 +223,12 @@ function DataControlPreview({
                 true,
                 undefined,
                 fc,
-                readonly
+                readonly,
               ),
             },
             fc,
             false,
-            renderer
+            renderer,
           )
         ) : (
           <div>No schema field: {fieldDetails.field}</div>
@@ -230,51 +238,44 @@ function DataControlPreview({
   );
 }
 
-function GroupedControlPreview({
-  context: { item, fields, selected, treeDrag, dropSuccess, readonly },
-  data: { isSelected },
-}: {
-  data: FormControlPreviewData;
-  context: FormControlPreviewContext;
-}) {
+function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
+  const { treeDrag, dropSuccess, selected, hooks } = usePreviewContext();
   const { renderGroup } = useFormRendererComponents();
 
-  const children = useControlValue(() => item.fields.children.elements ?? []);
+  const children = item.fields.children.elements ?? [];
 
-  const groupData = useControlValue(() => {
-    const { compoundField, type, title, dynamic, adornments, groupOptions } =
-      item.fields;
-    return {
-      compoundField: compoundField.value,
-      type: type.value,
-      title: title.value,
-      dynamic: dynamic.value,
-      adornments: adornments.value,
-      groupOptions: groupOptions.value,
-    };
-  });
+  const {
+    compoundField: cfc,
+    type,
+    title,
+    dynamic,
+    adornments,
+    groupOptions,
+  } = item.fields;
 
-  const { dragChildIndex, hasTarget, isActive } = useControlValue(() => {
-    const v = treeDrag.value;
-    const dragChildIndex =
-      v && v.draggedFrom && v.draggedFrom[0] === item
-        ? v.draggedFrom[1]
-        : undefined;
-    const hasTarget = v && v.targetParent === item ? v : undefined;
-    return {
-      dragChildIndex,
-      hasTarget,
-      isActive: v && v.draggedControl === item,
-    };
-  });
+  const groupData = {
+    compoundField: cfc.value,
+    type: type.value,
+    title: title.value,
+    dynamic: dynamic.value,
+    adornments: adornments.value,
+    groupOptions: groupOptions.value,
+  };
+
+  const v = treeDrag.value;
+  const dragChildIndex =
+    v && v.draggedFrom && v.draggedFrom[0] === item
+      ? v.draggedFrom[1]
+      : undefined;
+  const hasTarget = v && v.targetParent === item ? v : undefined;
+  const isActive = v && v.draggedControl === item;
   const { compoundField } = groupData;
   const cf = useFieldLookup(fields, compoundField);
   const childFields = compoundField ? cf.fields.children : fields;
-  const controlDrop = useSnippetDroppable(item, children.length, dropSuccess);
 
   const { setNodeRef, isOver } = useDroppable({
     id: item.uniqueId + "_bottom",
-    data: controlDrop,
+    data: controlDropData(item, children.length, dropSuccess),
   });
 
   const actualChildren = useMemo(() => {
@@ -312,7 +313,7 @@ function GroupedControlPreview({
         {renderGroup({
           definition: groupData as Omit<GroupedControlsDefinition, "children">,
           childCount: actualChildren.length,
-          properties: { visible: true, hooks: defaultFormEditHooks },
+          properties: { visible: true, hooks },
           renderChild,
         })}
       </LayoutGroup>
@@ -322,24 +323,18 @@ function GroupedControlPreview({
 
   function renderChild(
     i: number,
-    _wrapChild: (key: Key, db: ReactElement) => ReactElement
+    _wrapChild: (key: Key, db: ReactElement) => ReactElement,
   ) {
     const [child, fields] = actualChildren[i];
     return _wrapChild(
       child.uniqueId,
       <FormControlPreview
-        context={{
-          selected,
-          treeDrag,
-          item: child,
-          parent: item,
-          dropIndex: i,
-          fields,
-          noDrop: isActive,
-          dropSuccess,
-          readonly,
-        }}
-      />
+        fields={fields}
+        dropIndex={i}
+        item={child}
+        parent={item}
+        noDrop={isActive}
+      />,
     );
   }
 }
