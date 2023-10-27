@@ -1,5 +1,11 @@
 lockfileVersion: 5.4
 
+overrides:
+  '@react-typed-forms/core': ^3.0.0-dev.108
+  '@react-typed-forms/mui': ^3.0.0-dev.108
+  '@react-typed-forms/schemas': ^1.0.0-dev.14
+  '@react-typed-forms/schemas-mui': ^1.0.0-dev.14
+
 importers:
 
   .:
@@ -7,7 +13,7 @@ importers:
 
   ../../../astrolabe-client:
     specifiers:
-      '@react-typed-forms/core': ^3.0.0-dev.107
+      '@react-typed-forms/core': ^3.0.0-dev.108
       '@types/node': ^20.8.4
       '@types/react': ^18.2.28
       '@types/shallowequal': ^1.1.2
@@ -35,7 +41,7 @@ importers:
       '@astrolabe/client': workspace:*
       '@dnd-kit/core': ^6.0.5
       '@react-typed-forms/core': ^3.0.0-dev.108
-      '@react-typed-forms/schemas': ^1.0.0-dev.13
+      '@react-typed-forms/schemas': ^1.0.0-dev.14
       '@types/react': ^18.2.31
       framer-motion: ^10.16.4
       http-request-cli: ^0.2.0
@@ -47,7 +53,7 @@ importers:
       '@astrolabe/client': link:../astrolabe-client
       '@dnd-kit/core': 6.0.8_react@18.2.0
       '@react-typed-forms/core': 3.0.0-dev.108
-      '@react-typed-forms/schemas': 1.0.0-dev.13
+      '@react-typed-forms/schemas': 1.0.0-dev.14
       framer-motion: 10.16.4_react@18.2.0
       immutability-helper: 3.1.1
       react: 18.2.0
@@ -68,8 +74,8 @@ importers:
       '@radix-ui/react-tabs': 1.0.4
       '@radix-ui/react-toast': 1.1.5
       '@radix-ui/react-tooltip': 1.0.7
-      '@react-typed-forms/core': ^3.0.0-dev.107
-      '@react-typed-forms/schemas': ^1.0.0-dev.12
+      '@react-typed-forms/core': ^3.0.0-dev.108
+      '@react-typed-forms/schemas': ^1.0.0-dev.14
       '@types/node': ^20.8.4
       '@types/react': ^18.2.28
       '@types/shallowequal': ^1.1.2
@@ -97,7 +103,7 @@ importers:
       '@radix-ui/react-toast': 1.1.5_6zeq3s7qrgz7xead6ym4yxv6eq
       '@radix-ui/react-tooltip': 1.0.7_6zeq3s7qrgz7xead6ym4yxv6eq
       '@react-typed-forms/core': 3.0.0-dev.108
-      '@react-typed-forms/schemas': 1.0.0-dev.13
+      '@react-typed-forms/schemas': 1.0.0-dev.14
       class-variance-authority: 0.7.0
       clsx: 2.0.0
       focus-trap-react: 10.2.2_v2m5e27vhdewzwhryxwfaorcca
@@ -1903,8 +1909,8 @@ packages:
       react: 18.2.0
     dev: false
 
-  /@react-typed-forms/schemas/1.0.0-dev.13:
-    resolution: {integrity: sha512-vL7SUZm35FCpwSaXRVeYqlf4LQyhCdqq3+ll38TL82kta2G8LMr1+ebM24GuLF1haeDZGT+DWDIatLcQcrF6SA==}
+  /@react-typed-forms/schemas/1.0.0-dev.14:
+    resolution: {integrity: sha512-qvjqm/+ACG9d43YieY4tmM76PnX1ZngTE4cs1ZKMV8HyqaY576UPifwXdDckEMHm8IzhmD5f1m10t7La+nb0Mg==}
     dependencies:
       '@react-typed-forms/core': 3.0.0-dev.108
     dev: false

@@ -80,7 +80,7 @@
    *
    * The default value is `local`.
    */
-  // "pnpmStore": "global",
+  "pnpmStore": "global",
 
   /**
    * If true, then `rush install` will report an error if manual modifications
@@ -113,8 +113,10 @@
    * PNPM documentation: https://pnpm.io/package_json#pnpmoverrides
    */
   "globalOverrides": {
-    // "example1": "^1.0.0",
-    // "example2": "npm:@company/example2@^1.0.0"
+    "@react-typed-forms/core": "^3.0.0-dev.108",
+    "@react-typed-forms/mui": "^3.0.0-dev.108",
+    "@react-typed-forms/schemas": "^1.0.0-dev.14",
+    "@react-typed-forms/schemas-mui": "^1.0.0-dev.14"
   },
 
   /**
