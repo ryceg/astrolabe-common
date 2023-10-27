@@ -2,6 +2,8 @@ import { Control, newControl } from "@react-typed-forms/core";
 import {
   ActionControlDefinition,
   ActionControlProperties,
+  CompoundField,
+  ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
   DataRendererProps,
@@ -17,6 +19,8 @@ import {
   GroupedControlsDefinition,
   GroupRenderType,
   isCompoundField,
+  isDataControl,
+  isGroupControl,
   isScalarField,
   renderControl,
   SchemaField,
@@ -276,4 +280,59 @@ export function defaultControlForField(
     };
   }
   throw "Unknown schema field";
+}
+function findReferencedControl(
+  field: string,
+  control: ControlDefinition,
+): ControlDefinition | undefined {
+  if (isDataControl(control) && field === control.field) return control;
+  if (isGroupControl(control)) {
+    if (control.compoundField)
+      return field === control.compoundField ? control : undefined;
+    return findReferencedControlInArray(field, control.children);
+  }
+  return undefined;
+}
+
+function findReferencedControlInArray(
+  field: string,
+  controls: ControlDefinition[],
+): ControlDefinition | undefined {
+  for (const c of controls) {
+    const ref = findReferencedControl(field, c);
+    if (ref) return ref;
+  }
+  return undefined;
+}
+
+export function addMissingControls(
+  fields: SchemaField[],
+  controls: ControlDefinition[],
+): ControlDefinition[] {
+  const changes: {
+    field: SchemaField;
+    existing: ControlDefinition | undefined;
+  }[] = fields.flatMap((x) => {
+    if (fieldHasTag(x, "_NoControl")) return [];
+    const existing = findReferencedControlInArray(x.field, controls);
+    if (!existing || isCompoundField(x)) return { field: x, existing };
+    return [];
+  });
+  const changedCompounds = controls.map((x) => {
+    const ex = changes.find((c) => c.existing === x);
+    if (!ex) return x;
+    const cf = x as GroupedControlsDefinition;
+    return {
+      ...cf,
+      children: addMissingControls(
+        (ex.field as CompoundField).children,
+        cf.children,
+      ),
+    };
+  });
+  return changedCompounds.concat(
+    changes
+      .filter((x) => !x.existing)
+      .map((x) => defaultControlForField(x.field)),
+  );
 }
