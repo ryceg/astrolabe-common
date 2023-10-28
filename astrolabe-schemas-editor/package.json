@@ -10,6 +10,7 @@
 		"@react-typed-forms/core": "^3.0.0-dev.108",
 		"@react-typed-forms/schemas": "^1.0.0-dev.14",
 		"@astrolabe/client": "workspace:*",
+		"@astrolabe/ui-tree": "workspace:*",
 		"@dnd-kit/core": "^6.0.5",
 		"framer-motion": "^10.16.4",
 		"react": "^18.2.0",
