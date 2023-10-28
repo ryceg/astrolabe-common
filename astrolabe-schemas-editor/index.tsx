@@ -336,3 +336,42 @@ export function addMissingControls(
       .map((x) => defaultControlForField(x.field)),
   );
 }
+
+interface CustomRenderOptions {
+  value: string;
+  name: string;
+  fields: SchemaField[];
+}
+
+export function addCustomRenderOptions(
+  controlFields: SchemaField[],
+  customRenderOptions: CustomRenderOptions[],
+): SchemaField[] {
+  return controlFields.map((x) =>
+    x.field === "renderOptions" && isCompoundField(x) ? addRenderOptions(x) : x,
+  );
+
+  function addRenderOptions(roField: CompoundField): CompoundField {
+    const children = roField.children;
+    return {
+      ...roField,
+      children: [
+        ...children.map((x) =>
+          x.field === "type" ? addRenderOptionType(x) : x,
+        ),
+        ...customRenderOptions.flatMap((x) => x.fields),
+      ],
+    };
+  }
+
+  function addRenderOptionType(typeField: SchemaField): SchemaField {
+    const options = typeField.options ?? [];
+    return {
+      ...typeField,
+      options: [
+        ...options,
+        ...customRenderOptions.map(({ name, value }) => ({ name, value })),
+      ],
+    };
+  }
+}

@@ -34,7 +34,6 @@ import {
   AnimateLayoutChanges,
   SortableContext,
   useSortable,
-  UseSortableArguments,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { setIncluded } from "@astrolabe/client/util/arrays";
@@ -308,282 +307,10 @@ export function ControlTree<V>({
     dragState.fields.offsetLeft.value = Math.round(delta.x / indentationWidth);
   }
 }
-
-// interface ControlTreeItemProps {
-//   title: string;
-//   icon: string | ReactElement;
-//   collapsed: boolean;
-//   childCount?: number;
-//   clone?: boolean;
-//   disableInteraction?: boolean;
-//   disableSelection?: boolean;
-//   ghost?: boolean;
-//   handleProps?: any;
-//   indicator?: boolean;
-//   disableDrag?: boolean;
-//   indentationWidth: number;
-//   depth: number;
-//   canHaveChildren: boolean;
-//   onCollapse?(): void;
-//   onRemove?(): void;
-//   wrapperRef?(node: HTMLLIElement): void;
-//   style: CSSProperties;
-//   onEditTitle?: (title: string) => void;
-//   selected: boolean;
-//   onSelect: () => void;
-//   actions?: ReactNode;
-//   classes: ControlClasses;
-//   renderDragHandle: (props: any) => ReactElement;
-//   noHandle: ReactNode;
-// }
-//
-// const ControlTreeItem = forwardRef<HTMLDivElement, ControlTreeItemProps>(
-//   (
-//     {
-//       icon,
-//       title,
-//       childCount,
-//       clone,
-//       disableSelection,
-//       disableInteraction,
-//       ghost,
-//       handleProps,
-//       indicator,
-//       collapsed,
-//       onCollapse,
-//       onRemove,
-//       style,
-//       wrapperRef,
-//       indentationWidth,
-//       depth,
-//       onEditTitle,
-//       onSelect,
-//       selected,
-//       disableDrag,
-//       actions,
-//       canHaveChildren,
-//       classes: styles,
-//       renderDragHandle,
-//       noHandle,
-//     },
-//     ref,
-//   ) => {
-//     const titleEditing = useControl({ editing: false, title });
-//     const { editing, title: titleControl } = titleEditing.fields;
-//
-//     function setTitleEditing(b: boolean) {
-//       if (b) {
-//         titleControl.value = title;
-//       } else {
-//         onEditTitle?.(titleControl.current.value);
-//       }
-//       editing.value = b;
-//     }
-//     return (
-//       <li
-//         className={clsx(
-//           styles.Wrapper,
-//           clone && styles.clone,
-//           ghost && styles.ghost,
-//           indicator && styles.indicator,
-//           disableSelection && styles.disableSelection,
-//           disableInteraction && styles.disableInteraction,
-//           selected && styles.selected,
-//         )}
-//         ref={wrapperRef}
-//         style={
-//           {
-//             "--spacing": `${indentationWidth * depth}px`,
-//           } as React.CSSProperties
-//         }
-//       >
-//         <div
-//           className={styles.TreeItem}
-//           ref={ref}
-//           style={style}
-//           onClick={onSelect}
-//         >
-//           {!disableDrag ? renderDragHandle(handleProps) : noHandle}
-//           {(onCollapse || canHaveChildren) && (
-//             <IconButton
-//               size="small"
-//               onClick={(e) => {
-//                 e.stopPropagation();
-//                 onCollapse?.();
-//               }}
-//               className={clsx(styles.Collapse, collapsed && styles.collapsed)}
-//               sx={{ visibility: !onCollapse ? "hidden" : undefined }}
-//             >
-//               <ExpandMoreIcon />
-//             </IconButton>
-//           )}
-//           {typeof icon === "string" ? <Icon>{icon}</Icon> : icon}
-//           <RenderControl
-//             children={() =>
-//               editing.value ? (
-//                 <ClickAwayListener onClickAway={() => setTitleEditing(false)}>
-//                   <div style={{ flexGrow: 1 }}>
-//                     <FTextField
-//                       state={titleEditing.fields.title}
-//                       size={"small"}
-//                       onFocus={(e) => e.target.select()}
-//                       focused
-//                       style={{ height: "100%", backgroundColor: "#fff" }}
-//                       onKeyPress={(e) => {
-//                         if (e.key === "Enter") setTitleEditing(false);
-//                       }}
-//                     />
-//                   </div>
-//                 </ClickAwayListener>
-//               ) : (
-//                 <span
-//                   className={styles.Text}
-//                   onDoubleClick={
-//                     onEditTitle ? () => setTitleEditing(true) : undefined
-//                   }
-//                 >
-//                   {title}
-//                 </span>
-//               )
-//             }
-//           />
-//           {!clone && onRemove && (
-//             <Tooltip title={"Remove"}>
-//               <IconButton
-//                 onClick={(e) => {
-//                   e.stopPropagation();
-//                   confirmation(
-//                     () => onRemove(),
-//                     `Are you sure you want to remove "${title}"`,
-//                     "Confirm Delete",
-//                   );
-//                 }}
-//               >
-//                 <Delete className={"hoverButtons"} />
-//               </IconButton>
-//             </Tooltip>
-//           )}
-//           {clone && childCount && childCount > 1 ? (
-//             <span className={styles.Count}>{childCount}</span>
-//           ) : null}
-//           {actions}
-//         </div>
-//       </li>
-//     );
-//   },
-// );
-//
-// const measuring = {
-//   droppable: {
-//     // strategy: MeasuringStrategy.Always,
-//     strategy: MeasuringStrategy.WhileDragging,
-//     frequency: 1000,
-//   },
-// };
-//
 const animateLayoutChanges: AnimateLayoutChanges = ({
   isSorting,
   wasDragging,
 }) => !(isSorting || wasDragging);
-
-// export function SortableTreeItem({
-//   node,
-//   clone,
-//   insertState,
-//   active,
-//   selected,
-//   onRemove,
-//   ...props
-// }: Pick<
-//   ControlTreeItemProps,
-//   | "onCollapse"
-//   | "clone"
-//   | "indentationWidth"
-//   | "indicator"
-//   | "title"
-//   | "actions"
-//   | "onRemove"
-// > & {
-//   node: ControlTreeNode;
-//   selected: Control<Control<any> | undefined>;
-//   insertState: Control<TreeInsertState | undefined>;
-//   active: Control<Control<any> | undefined>;
-// }) {
-//   const {
-//     attributes,
-//     isDragging,
-//     isSorting,
-//     listeners,
-//     setDraggableNodeRef,
-//     setDroppableNodeRef,
-//     transform,
-//     transition,
-//   } = useSortable({
-//     id: node.control.uniqueId,
-//     data: { control: node.control },
-//     animateLayoutChanges,
-//   });
-//   const style: CSSProperties = {
-//     transform: CSS.Translate.toString(transform),
-//     transition,
-//   };
-//   const isSelected = useIsSelected(selected, node.control);
-//   const itemRef = useScrollIntoView<HTMLLIElement>(isSelected);
-//   return (
-//     <RenderControl
-//       children={() => (
-//         <ControlTreeItem
-//           depth={
-//             active.value === node.control && insertState.fields
-//               ? insertState.fields.parent.value.indent + 1
-//               : node.indent
-//           }
-//           collapsed={!node.expanded}
-//           ref={setDraggableNodeRef}
-//           wrapperRef={(r) => {
-//             setDroppableNodeRef(r);
-//             itemRef.current = r;
-//           }}
-//           style={style}
-//           ghost={isDragging}
-//           childCount={
-//             clone && nodeCanHaveChildren(node)
-//               ? nodeChildCount(node) + 1
-//               : undefined
-//           }
-//           icon={node.icon ?? "tune"}
-//           clone={clone}
-//           disableSelection={false}
-//           disableInteraction={isSorting}
-//           onEditTitle={node.updateTitle}
-//           selected={!clone && isSelected}
-//           canHaveChildren={nodeCanHaveChildren(node)}
-//           onSelect={() => (selected.value = node.control)}
-//           onRemove={
-//             onRemove ??
-//             (!node.dragEnabled
-//               ? undefined
-//               : () => {
-//                   groupedChanges(() => {
-//                     const siblings = node.parent?.children;
-//                     siblings && removeElement(siblings, node.control);
-//                     if (selected.value === node.control) {
-//                       selected.value = undefined;
-//                     }
-//                   });
-//                 })
-//           }
-//           disableDrag={!node.dragEnabled}
-//           handleProps={{
-//             ...attributes,
-//             ...listeners,
-//           }}
-//           {...props}
-//         />
-//       )}
-//     />
-//   );
-// }
 
 const adjustTranslate: Modifier = ({ transform }) => {
   return {
@@ -636,6 +363,7 @@ export interface SortableTreeItem {
   };
   paddingLeft: number;
   isDragging: boolean;
+  isSelected: boolean;
   setDraggableNodeRef: (elem: HTMLElement | null) => void;
   setDroppableNodeRef: (elem: HTMLElement | null) => void;
   canHaveChildren: boolean;
@@ -677,6 +405,7 @@ export function useSortableTreeItem({
   return {
     handleProps: { ...attributes, ...listeners },
     itemProps: { style, onClick: () => (selected.value = node.control) },
+    isSelected: selected.value === node.control,
     canHaveChildren,
     setDraggableNodeRef,
     setDroppableNodeRef,
