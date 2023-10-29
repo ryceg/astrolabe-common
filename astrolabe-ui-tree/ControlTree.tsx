@@ -1,6 +1,8 @@
 import {
+  addElement,
   Control,
   groupedChanges,
+  removeElement,
   updateElements,
   useControl,
   useControlEffect,
@@ -58,24 +60,26 @@ export interface ControlTreeItemProps {
   active: Control<any>;
   onCollapse?: () => void;
   actions?: ReactNode;
-  onRemove?: () => void;
 }
 
-export function ControlTree<V>({
+export interface ControlTreeProps {
+  treeState: Control<TreeState>;
+  controls: Control<any[]>;
+  canDropAtRoot: (c: Control<any>) => boolean;
+  indentationWidth?: number;
+  indicator?: boolean;
+  TreeItem: FC<ControlTreeItemProps>;
+  actions?: (node: ControlTreeNode) => ReactNode | undefined;
+}
+export function ControlTree({
   controls,
   canDropAtRoot,
   indentationWidth = 50,
   indicator = true,
   treeState,
+  actions,
   TreeItem,
-}: {
-  treeState: Control<TreeState>;
-  controls: Control<V[]>;
-  canDropAtRoot: (c: Control<any>) => boolean;
-  indentationWidth?: number;
-  indicator?: boolean;
-  TreeItem: FC<ControlTreeItemProps>;
-}) {
+}: ControlTreeProps) {
   const sensors = useSensors(useSensor(PointerSensor));
   const dragState = useControl<TreeDragState>({ offsetLeft: 0 });
   const dragFields = dragState.fields;
@@ -227,7 +231,7 @@ export function ControlTree<V>({
     const treeFields = treeState.fields;
     const hasChildren = nodeChildCount(x) > 0;
     return x.render({
-      renderItem: (title, actions, onRemove) => (
+      renderItem: (title) => (
         <TreeItem
           key={x.control.uniqueId}
           node={x}
@@ -239,8 +243,7 @@ export function ControlTree<V>({
           insertState={treeFields.dragInsert}
           active={dragState.fields.active}
           onCollapse={hasChildren ? () => onCollapse(x) : undefined}
-          actions={actions}
-          onRemove={onRemove}
+          actions={actions?.(x)}
         />
       ),
       children: clone ? [] : x.childrenNodes.map((c) => renderTreeNode(c)),
@@ -412,4 +415,17 @@ export function useSortableTreeItem({
     isDragging,
     paddingLeft: clone ? 0 : depth * indentationWidth,
   };
+}
+
+export function removeNodeFromParent(
+  node: ControlTreeNode,
+  selected: Control<Control<any> | undefined>,
+) {
+  groupedChanges(() => {
+    const siblings = node.parent?.children;
+    siblings && removeElement(siblings, node.control);
+    if (selected.value === node.control) {
+      selected.value = undefined;
+    }
+  });
 }

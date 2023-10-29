@@ -12,7 +12,6 @@ export type TreeNodeRenderProps = {
   renderItem: (
     title: string | undefined | null,
     actions?: ReactNode,
-    onRemove?: () => void
   ) => ReactElement;
   children: ReactNode;
 };
@@ -51,29 +50,29 @@ export interface ControlTreeNode
 
 export interface TreeNodeBuilder<V> {
   withChildren(
-    children: (n: Control<V>) => Control<any[]> | undefined
+    children: (n: Control<V>) => Control<any[]> | undefined,
   ): TreeNodeBuilder<V>;
 
   asChildren: V extends any[] ? TreeNodeBuilder<V> : never;
 
   withDropping(
-    canDropChild: (nodeType: string, child: Control<any>) => boolean
+    canDropChild: (nodeType: string, child: Control<any>) => boolean,
   ): TreeNodeBuilder<V>;
 
   withDragging(enabled?: boolean): TreeNodeBuilder<V>;
 
   withCustomRender(
-    render: (node: Control<V>, props: TreeNodeRenderProps) => ReactElement
+    render: (node: Control<V>, props: TreeNodeRenderProps) => ReactElement,
   ): TreeNodeBuilder<V>;
 
   and(p?: (b: TreeNodeBuilder<V>) => TreeNodeBuilder<V>): TreeNodeBuilder<V>;
 
   withVirtualChildren(
-    getChildren: (n: Control<V>) => Control<any>[]
+    getChildren: (n: Control<V>) => Control<any>[],
   ): TreeNodeBuilder<V>;
 
   withIcon(
-    icon: string | ((n: Control<V>) => ReactElement | string) | ReactElement
+    icon: string | ((n: Control<V>) => ReactElement | string) | ReactElement,
   ): TreeNodeBuilder<V>;
 
   build(c: Control<V>): TreeNodeData;
@@ -83,7 +82,7 @@ export function toTreeNode(
   expansions: number[],
   active: Control<any> | undefined,
   parent: ControlTreeNode,
-  indent: number
+  indent: number,
 ): (c: Control<any>, childIndex: number) => ControlTreeNode {
   return (c, childIndex) => {
     const treeNode = getTreeNodeData(c);
@@ -101,7 +100,7 @@ export function toTreeNode(
         return Boolean(
           children &&
             (!treeNode.canDropChild ||
-              (childType && treeNode.canDropChild(childType, child)))
+              (childType && treeNode.canDropChild(childType, child))),
         );
       },
       children,
@@ -109,7 +108,7 @@ export function toTreeNode(
     };
     if (children && expanded && active !== c) {
       flattened["childrenNodes"] = children.elements.map(
-        toTreeNode(expansions, active, flattened, indent + 1)
+        toTreeNode(expansions, active, flattened, indent + 1),
       );
     }
     return flattened;
@@ -131,21 +130,16 @@ export interface TreeDragState {
   overId?: number;
   offsetLeft: number;
 }
-
-export function useIsSelected<T>(selected: Control<T>, item: T): boolean {
-  return useControlValue(() => selected.value === item);
-}
-
 export function findAllTreeParentsInArray(
   node: Control<any>,
-  nodes: Control<any[]>
+  nodes: Control<any[]>,
 ): Control<any>[] {
   return nodes.elements.flatMap((x) => findAllTreeParents(node, x)) ?? [];
 }
 
 export function findAllTreeParents(
   node: Control<any>,
-  rootNode: Control<any>
+  rootNode: Control<any>,
 ): Control<any>[] {
   if (node === rootNode) return [rootNode];
   const children = getTreeNodeData(rootNode).getChildren();
@@ -170,27 +164,27 @@ export function getTreeNodeData(c: Control<any>): TreeNodeData {
 }
 
 export type TreeNodeConfigure<V> = (
-  b: TreeNodeBuilder<V>
+  b: TreeNodeBuilder<V>,
 ) => TreeNodeBuilder<V>;
 
 export function treeNode<V>(
   nodeType: string,
   title: string,
-  configure?: TreeNodeConfigure<V>
+  configure?: TreeNodeConfigure<V>,
 ): ControlSetup<V, TreeNodeStructure>;
 
 export function treeNode<V>(
   nodeType: string,
   title: (node: Control<V>) => Control<string | undefined | null>,
   allowEditing: boolean,
-  configure?: TreeNodeConfigure<V>
+  configure?: TreeNodeConfigure<V>,
 ): ControlSetup<V, TreeNodeStructure>;
 
 export function treeNode<V>(
   nodeType: string,
   title: string | ((node: Control<V>) => Control<string | undefined | null>),
   configureOrEdit?: TreeNodeConfigure<V> | boolean,
-  configure?: TreeNodeConfigure<V>
+  configure?: TreeNodeConfigure<V>,
 ): ControlSetup<V, TreeNodeStructure> {
   const fixedTitle = typeof title === "string";
   const builder = fixedTitle
@@ -219,7 +213,7 @@ export function treeNode<V>(
     meta: {
       nodeType,
       treeNode: builder.and(
-        fixedTitle ? (configureOrEdit as TreeNodeConfigure<V>) : configure
+        fixedTitle ? (configureOrEdit as TreeNodeConfigure<V>) : configure,
       ),
     },
   };
@@ -259,16 +253,16 @@ class TreeNodeBuildImpl<V> implements TreeNodeBuilder<V> {
   }
 
   withIcon(
-    icon: string | ((n: Control<V>) => string | ReactElement) | ReactElement
+    icon: string | ((n: Control<V>) => string | ReactElement) | ReactElement,
   ): TreeNodeBuilder<V> {
     this.builders.push(
-      (n, d) => (d.icon = typeof icon === "function" ? icon(n) : icon)
+      (n, d) => (d.icon = typeof icon === "function" ? icon(n) : icon),
     );
     return this;
   }
 
   withChildren(
-    children: (n: Control<V>) => Control<any[]> | undefined
+    children: (n: Control<V>) => Control<any[]> | undefined,
   ): TreeNodeBuilder<V> {
     this.builders.push((n, d) => {
       d.getChildren = () => children(n);
@@ -277,7 +271,10 @@ class TreeNodeBuildImpl<V> implements TreeNodeBuilder<V> {
   }
 
   withCustomRender(
-    render: (node: Control<V>, props: TreeNodeRenderProps) => React.ReactElement
+    render: (
+      node: Control<V>,
+      props: TreeNodeRenderProps,
+    ) => React.ReactElement,
   ): TreeNodeBuilder<V> {
     this.builders.push((n, d) => (d.render = (p) => render(n, p)));
     return this;
@@ -289,14 +286,14 @@ class TreeNodeBuildImpl<V> implements TreeNodeBuilder<V> {
   }
 
   withDropping(
-    canDropChild: (nodeType: string, child: Control<any>) => boolean
+    canDropChild: (nodeType: string, child: Control<any>) => boolean,
   ): TreeNodeBuilder<V> {
     this.builders.push((n, d) => (d.canDropChild = canDropChild));
     return this;
   }
 
   withVirtualChildren(
-    getChildren: (n: Control<V>) => Control<any>[]
+    getChildren: (n: Control<V>) => Control<any>[],
   ): TreeNodeBuilder<V> {
     this.builders.push(
       (n, d) =>
@@ -308,7 +305,7 @@ class TreeNodeBuildImpl<V> implements TreeNodeBuilder<V> {
             n.meta.virtualChildren = childControl;
           }
           return childControl;
-        })
+        }),
     );
     return this;
   }

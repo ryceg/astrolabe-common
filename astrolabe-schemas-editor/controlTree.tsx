@@ -18,6 +18,15 @@ export function isControlDefinitionNode(
   return node.meta.nodeType === ControlDefNodeType;
 }
 
+export function getGroupControlChildren(
+  n: Control<any>,
+): Control<ControlDefinitionForm[]> | undefined {
+  return isControlDefinitionNode(n) &&
+    n.fields.type.current.value === ControlDefinitionType.Group
+    ? n.fields.children
+    : undefined;
+}
+
 export function makeControlTree(
   makeActions?: (node: ControlForm) => ReactNode | undefined,
 ) {
@@ -30,12 +39,7 @@ export function makeControlTree(
       true,
       (b) =>
         b
-          .withChildren((n) =>
-            isControlDefinitionNode(n) &&
-            n.fields.type.current.value === ControlDefinitionType.Group
-              ? n.fields.children
-              : undefined,
-          )
+          .withChildren(getGroupControlChildren)
           .withIcon((n) => {
             switch (n.fields.type.current.value) {
               case ControlDefinitionType.Group:
