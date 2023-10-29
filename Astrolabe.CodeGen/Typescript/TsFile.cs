@@ -70,7 +70,7 @@ public record TsFunctionType(IEnumerable<TsType> ArgTypes, TsType ReturnType, bo
 
 public record TsType(bool Undefinable, bool Nullable);
 
-public record TsTypeRef(string Name, TsImportable Imports = null, bool Undefinable = false, bool Nullable = false) :
+public record TsTypeRef(string Name, TsImportable? Imports = null, bool Undefinable = false, bool Nullable = false) :
     TsType(
         Undefinable, Nullable);
 
@@ -81,6 +81,12 @@ public record TsGenericType(TsType BaseType, IEnumerable<TsType> GenTypes, bool 
     bool Nullable = false) : TsType(Undefinable,
     Nullable);
 
+public record TsTypeParamExpr(TsExpr Expr, IEnumerable<TsType> Types) : TsExpr;
+
+public record TsStringConstantType(string Value) : TsType(false, false);
+
+public record TsTypeSet(IEnumerable<TsType> Types) : TsType(false, false);
+
 public record TsFieldType(string Field, bool Optional, TsType Type);
 
 public record TsObjectExpr(IEnumerable<TsObjectField> Fields) : TsExpr
@@ -89,7 +95,7 @@ public record TsObjectExpr(IEnumerable<TsObjectField> Fields) : TsExpr
     {
         return new TsObjectExpr(fields);
     }
-    
+
     public TsObjectExpr SetField(TsObjectField field)
     {
         var existing = Fields.FirstOrDefault(x => x.Field.ToSource() == field.Field.ToSource());
@@ -146,6 +152,8 @@ public static class TsToSource
                 $"{tsGenType.BaseType.ToSource()}<{string.Join(", ", tsGenType.GenTypes.Select(x => x.ToSource()))}>",
             TsFunctionType tsFuncType =>
                 $"({string.Join(", ", tsFuncType.ArgTypes.Select(x => x.ToSource()))}) => {tsFuncType.ReturnType.ToSource()}",
+            TsStringConstantType(var v) => EscapeString(v),
+            TsTypeSet tsTypeSet => string.Join("|", tsTypeSet.Types.Select(x => x.ToSource())),
             _ => throw new ArgumentOutOfRangeException(nameof(tsType))
         };
         return $"{mainType}{(tsType.Nullable ? " | null" : "")}{(tsType.Undefinable ? " | undefined" : "")}";
@@ -213,15 +221,22 @@ public static class TsToSource
                 .Concat(tsGenType.GenTypes.SelectMany(x => x.CollectImports())),
             TsFunctionType tsFunctionType => tsFunctionType.ArgTypes.SelectMany(x => x.CollectImports())
                 .Concat(tsFunctionType.ReturnType.CollectImports()),
+            TsStringConstantType => Array.Empty<TsImport>(),
+            TsTypeSet(var types) => types.SelectMany(CollectImports),
             _ => throw new ArgumentOutOfRangeException(nameof(tsType))
         };
     }
 
+    public static string EscapeString(string value)
+    {
+        return $"\"{value}\"";
+    }
+    
     public static string ToSource(this TsConstExpr tsConstExpr)
     {
         return tsConstExpr.Value switch
         {
-            string s => $"\"{s}\"",
+            string s => EscapeString(s),
             int i => i.ToString(),
             double d => d.ToString(CultureInfo.InvariantCulture),
             null => "null",
@@ -250,6 +265,8 @@ public static class TsToSource
                                          "\n}\n",
             TsRawExpr tsRawExpr => tsRawExpr.Source,
             TsConstExpr tsConstExpr => tsConstExpr.ToSource(),
+            TsTypeParamExpr tsTypeParamExpr =>
+                $"{tsTypeParamExpr.Expr.ToSource()}<{string.Join(", ", tsTypeParamExpr.Types.Select(x => x.ToSource()))}>",
             TsNewExpression tsNewExpression =>
                 $"new {tsNewExpression.ClassType.ToSource()}({string.Join(", ", tsNewExpression.Args.Select(x => x.ToSource()))})",
             TsAnonFunctionExpression tsAnon =>
@@ -270,6 +287,7 @@ public static class TsToSource
                 x.Value.CollectImports().Concat(x.Field.CollectImports())),
             TsRawExpr tsRawExpr => tsRawExpr.Imports?.AllImports() ?? Array.Empty<TsImport>(),
             TsConstExpr tsConst => Array.Empty<TsImport>(),
+            TsTypeParamExpr { Expr: var e, Types: var t } => e.CollectImports().Concat(t.SelectMany(CollectImports)),
             TsNewExpression tsNew => tsNew.Args.SelectMany(x => x.CollectImports())
                 .Concat(tsNew.ClassType.CollectImports()),
             TsAnonFunctionExpression tsAnon => tsAnon.ArgDefs.SelectMany(x => x.CollectImports())
@@ -305,5 +323,4 @@ public static class TsToSource
                 .Concat(tsFunction.Body.SelectMany(x => x.CollectImports())),
         };
     }
-
 }

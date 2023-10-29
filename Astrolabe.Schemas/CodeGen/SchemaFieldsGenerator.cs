@@ -10,12 +10,25 @@ namespace Astrolabe.Schemas.CodeGen;
 
 public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 {
-    private readonly string _clientPath;
+    private readonly SchemaFieldsGeneratorOptions _options;
+    private readonly IEnumerable<TsType> _customFieldTypeParams;
 
-
-    public SchemaFieldsGenerator(string clientPath)
+    public SchemaFieldsGenerator(string clientPath) : this(new SchemaFieldsGeneratorOptions(clientPath))
     {
-        _clientPath = clientPath;
+    }
+
+    public SchemaFieldsGenerator(SchemaFieldsGeneratorOptions options)
+    {
+        _options = options;
+        if (_options.CustomFieldTypes != null)
+        {
+            _customFieldTypeParams = new[]
+                { new TsTypeSet(_options.CustomFieldTypes.Select(x => new TsStringConstantType(x))) };
+        }
+        else
+        {
+            _customFieldTypeParams = Array.Empty<TsType>();
+        }
     }
 
     private static readonly TsRawExpr MakeScalarField =
@@ -33,6 +46,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 
     private static readonly TsRawExpr MakeCompoundField = new TsRawExpr("makeCompoundField",
         new TsImport("@react-typed-forms/schemas", "makeCompoundField"));
+
+    private static readonly TsRawExpr BuildSchemaFunc =
+        new("buildSchema", new TsImport("@react-typed-forms/schemas", "buildSchema"));
 
     private static readonly HashSet<string> FormLibTypes = new()
     {
@@ -71,10 +87,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         return type.Name + "Schema";
     }
 
-    private static TsRawExpr BuildSchema(string schemaType)
+    private TsExpr BuildSchema(string schemaType)
     {
-        return new TsRawExpr("buildSchema<" + schemaType + ">",
-            new TsImport("@react-typed-forms/schemas", "buildSchema"));
+        return new TsTypeParamExpr(BuildSchemaFunc, new[] { new TsTypeRef(schemaType) }.Concat(_customFieldTypeParams));
     }
 
     private static string DefaultConstName(Type type)
@@ -100,7 +115,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 
     private TsImport ClientImport(Type type)
     {
-        return new TsImport(FormLibTypes.Contains(type.Name) ? "@react-typed-forms/schemas" : _clientPath, type.Name);
+        return FormLibTypes.Contains(type.Name)
+            ? new TsImport("@react-typed-forms/schemas", type.Name)
+            : _options.ImportType(type);
     }
 
     protected override IEnumerable<TsDeclaration> ToDeclarations(SimpleTypeData typeData)
@@ -129,7 +146,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             var baseType = type.GetCustomAttribute<JsonBaseTypeAttribute>();
             var subTypes = type.GetCustomAttributes<JsonSubTypeAttribute>();
 
-            return deps.Concat(new TsDeclaration[]
+            deps = deps.Concat(new TsDeclaration[]
             {
                 controlsInterface,
                 new TsAssignment(tsConstName,
@@ -140,8 +157,13 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
                                 FieldForMember(x, objectTypeData, baseType, subTypes)))
                         })),
                 CreateDefaultFormConst(objectTypeData.Type),
-                CreateConvertFunction(objectTypeData.Type)
             });
+            if (_options.ShouldCreateConvert(objectTypeData.Type))
+            {
+                deps = deps.Append(CreateConvertFunction(objectTypeData.Type));
+            }
+
+            return deps;
         }
 
         TsFieldType ControlsMember(TypeMember<SimpleTypeData> member)
@@ -164,6 +186,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         {
             enumType = memberData.Type;
         }
+
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         var buildFieldCall = SetOptions(FieldForType(memberData, parent), new Dictionary<string, object?>
         {
@@ -197,7 +220,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             return ClientImport(type).TypeRef;
         }
 
-        if (type == typeof(string) || type == typeof(Guid) || type == typeof(DateTime))
+        if (type == typeof(string) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateOnly) ||
+            type == typeof(DateTimeOffset))
             return new TsTypeRef("string");
         if (type == typeof(int) || type == typeof(double) || type == typeof(long))
             return new TsTypeRef("number");
@@ -240,12 +264,18 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 
     private TsCallExpression FieldForType(SimpleTypeData simpleType, ObjectTypeData parentObject)
     {
+        var fieldType = _options.CustomFieldType?.Invoke(simpleType.Type);
+        if (fieldType != null)
+        {
+            return MakeScalar(new TsConstExpr(fieldType));
+        }
+
         return simpleType switch
         {
             EnumerableTypeData enumerableTypeData => SetOption(FieldForType(enumerableTypeData.Element(), parentObject),
                 "collection", true),
             ObjectTypeData objectTypeData => DoObject(objectTypeData),
-            _ => MakeScalar(FieldTypeForTypeOnly(simpleType.Type))
+            _ => MakeScalar(new TsRawExpr("FieldType." + FieldTypeForTypeOnly(simpleType.Type), FieldTypeImport))
         };
 
         TsCallExpression DoObject(ObjectTypeData objectTypeData)
@@ -264,11 +294,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         }
     }
 
-    private TsCallExpression MakeScalar(FieldType fieldType)
+    private TsCallExpression MakeScalar(TsExpr fieldTypeExpr)
     {
         return TsCallExpression.Make(
             MakeScalarField, TsObjectExpr.Make(
-                TsObjectField.NamedField("type", new TsRawExpr("FieldType." + fieldType, FieldTypeImport))
+                TsObjectField.NamedField("type", fieldTypeExpr)
             )
         );
     }
@@ -299,5 +329,30 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         {
             return stringEnum ? info.Name : (int)info.GetValue(null)!;
         }
+    }
+}
+
+public class SchemaFieldsGeneratorOptions
+{
+    public Func<Type, TsImport> ImportType { get; }
+
+    public SchemaFieldsGeneratorOptions(Func<Type, TsImport> importType)
+    {
+        ImportType = importType;
+    }
+
+    public SchemaFieldsGeneratorOptions(string clientModule)
+    {
+        ImportType = x => new TsImport(clientModule, x.Name);
+    }
+
+    public Func<Type, bool>? CreateConvert { get; set; }
+    public Func<Type, string?>? CustomFieldType { get; set; }
+
+    public IEnumerable<string>? CustomFieldTypes { get; set; }
+
+    public bool ShouldCreateConvert(Type type)
+    {
+        return CreateConvert?.Invoke(type) ?? true;
     }
 }
