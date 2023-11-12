@@ -1,7 +1,7 @@
 import { Control, newControl } from "@react-typed-forms/core";
 import {
   ActionControlDefinition,
-  ActionControlProperties,
+  ActionRendererProps,
   CompoundField,
   ControlDefinition,
   ControlDefinitionType,
@@ -15,8 +15,8 @@ import {
   FormEditState,
   getOptionsForScalarField,
   GridRenderer,
-  GroupControlProperties,
   GroupedControlsDefinition,
+  GroupRendererProps,
   GroupRenderType,
   isCompoundField,
   isDataControl,
@@ -125,7 +125,8 @@ export function makeEditorFormHooks(
       formState: FormEditState,
       definition: GroupedControlsDefinition,
       hooks,
-    ): GroupControlProperties {
+      renderers,
+    ): GroupRendererProps {
       const nestedField = useFieldLookup(fields, definition.compoundField);
       if (nestedField !== NonExistentField) {
         hooks = makeEditorFormHooks(
@@ -134,7 +135,12 @@ export function makeEditorFormHooks(
           context,
         );
       }
-      return editHooks.useGroupProperties(formState, definition, hooks);
+      return editHooks.useGroupProperties(
+        formState,
+        definition,
+        hooks,
+        renderers,
+      );
     },
     useDataProperties: (fs, c, sf) => {
       const control = fs.data.fields[sf.field];
@@ -146,7 +152,7 @@ export function makeEditorFormHooks(
         : getOptionsForScalarField(sf);
 
       const customRender =
-        visible && fieldHasTag(sf, "_DefaultValue")
+        visible.value && fieldHasTag(sf, "_DefaultValue")
           ? (p: DataRendererProps) => (
               <RenderDefaultValueControls
                 editHooks={editHooks}
@@ -158,6 +164,10 @@ export function makeEditorFormHooks(
           : undefined;
       return {
         options,
+        definition: c,
+        field: sf,
+        formState: fs,
+        renderOptions: c.renderOptions ?? { type: DataRenderType.Standard },
         control,
         defaultValue: sf.defaultValue,
         required: c.required ?? false,
@@ -191,10 +201,11 @@ export function makeEditorFormHooks(
         }
       }
     },
-    useActionProperties(fs, def): ActionControlProperties {
+    useActionProperties(fs, def): ActionRendererProps {
       const visible = useIsControlVisible(def, fs, editHooks.useExpression);
       return {
         visible,
+        definition: def,
         onClick: context?.makeOnClick ? context.makeOnClick(def) : () => {},
       };
     },

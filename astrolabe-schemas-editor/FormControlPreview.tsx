@@ -14,6 +14,7 @@ import { LayoutGroup, motion } from "framer-motion";
 import update from "immutability-helper";
 import {
   ActionControlDefinition,
+  AlwaysVisible,
   ControlDefinitionType,
   DataControlDefinition,
   DisplayControlDefinition,
@@ -129,10 +130,8 @@ function ActionControlPreview({
     >
       {renderAction({
         definition: item.value as ActionControlDefinition,
-        properties: {
-          visible: true,
-          onClick: () => {},
-        },
+        visible: { canChange: false, value: true },
+        onClick: () => {},
       })}
     </motion.div>
   );
@@ -158,7 +157,7 @@ function DisplayControlPreview({
     >
       {renderDisplay({
         definition: item.value as DisplayControlDefinition,
-        properties: { visible: true },
+        visible: AlwaysVisible,
       })}
     </motion.div>
   );
@@ -214,21 +213,14 @@ function DataControlPreview({
 
         {schemaField ? (
           renderer.renderData(
-            {
-              definition: fieldDetails as DataControlDefinition,
-              field: schemaField,
-              properties: getDefaultScalarControlProperties(
-                fieldDetails as DataControlDefinition,
-                schemaField,
-                true,
-                undefined,
-                fc,
-                readonly,
-              ),
-            },
-            fc,
-            false,
-            renderer,
+            getDefaultScalarControlProperties(
+              fieldDetails as DataControlDefinition,
+              schemaField,
+              AlwaysVisible,
+              undefined,
+              fc,
+              { fields: [], data: newControl({}), readonly },
+            ),
           )
         ) : (
           <div>No schema field: {fieldDetails.field}</div>
@@ -313,28 +305,27 @@ function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
         {renderGroup({
           definition: groupData as Omit<GroupedControlsDefinition, "children">,
           childCount: actualChildren.length,
-          properties: { visible: true, hooks },
+          visible: AlwaysVisible,
           renderChild,
+          hooks,
+          hideTitle: groupData.groupOptions?.hideTitle ?? false,
         })}
       </LayoutGroup>
       <div ref={setNodeRef} style={{ height: 5, marginTop: 20 }} />
     </motion.div>
   );
 
-  function renderChild(
-    i: number,
-    _wrapChild: (key: Key, db: ReactElement) => ReactElement,
-  ) {
+  function renderChild(i: number) {
     const [child, fields] = actualChildren[i];
-    return _wrapChild(
-      child.uniqueId,
+    return (
       <FormControlPreview
+        key={child.uniqueId}
         fields={fields}
         dropIndex={i}
         item={child}
         parent={item}
         noDrop={isActive}
-      />,
+      />
     );
   }
 }
