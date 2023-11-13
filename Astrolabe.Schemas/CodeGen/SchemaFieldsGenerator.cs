@@ -120,6 +120,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             : _options.ImportType(type);
     }
 
+    protected override string TypeKey(SimpleTypeData typeData)
+    {
+        return typeData.Type.Name;
+    }
+
     protected override IEnumerable<TsDeclaration> ToDeclarations(SimpleTypeData typeData)
     {
         return typeData switch
