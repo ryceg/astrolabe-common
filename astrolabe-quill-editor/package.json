@@ -1,0 +1,22 @@
+{
+  "name": "@astrolabe/quill-editor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.2.0",
+    "@react-typed-forms/core": "^3.0.0-dev.111",
+    "@react-typed-forms/schemas": "workspace:^2",
+    "react-quill": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "@types/react": "^18.2.37",
+    "prettier": "^3.0.3"
+  }
+}

@@ -273,7 +273,6 @@ export function defaultControlForField(
       groupOptions: {
         type: GroupRenderType.Grid,
         hideTitle: false,
-        columns: 3,
       } as GridRenderer,
       children: sf.children.map(defaultControlForField),
     };
