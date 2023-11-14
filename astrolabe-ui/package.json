@@ -4,8 +4,9 @@
 	"private": true,
 	"dependencies": {
 		"@astrolabe/client": "workspace:^0.1.0",
-		"@react-typed-forms/core": "^3.0.0-dev.107",
+		"@react-typed-forms/core": "^3.0.0-dev.112",
 		"@react-typed-forms/schemas": "^1.0.0-dev.12",
+		"@mui/base": "^5.0.0-beta.23",
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
 		"@radix-ui/react-popover": "1.0.7",
