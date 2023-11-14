@@ -122,7 +122,12 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
 
     protected override string TypeKey(SimpleTypeData typeData)
     {
-        return typeData.Type.Name;
+        return typeData switch
+        {
+            EnumerableTypeData enumerableTypeData => enumerableTypeData.Element().Type.Name+"[]",
+            ObjectTypeData objectTypeData => objectTypeData.Type.Name,
+            _ => ""
+        };
     }
 
     protected override IEnumerable<TsDeclaration> ToDeclarations(SimpleTypeData typeData)

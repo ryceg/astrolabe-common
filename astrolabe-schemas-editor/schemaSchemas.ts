@@ -189,6 +189,20 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
     isTypeField: true,
     required: true,
     displayName: "Type",
+    options: [
+      {
+        name: "Jsonata",
+        value: "Jsonata",
+      },
+      {
+        name: "FieldValue",
+        value: "FieldValue",
+      },
+      {
+        name: "UserMatch",
+        value: "UserMatch",
+      },
+    ],
   }),
   expression: makeScalarField({
     type: FieldType.String,

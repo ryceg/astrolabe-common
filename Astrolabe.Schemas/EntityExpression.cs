@@ -15,7 +15,7 @@ public enum ExpressionType
 [JsonSubType("FieldValue", typeof(FieldValueExpression))]
 [JsonSubType("Jsonata", typeof(JsonataExpression))]
 [JsonSubType("UserMatch", typeof(UserMatchExpression))]
-public abstract record EntityExpression(string Type)
+public abstract record EntityExpression([property: SchemaOptions(typeof(ExpressionType))] string Type)
 {
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }

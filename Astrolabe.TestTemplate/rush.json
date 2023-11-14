@@ -417,6 +417,10 @@
       "projectFolder": "../astrolabe-schemas-editor"
     },
     {
+      "packageName": "@astrolabe/ui-tree",
+      "projectFolder": "../astrolabe-ui-tree"
+    },
+    {
       "packageName": "clientapp",
       "projectFolder": "ClientApp"
     }
