@@ -3,14 +3,22 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { parse } from "querystring";
 import { AnchorHTMLAttributes, FC } from "react";
+import { getMatchingRoute, RouteData } from "@astrolabe/client/app/routeData";
 
-export function useNextNavigationService(): NavigationService {
+export function useNextNavigationService<T = {}>(
+  routes?: Record<string, RouteData<T>>,
+  defaultRoute?: RouteData<T>,
+): NavigationService<T> {
   const router = useRouter();
   const searchParams = useSearchParams()!;
   const pathname = usePathname()!;
   const segments = pathname ? pathname.split("/").filter((x) => x.length) : [];
 
   const query = parse(searchParams.toString());
+  const route =
+    (routes && getMatchingRoute(routes, segments)) ??
+    defaultRoute ??
+    ({} as RouteData<T>);
   return {
     query,
     pathname,
@@ -20,5 +28,6 @@ export function useNextNavigationService(): NavigationService {
     get: searchParams.get,
     getAll: searchParams.getAll,
     Link: Link as FC<AnchorHTMLAttributes<HTMLAnchorElement>>,
+    route,
   };
 }

@@ -234,6 +234,7 @@ export function useVerifyPage(
 
 export const defaultUserRoutes = {
   login: { label: "Login", allowGuests: true, forwardAuthenticated: true },
+  logout: { label: "Logout", allowGuests: false },
   changePassword: { label: "Change password", allowGuests: true },
   resetPassword: {
     label: "Reset password",

@@ -74,7 +74,10 @@ export function useControlTokenSecurity(): TokenSecurityService {
     fetch: createAccessTokenFetcher(
       async () => user.fields.accessToken.current.value,
     ),
-    async logout() {},
+    async logout() {
+      getTokenStorage().removeItem("token");
+      user.value = { busy: false, accessToken: null, loggedIn: false };
+    },
     async login() {},
     async setToken(accessToken: string) {
       getTokenStorage().setItem("token", accessToken);
@@ -87,9 +90,16 @@ export function useControlTokenSecurity(): TokenSecurityService {
   };
 }
 
-function getTokenStorage(): Pick<Storage, "getItem" | "setItem"> {
+function getTokenStorage(): Pick<
+  Storage,
+  "getItem" | "setItem" | "removeItem"
+> {
   if (typeof sessionStorage === "undefined") {
-    return { getItem: () => null, setItem: () => {} };
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem() {},
+    };
   }
   return sessionStorage;
 }
