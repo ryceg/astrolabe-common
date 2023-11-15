@@ -19,24 +19,42 @@ export interface NavLink {
 export interface NavLinkProps {
   navLink: NavLink;
   className?: string;
+  iconClass?: string;
+  labelClass?: string;
   href?: string;
   onClick?: () => void;
 }
 
+interface NavListClasses {
+  className: string;
+  entryClass: string;
+  linkClass: string;
+  labelClass: string;
+  iconClass: string;
+}
 export interface NavListProps {
   links: NavLink[];
-  className?: string;
-  entryClass?: string;
-  linkClass?: string;
   defaultRenderLink?: (link: NavLinkProps) => ReactNode;
+  classes?: Partial<NavListClasses>;
 }
+
+export const defaultNavListClasses: NavListClasses = {
+  className: "p-4 w-80 space-y-2 font-bold",
+  entryClass: "hover:bg-surface-100 rounded-md p-2",
+  iconClass: "text-2xl w-8 text-center",
+  labelClass: "hover:underline",
+  linkClass: "flex gap-x-4 items-center",
+};
+
 export function NavList({
-  className,
   links,
-  entryClass = "flex",
-  linkClass,
+  classes,
   defaultRenderLink = (p) => <DefaultNavLink {...p} />,
 }: NavListProps) {
+  const { className, entryClass, linkClass, labelClass, iconClass } = {
+    ...defaultNavListClasses,
+    ...classes,
+  };
   return (
     <ul className={className}>
       {links.map((navLink, i) => (
@@ -51,6 +69,8 @@ export function NavList({
     const { path } = navLink;
     const props = {
       navLink,
+      labelClass,
+      iconClass,
       className: linkClass,
       href: typeof path === "string" ? path : undefined,
       onClick: typeof path === "function" ? path : undefined,
@@ -61,13 +81,15 @@ export function NavList({
 
 export function DefaultNavLink({
   navLink: { icon, label },
+  labelClass,
+  iconClass,
   ...linkProps
 }: NavLinkProps) {
   const { Link } = useNavigationService();
   return (
     <Link {...linkProps}>
-      {icon}
-      {label}
+      <span className={iconClass}>{icon}</span>
+      <span className={labelClass}>{label}</span>
     </Link>
   );
 }
@@ -75,12 +97,14 @@ export function DefaultNavLink({
 export interface NavLinkRouteData {
   navLink?: boolean;
   icon?: ReactNode;
+  linkOrder?: number;
 }
 
 export function createNavLinks(
   routes: Record<string, RouteData<NavLinkRouteData>>,
 ): NavLink[] {
-  return Object.entries(routes)
+  const sorted = Object.entries(routes)
     .filter((x) => x[1].navLink)
-    .map(([path, r]) => ({ path, label: r.label, icon: r.icon }));
+    .sort((a, b) => (a[1].linkOrder ?? 0) - (b[1].linkOrder ?? 0));
+  return sorted.map(([path, r]) => ({ path, label: r.label, icon: r.icon }));
 }
