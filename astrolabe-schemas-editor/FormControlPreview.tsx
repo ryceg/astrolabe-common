@@ -147,7 +147,12 @@ function DisplayControlPreview({
     <motion.div
       layout={defaultLayoutChange}
       layoutId={item.uniqueId.toString()}
-      onClick={(e) => {
+      onMouseDownCapture={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      onClickCapture={(e) => {
+        e.preventDefault();
         e.stopPropagation();
         selected.value = item;
       }}
