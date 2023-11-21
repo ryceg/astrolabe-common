@@ -18,6 +18,7 @@ export const buttonVariants = cva(
 				danger: "bg-danger-500 text-danger-50 hover:bg-danger-600",
 				outline: "border border-current",
 				ghost: "hover:bg-primary-300 hover:text-primary-950",
+				gray: "text-secondary-500 hover:bg-primary-100 bg-surface-100 aria-disabled:cursor-not-allowed aria-disabled:text-gray-600",
 				link: "underline-offset-4 hover:underline text-white",
 				hyperlink:
 					"text-blue-800 underline-offset-4 underline hover:underline-offset-8 transition-all hover:text-blue-700",
