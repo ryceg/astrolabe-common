@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import shallowEqual from "shallowequal";
 import { NavigationService, useNavigationService } from "../service/navigation";
 import { ParsedUrlQuery } from "querystring";
+import { stringify } from "querystring";
 
 /**
  * A hook that returns a query control object that can be used to manage the query parameters of the current URL.
@@ -26,12 +27,7 @@ export function useQueryControl(): Control<ParsedUrlQuery> {
   useValueChangeEffect(
     queryControl,
     (q) => {
-      // if there's no query, we want to remove the query string from the URL
-      if (Object.values(q).some((arg) => !!arg?.length)) {
-        router.replace(router.pathname + "?" + q.toString());
-      } else {
-        router.push(router.pathname);
-      }
+      router.replace(router.pathname + "?" + stringify(q));
     },
     200,
   );
