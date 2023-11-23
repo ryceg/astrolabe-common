@@ -111,12 +111,12 @@ export interface PageSecurity {
 }
 
 export function usePageSecurity(
-  route: RouteData<PageSecurity>,
   loginHref: string = "/login",
   defaultHref: string = "/",
 ): boolean {
   const security = useSecurityService();
-  const nav = useNavigationService();
+  const nav = useNavigationService<PageSecurity>();
+  const route = nav.route;
   const fields = security.currentUser.fields;
   const busy = fields.busy.value && !route.dontWaitForAuth;
   const loggedIn = fields.loggedIn.value;

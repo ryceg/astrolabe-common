@@ -102,9 +102,14 @@ export interface NavLinkRouteData {
 
 export function createNavLinks(
   routes: Record<string, RouteData<NavLinkRouteData>>,
+  basePath: string = "/",
 ): NavLink[] {
   const sorted = Object.entries(routes)
     .filter((x) => x[1].navLink)
     .sort((a, b) => (a[1].linkOrder ?? 0) - (b[1].linkOrder ?? 0));
-  return sorted.map(([path, r]) => ({ path, label: r.label, icon: r.icon }));
+  return sorted.map(([path, r]) => ({
+    path: basePath + path,
+    label: r.label,
+    icon: r.icon,
+  }));
 }
