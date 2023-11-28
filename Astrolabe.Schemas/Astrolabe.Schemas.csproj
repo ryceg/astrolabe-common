@@ -9,6 +9,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Annotation\Astrolabe.Annotation.csproj" />
       <ProjectReference Include="..\Astrolabe.CodeGen\Astrolabe.CodeGen.csproj" />
+      <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
     </ItemGroup>
 
 
