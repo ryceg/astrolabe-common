@@ -30,6 +30,7 @@ import {
   ControlDefinitionForm,
   defaultControlDefinitionForm,
   defaultSchemaFieldForm,
+  FieldOptionForm,
   SchemaFieldForm,
 } from "./schemaSchemas";
 import { ReactElement, useEffect, useMemo } from "react";
@@ -147,9 +148,9 @@ export function makeEditorFormHooks(
       const visible = useIsControlVisible(c, fs, editHooks.useExpression);
       const fieldList = fields.value;
       const otherField = sf.tags?.find(isSchemaOptionTag);
-      const options = otherField
+      const [options, field] = otherField
         ? otherFieldOptions(otherField)
-        : getOptionsForScalarField(sf);
+        : [getOptionsForScalarField(sf), sf];
 
       const customRender =
         visible.value && fieldHasTag(sf, "_DefaultValue")
@@ -165,7 +166,7 @@ export function makeEditorFormHooks(
       return {
         options,
         definition: c,
-        field: sf,
+        field,
         formState: fs,
         renderOptions: c.renderOptions ?? { type: DataRenderType.Standard },
         control,
@@ -176,16 +177,24 @@ export function makeEditorFormHooks(
         readonly: c.readonly ?? false,
       };
 
-      function otherFieldOptions(ot: SchemaOptionTag) {
+      function otherFieldOptions(
+        ot: SchemaOptionTag,
+      ): [FieldOptionForm[] | undefined, SchemaField] {
         switch (ot) {
           case SchemaOptionTag.SchemaField:
-            return fieldList
-              .filter((x) => !isCompoundField(x))
-              .map(schemaFieldOption);
+            return [
+              fieldList
+                .filter((x) => !isCompoundField(x))
+                .map(schemaFieldOption),
+              sf,
+            ];
           case SchemaOptionTag.NestedSchemaField:
-            return fieldList.filter(isCompoundField).map(schemaFieldOption);
+            return [
+              fieldList.filter(isCompoundField).map(schemaFieldOption),
+              sf,
+            ];
           case SchemaOptionTag.TableList:
-            return context?.tableList?.value ?? [];
+            return [context?.tableList?.value ?? [], sf];
 
           default:
             const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
@@ -197,7 +206,10 @@ export function makeEditorFormHooks(
             const opts =
               fieldInSchema.fields.options.value ??
               fieldInSchema.fields.restrictions.fields?.options.value;
-            return opts && opts.length > 0 ? opts : undefined;
+            return [
+              opts && opts.length > 0 ? opts : undefined,
+              { ...sf, type: fieldInSchema.fields.type.value },
+            ];
         }
       }
     },
