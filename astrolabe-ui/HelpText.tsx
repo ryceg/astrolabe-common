@@ -36,7 +36,7 @@ export function HelpText({
 		>
 			<i
 				className={cn(
-					"text-primary-500 fa fa-question-circle cursor-help print:hidden",
+					"text-primary-500 fa-light fa-question-circle cursor-help print:hidden",
 					iconClass
 				)}
 				onMouseEnter={triggerEnter}
