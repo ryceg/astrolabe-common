@@ -68,7 +68,9 @@ public enum DataRenderType
     [Display(Name = "User Selection")] UserSelection,
     [Display(Name = "Synchronised Fields")] Synchronised,
     [Display(Name = "Icon Selection")] IconSelector,
-    [Display(Name = "Date/Time")] DateTime
+    [Display(Name = "Date/Time")] DateTime,
+    [Display(Name = "Checkbox")] Checkbox,
+    [Display(Name = "Dropdown")] Dropdown,
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]

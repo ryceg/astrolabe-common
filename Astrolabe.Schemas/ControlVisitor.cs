@@ -31,7 +31,7 @@ public record ControlVisitor(Func<ControlVisitorContext<DataControlDefinition>, 
     Func<ControlVisitorContext<DisplayControlDefinition>, bool>? Display = null, Func<ControlVisitorContext<ActionControlDefinition>, bool>? Action = null, 
     Func<ControlVisitorContext<GroupedControlsDefinition>, bool>? Group = null, Func<ControlVisitorContext<object>, bool>? Other = null)
 {
-    public bool VisitAll(JsonArray controls, IControlVisitorContext? context = null)
+    public bool VisitAll(IEnumerable<JsonNode?> controls, IControlVisitorContext? context = null)
     {
         foreach (var node in controls)
         {
