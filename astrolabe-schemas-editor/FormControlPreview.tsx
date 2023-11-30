@@ -1,12 +1,5 @@
-import { Control, newControl, useControlValue } from "@react-typed-forms/core";
-import React, {
-  createContext,
-  Key,
-  ReactElement,
-  ReactNode,
-  useContext,
-  useMemo,
-} from "react";
+import { Control, newControl } from "@react-typed-forms/core";
+import React, { createContext, ReactNode, useContext, useMemo } from "react";
 import { isNullOrEmpty } from "@astrolabe/client/util/arrays";
 import { SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
@@ -18,9 +11,7 @@ import {
   ArrayRendererProps,
   ControlDefinitionType,
   createAction,
-  createDefaultArrayRenderer,
   DataControlDefinition,
-  DataRendererProps,
   DisplayControlDefinition,
   DynamicPropertyType,
   FormEditHooks,
@@ -131,6 +122,7 @@ function ActionControlPreview({
       }}
       style={{
         backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
+        position: "relative",
       }}
     >
       {renderAction({
@@ -163,6 +155,7 @@ function DisplayControlPreview({
       }}
       style={{
         backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
+        position: "relative",
       }}
     >
       {renderDisplay({
@@ -180,7 +173,7 @@ function DataControlPreview({
   fields,
   dropIndex,
 }: FormControlPreviewDataProps) {
-  const { selected, readonly, VisibilityIcon } = usePreviewContext();
+  const { selected, readonly } = usePreviewContext();
   const fieldDetails = item.value;
   const schemaField = useFindScalarField(fields, fieldDetails.field!);
   const isCollection = Boolean(schemaField?.collection);
@@ -188,9 +181,7 @@ function DataControlPreview({
     () => newControl(isCollection ? [undefined] : undefined),
     [isCollection],
   );
-  const hasVisibilityScripting =
-    !isNullOrEmpty(schemaField?.onlyForTypes) ||
-    fieldDetails.dynamic?.some((x) => x.type === DynamicPropertyType.Visible);
+  const onlyForTypes = !isNullOrEmpty(schemaField?.onlyForTypes);
 
   const renderer = useFormRendererComponents();
   return (
@@ -208,25 +199,15 @@ function DataControlPreview({
       }}
       style={{
         backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
+        position: "relative",
       }}
     >
-      <>
-        {/*<div style={{ position: "relative" }}>*/}
-        {/*  <div style={{ position: "absolute", right: "100px" }}>*/}
-        {/*    {isOver ? "O -" : ""}*/}
-        {/*    {item.uniqueId} - {dropIndex}*/}
-        {/*  </div>*/}
-        {/*</div>*/}
-        {hasVisibilityScripting && (
-          <div style={{ position: "relative" }}>{VisibilityIcon}</div>
-        )}
-
-        {schemaField ? (
-          renderRealField(schemaField)
-        ) : (
-          <div>No schema field: {fieldDetails.field}</div>
-        )}
-      </>
+      <EditorDetails control={item} schemaVisibility={onlyForTypes} />
+      {schemaField ? (
+        renderRealField(schemaField)
+      ) : (
+        <div>No schema field: {fieldDetails.field}</div>
+      )}
     </motion.div>
   );
 
@@ -334,7 +315,9 @@ function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
         e.stopPropagation();
         selected.value = item;
       }}
+      style={{ position: "relative" }}
     >
+      <EditorDetails control={item} />
       <LayoutGroup>
         {renderGroup({
           definition: groupData as Omit<GroupedControlsDefinition, "children">,
@@ -362,4 +345,49 @@ function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
       />
     );
   }
+}
+
+function EditorDetails({
+  control,
+  schemaVisibility,
+}: {
+  control: ControlForm;
+  schemaVisibility?: boolean;
+}) {
+  const { VisibilityIcon } = usePreviewContext();
+  const {
+    type: { value: type },
+    field,
+    compoundField,
+    dynamic,
+  } = control.fields;
+  const hasVisibilityScripting = dynamic.value?.some(
+    (x) => x.type === DynamicPropertyType.Visible,
+  );
+
+  const fieldName =
+    type === ControlDefinitionType.Data
+      ? field.value
+      : type === ControlDefinitionType.Group
+      ? compoundField.value
+      : null;
+
+  return (
+    <div
+      style={{
+        backgroundColor: "white",
+        fontSize: "12px",
+        position: "absolute",
+        top: 0,
+        right: 0,
+        padding: 2,
+        border: "solid 1px black",
+      }}
+    >
+      {fieldName}
+      {(hasVisibilityScripting || schemaVisibility) && (
+        <span style={{ paddingLeft: 4 }}>{VisibilityIcon}</span>
+      )}
+    </div>
+  );
 }
