@@ -15,13 +15,18 @@ import update from "immutability-helper";
 import {
   ActionControlDefinition,
   AlwaysVisible,
+  ArrayRendererProps,
   ControlDefinitionType,
+  createAction,
+  createDefaultArrayRenderer,
   DataControlDefinition,
+  DataRendererProps,
   DisplayControlDefinition,
   DynamicPropertyType,
   FormEditHooks,
   getDefaultScalarControlProperties,
   GroupedControlsDefinition,
+  SchemaField,
   useFormRendererComponents,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
@@ -179,8 +184,8 @@ function DataControlPreview({
   const fieldDetails = item.value;
   const schemaField = useFindScalarField(fields, fieldDetails.field!);
   const isCollection = Boolean(schemaField?.collection);
-  const fc = useMemo(
-    () => newControl(isCollection ? [] : undefined),
+  const control: Control<any> = useMemo(
+    () => newControl(isCollection ? [undefined] : undefined),
     [isCollection],
   );
   const hasVisibilityScripting =
@@ -217,22 +222,46 @@ function DataControlPreview({
         )}
 
         {schemaField ? (
-          renderer.renderData(
-            getDefaultScalarControlProperties(
-              fieldDetails as DataControlDefinition,
-              schemaField,
-              AlwaysVisible,
-              undefined,
-              fc,
-              { fields: [], data: newControl({}), readonly },
-            ),
-          )
+          renderRealField(schemaField)
         ) : (
           <div>No schema field: {fieldDetails.field}</div>
         )}
       </>
     </motion.div>
   );
+
+  function renderRealField(field: SchemaField) {
+    const definition = fieldDetails as DataControlDefinition;
+    const dataProps = getDefaultScalarControlProperties(
+      definition,
+      field,
+      AlwaysVisible,
+      undefined,
+      control,
+      { fields: [], data: newControl({}), readonly },
+    );
+    const finalProps = !field.collection
+      ? dataProps
+      : {
+          ...dataProps,
+          array: makeArrayProps(),
+        };
+    return renderer.renderData(finalProps);
+
+    function makeArrayProps(): ArrayRendererProps {
+      return {
+        control,
+        definition,
+        field,
+        childCount: 1,
+        childKey: (c) => 0,
+        removeAction: (c) => createAction("Remove", () => {}, "removeElement"),
+        addAction: createAction("Add", () => {}, "addElement"),
+        renderChild: (c) =>
+          renderer.renderData({ ...dataProps, control: control.elements[0] }),
+      };
+    }
+  }
 }
 
 function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {

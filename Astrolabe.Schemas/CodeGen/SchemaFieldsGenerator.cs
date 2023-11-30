@@ -191,12 +191,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         var memberData = member.Data();
         var firstProp = member.Properties.First();
         var tags = firstProp.GetCustomAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
-        var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType;
-        if (enumType == null && memberData.Type.IsEnum)
-        {
-            enumType = memberData.Type;
-        }
-
+        var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         var buildFieldCall = SetOptions(FieldForType(memberData, parent), new Dictionary<string, object?>
         {
@@ -211,6 +206,15 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         return TsObjectField.NamedField(member.FieldName, buildFieldCall);
     }
 
+    private Type? GetEnumType(SimpleTypeData data)
+    {     
+        return data switch
+        {
+            EnumerableTypeData enumerableTypeData => GetEnumType(enumerableTypeData.Element()),
+            { Type.IsEnum: true } => data.Type,
+            _ => null
+        };
+    }
 
     private TsType FormType(SimpleTypeData data)
     {
