@@ -1,30 +1,57 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Astrolabe.JSON;
 using Astrolabe.JSON.Extensions;
 
 namespace Astrolabe.Schemas;
 
 public interface IControlVisitorContext
 {
-    string FieldContext { get; }
+    JsonPathSegments JsonContext { get; }
     
     IControlVisitorContext WithFieldContext();
+    object? FindAttribute(object key);
+
+    static readonly JsonSerializerOptions Options = new JsonSerializerOptions().AddStandardOptions();
 }
-public record ControlVisitorContext<T>(JsonObject JsonDefinition, IControlVisitorContext? Parent, string FieldContext)
+public record ControlVisitorContext<T>(string NodeType, JsonObject JsonDefinition, IControlVisitorContext? Parent, JsonPathSegments JsonContext)
     : IControlVisitorContext
 {
     private T? _definition;
-    private static readonly JsonSerializerOptions Options = new JsonSerializerOptions().AddStandardOptions();
+    private IDictionary<object, object>? _attributes;
+
+    private IDictionary<object, object> Attributes => _attributes ??= new Dictionary<object, object>();
     
+    public void Set(object key, object value)
+    {
+        Attributes[key] = value;
+    }
+    
+    public object? Get(object key)
+    {
+        if (_attributes == null)
+            return null;
+        return Attributes.TryGetValue(key, out var value) ? value : null;
+    }
+
     public IControlVisitorContext WithFieldContext()
     {
         var fieldNode = JsonDefinition["compoundField"]?.GetValue<string>();
         if (string.IsNullOrEmpty(fieldNode))
             return this;
-        return this with { FieldContext = FieldContext.Length == 0 ? fieldNode : $"{FieldContext}/{fieldNode}" };
+        var newOne = this with { Parent = this, NodeType = "CompoundGroup", JsonContext = JsonContext.Field(fieldNode)};
+        newOne._definition = _definition;
+        return newOne;
     }
 
-    public T Definition => _definition ??= JsonDefinition.Deserialize<T>(Options)!;
+    public T Definition => _definition ??= JsonDefinition.Deserialize<T>(IControlVisitorContext.Options)!;
+    public object? FindAttribute(object key)
+    {
+        var haveIt = Get(key);
+        if (haveIt != null)
+            return haveIt;
+        return Parent?.FindAttribute(key);
+    }
 }
 
 public record ControlVisitor(Func<ControlVisitorContext<DataControlDefinition>, bool>? Data = null, 
@@ -35,7 +62,7 @@ public record ControlVisitor(Func<ControlVisitorContext<DataControlDefinition>, 
     {
         foreach (var node in controls)
         {
-            if (!Visit(node!.AsObject()))
+            if (!Visit(node!.AsObject(), context))
                 return false;
         }
         return true;
@@ -62,7 +89,7 @@ public record ControlVisitor(Func<ControlVisitorContext<DataControlDefinition>, 
         
         (bool, IControlVisitorContext) RunVisitor<T>(Func<ControlVisitorContext<T>, bool>? visitFn)
         {
-            var ctx = new ControlVisitorContext<T>(control, context, context?.FieldContext ?? "");
+            var ctx = new ControlVisitorContext<T>(controlType, control, context, context?.JsonContext ?? JsonPathSegments.Empty);
             return (visitFn?.Invoke(ctx) ?? true, ctx);
         }
     }
