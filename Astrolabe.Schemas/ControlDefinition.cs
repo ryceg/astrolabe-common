@@ -33,12 +33,14 @@ public abstract record ControlDefinition([property: SchemaOptions(typeof(Control
 
 public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)] string Field) : ControlDefinition(ControlDefinitionType.Data.ToString())
 {
+    [DefaultValue(false)]
     public bool? Required { get; set; }
     
     public RenderOptions? RenderOptions { get; set; }
     
     public object? DefaultValue { get; set; }
     
+    [DefaultValue(false)]
     public bool? Readonly { get; set; }
 }
 
@@ -160,16 +162,32 @@ public record GridRenderer(int? Columns) : GroupRenderOptions(GroupRenderType.Gr
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value) : GroupRenderOptions(GroupRenderType.GroupElement.ToString());
 
+
+[JsonString]
+public enum AdornmentPlacement {
+    [Display(Name = "Start of control")] 
+    ControlStart,
+    [Display(Name = "End of control")]
+    ControlEnd,
+    [Display(Name = "Start of label")]
+    LabelStart,
+    [Display(Name = "End of label")]
+    LabelEnd,
+}
+
 [JsonString]
 public enum ControlAdornmentType
 {
     Tooltip,
-    Accordion
+    Accordion,
+    [Display(Name = "Help Text")]
+    HelpText
 }
 
 [JsonBaseType("type", typeof(TooltipAdornment))]
 [JsonSubType("Tooltip", typeof(TooltipAdornment))]
 [JsonSubType("Accordion", typeof(AccordionAdornment))]
+[JsonSubType("HelpText", typeof(HelpTextAdornment))]
 public abstract record ControlAdornment([property: SchemaOptions(typeof(ControlAdornmentType))] string Type)
 {
     [JsonExtensionData]
@@ -179,3 +197,5 @@ public abstract record ControlAdornment([property: SchemaOptions(typeof(ControlA
 public record TooltipAdornment(string Tooltip) : ControlAdornment(ControlAdornmentType.Tooltip.ToString());
 
 public record AccordionAdornment(string Title, bool DefaultExpanded) : ControlAdornment(ControlAdornmentType.Accordion.ToString());
+
+public record HelpTextAdornment(string HelpText, AdornmentPlacement? Placement) : ControlAdornment(ControlAdornmentType.HelpText.ToString());

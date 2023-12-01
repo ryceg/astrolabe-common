@@ -18,6 +18,7 @@ import {
   DisplayData,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
+import { AdornmentPlacement } from "../client";
 
 export interface FieldOptionForm {
   name: string;
@@ -281,6 +282,8 @@ export interface ControlAdornmentForm {
   tooltip: string;
   title: string;
   defaultExpanded: boolean;
+  helpText: string;
+  placement: AdornmentPlacement | null;
 }
 
 export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
@@ -297,6 +300,10 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
       {
         name: "Accordion",
         value: "Accordion",
+      },
+      {
+        name: "Help Text",
+        value: "HelpText",
       },
     ],
   }),
@@ -317,6 +324,35 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     onlyForTypes: ["Accordion"],
     required: true,
     displayName: "DefaultExpanded",
+  }),
+  helpText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["HelpText"],
+    required: true,
+    displayName: "HelpText",
+  }),
+  placement: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["HelpText"],
+    displayName: "Placement",
+    options: [
+      {
+        name: "Start of control",
+        value: "ControlStart",
+      },
+      {
+        name: "End of control",
+        value: "ControlEnd",
+      },
+      {
+        name: "Start of label",
+        value: "LabelStart",
+      },
+      {
+        name: "End of label",
+        value: "LabelEnd",
+      },
+    ],
   }),
 });
 
@@ -407,6 +443,14 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
       {
         name: "Date/Time",
         value: "DateTime",
+      },
+      {
+        name: "Checkbox",
+        value: "Checkbox",
+      },
+      {
+        name: "Dropdown",
+        value: "Dropdown",
       },
     ],
   }),
@@ -643,6 +687,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   required: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
+    defaultValue: false,
     displayName: "Required",
   }),
   renderOptions: makeCompoundField({
@@ -658,6 +703,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   readonly: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
+    defaultValue: false,
     displayName: "Readonly",
   }),
   children: makeCompoundField({
