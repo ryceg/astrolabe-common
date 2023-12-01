@@ -6,12 +6,14 @@ export function Textfield({
   label,
   required = false,
   className,
+  inputClass,
   ...externalProps
 }: React.InputHTMLAttributes<HTMLInputElement> & {
   control: Control<string | null | undefined>;
   label: string;
   required?: boolean;
   className?: string;
+  inputClass?: string;
 }) {
   const id = externalProps.id ?? "c" + control.uniqueId;
   const { errorText, value, ...props } = formControlProps(control);
@@ -24,7 +26,7 @@ export function Textfield({
       <input
         id={id}
         type="text"
-        className="input-field"
+        className={inputClass}
         {...props}
         {...externalProps}
         value={value == null ? "" : value}

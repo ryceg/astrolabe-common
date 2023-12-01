@@ -74,6 +74,15 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
     
     protected abstract Task SetResetCodeAndEmail(string email, string resetCode);
 
+    public async Task ChangeEmail(ChangeEmail change, Func<TUserId> userId)
+    {
+        var hashedPassword = _passwordHasher.Hash(change.Password);
+        if (!await EmailChangeForUserId(userId(), hashedPassword, change.NewEmail))
+            throw new UnauthorizedException();
+    }
+    
+    protected abstract Task<bool> EmailChangeForUserId(TUserId userId, string hashedPassword, string newEmail);
+
     public async Task<string> ChangePassword(ChangePassword change, string? resetCode, Func<TUserId> userId)
     {
         (bool, Func<string, Task<string>>?) apply; 

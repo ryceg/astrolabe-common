@@ -37,6 +37,12 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
         return _localUserService.ForgotPassword(email);
     }
 
+    [HttpPost("changeEmail")]
+    public Task ChangeEmail(ChangeEmail email)
+    {
+        return _localUserService.ChangeEmail(email, GetUserId);
+    }
+
     [Authorize]
     [AllowAnonymous]
     [HttpPost("changePassword")]

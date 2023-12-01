@@ -39,11 +39,11 @@ export interface NavListProps {
 }
 
 export const defaultNavListClasses: NavListClasses = {
-  className: "p-4 w-80 space-y-2 font-bold",
+  className: "p-4 w-80 space-y-2",
   entryClass: "hover:bg-surface-100 rounded-md p-2",
   iconClass: "text-2xl w-8 text-center",
   labelClass: "hover:underline",
-  linkClass: "flex gap-x-4 items-center",
+  linkClass: "flex gap-x-4 items-center font-bold",
 };
 
 export function NavList({
@@ -94,22 +94,44 @@ export function DefaultNavLink({
   );
 }
 
+export type NavLinkSpec = string | { list: string; order: number };
+
 export interface NavLinkRouteData {
-  navLink?: boolean;
+  navLink?: NavLinkSpec | NavLinkSpec[];
   icon?: ReactNode;
-  linkOrder?: number;
 }
 
 export function createNavLinks(
+  linkType: string,
   routes: Record<string, RouteData<NavLinkRouteData>>,
   basePath: string = "/",
 ): NavLink[] {
   const sorted = Object.entries(routes)
-    .filter((x) => x[1].navLink)
-    .sort((a, b) => (a[1].linkOrder ?? 0) - (b[1].linkOrder ?? 0));
+    .flatMap((x) => {
+      const s = matchingSpec(x[1].navLink);
+      return s ? [[x[0], { route: x[1], link: s }] as const] : [];
+    })
+    .sort((a, b) => specOrder(a[1].link) - specOrder(b[1].link));
   return sorted.map(([path, r]) => ({
     path: basePath + path,
-    label: r.label,
-    icon: r.icon,
+    label: r.route.label,
+    icon: r.route.icon,
   }));
+
+  function specOrder(s: NavLinkSpec) {
+    return typeof s === "string" ? 0 : s.order;
+  }
+  function matchingSpec(
+    v?: NavLinkSpec | NavLinkSpec[],
+  ): NavLinkSpec | undefined {
+    if (!v) return undefined;
+    if (Array.isArray(v)) {
+      return v.find(matchOne);
+    }
+    return matchOne(v) ? v : undefined;
+  }
+
+  function matchOne(n: NavLinkSpec): boolean {
+    return typeof n === "object" ? n.list === linkType : n === linkType;
+  }
 }

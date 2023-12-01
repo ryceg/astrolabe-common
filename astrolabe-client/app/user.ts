@@ -100,6 +100,21 @@ export interface PasswordChangeProps {
   confirmPrevious: boolean;
 }
 
+export interface ChangeEmailFormData {
+  password: string;
+  newEmail: string;
+}
+
+export const emptyChangeEmailForm: ChangeEmailFormData = {
+  password: "",
+  newEmail: "",
+};
+
+export interface EmailChangeProps {
+  control: Control<ChangeEmailFormData>;
+  changeEmail: () => Promise<boolean>;
+}
+
 export function useChangePasswordPage(
   runChange: (
     resetCode: string | null,
@@ -119,6 +134,31 @@ export function useChangePasswordPage(
     confirmPrevious: !resetCode,
     changePassword: () =>
       validateAndRunResult(control, () => runChange(resetCode, control.value)),
+  };
+}
+
+export function useChangeEmailPage(
+  runChange: (change: ChangeEmailFormData) => Promise<any>,
+): EmailChangeProps {
+  const control = useControl(emptyChangeEmailForm);
+
+  const {
+    errors: { credentials },
+  } = useAuthPageSetup();
+
+  return {
+    control,
+    changeEmail: () =>
+      validateAndRunResult(
+        control,
+        () => runChange(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.fields.password.error = credentials;
+            return true;
+          } else return false;
+        },
+      ),
   };
 }
 
@@ -236,6 +276,7 @@ export const defaultUserRoutes = {
   login: { label: "Login", allowGuests: true, forwardAuthenticated: true },
   logout: { label: "Logout", allowGuests: false },
   changePassword: { label: "Change password", allowGuests: true },
+  changeEmail: { label: "Change email", allowGuests: false },
   resetPassword: {
     label: "Reset password",
     allowGuests: true,

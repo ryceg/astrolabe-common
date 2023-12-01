@@ -7,6 +7,8 @@ import { useNavigationService } from "./navigation";
 export interface UserState {
   busy: boolean;
   loggedIn: boolean;
+  email?: string;
+  name?: string;
   accessToken?: string | null;
 }
 
