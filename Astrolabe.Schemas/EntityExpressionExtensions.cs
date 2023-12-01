@@ -18,8 +18,8 @@ public static class EntityExpressionExtensions
 
     private static bool NodeEquals(JsonNode? node, object? value)
     {
-        if (node == null && value == null)
-            return true;
+        if (node == null)
+            return value == null;
         return (node, value) switch
         {
             ({} n, JsonElement e) => n.AsValue() == JsonValue.Create(e),

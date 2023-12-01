@@ -35,9 +35,9 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         return Guid.NewGuid().ToString();
     }
 
-    protected virtual async Task ApplyCreationRules(CreateNewUserValidator<TNewUser> validator)
+    protected virtual Task ApplyCreationRules(CreateNewUserValidator<TNewUser> validator)
     {
-        
+        return Task.CompletedTask;
     }
 
     protected virtual void ApplyPasswordRules<T>(AbstractValidator<T> validator) where T : IPasswordHolder
@@ -64,7 +64,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         return token;
     }
 
-    protected abstract Task<string> AuthenticatedHashed(AuthenticateRequest authenticateRequest, string hashedPassword);
+    protected abstract Task<string?> AuthenticatedHashed(AuthenticateRequest authenticateRequest, string hashedPassword);
 
     public async Task ForgotPassword(string email)
     {

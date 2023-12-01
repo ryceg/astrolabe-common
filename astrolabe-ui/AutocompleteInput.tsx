@@ -103,6 +103,7 @@ export function AutocompleteInput<A>({
         )}
         <input
           className={input}
+          type="text"
           placeholder={inputPlaceholder}
           {...getInputProps()}
         />
