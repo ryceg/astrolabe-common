@@ -10,6 +10,7 @@ export interface UserState {
   email?: string;
   name?: string;
   accessToken?: string | null;
+  afterLoginHref?: string;
 }
 
 export interface SecurityService {
@@ -115,6 +116,7 @@ export interface PageSecurity {
 export function usePageSecurity(
   loginHref: string = "/login",
   defaultHref: string = "/",
+  logoutHref: string = "/logout",
 ): boolean {
   const security = useSecurityService();
   const nav = useNavigationService<PageSecurity>();
@@ -127,12 +129,15 @@ export function usePageSecurity(
 
   useEffect(() => {
     if (forwardLogin) {
+      fields.afterLoginHref.value =
+        nav.pathname !== logoutHref ? nav.pathAndQuery() : undefined;
       nav.push(loginHref);
     }
   }, [forwardLogin]);
   useEffect(() => {
     if (forwardAuth) {
-      nav.replace(defaultHref);
+      nav.replace(fields.afterLoginHref.value ?? defaultHref);
+      fields.afterLoginHref.value = undefined;
     }
   }, [forwardAuth]);
   return busy || forwardAuth || forwardLogin;

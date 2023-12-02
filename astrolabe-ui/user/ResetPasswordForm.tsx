@@ -1,9 +1,9 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { LoginContainer } from "./LoginContainer";
 import { ResetPasswordFormData } from "@astrolabe/client/app/user";
 import { CircularProgress } from "../CircularProgress";
+import { UserFormContainer } from "./UserFormContainer";
 
 export function ResetPasswordForm({
   className,
@@ -20,7 +20,7 @@ export function ResetPasswordForm({
   } = control;
   const hasBeenReset = useControl(false);
   return (
-    <LoginContainer className={className}>
+    <UserFormContainer className={className}>
       {hasBeenReset.value ? (
         <>
           <h2>Check email to continue</h2>
@@ -51,7 +51,7 @@ export function ResetPasswordForm({
           </form>
         </>
       )}
-    </LoginContainer>
+    </UserFormContainer>
   );
   async function doReset() {
     control.disabled = true;

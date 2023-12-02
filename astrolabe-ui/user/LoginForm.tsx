@@ -2,9 +2,9 @@ import { Textfield } from "../Textfield";
 import { Control, Fcheckbox, useControlEffect } from "@react-typed-forms/core";
 import { Button } from "../Button";
 import clsx from "clsx";
-import { LoginContainer } from "./LoginContainer";
 import { LoginFormData, useAuthPageSetup } from "@astrolabe/client/app/user";
 import { CircularProgress } from "../CircularProgress";
+import { UserFormContainer } from "./UserFormContainer";
 
 export function LoginForm({
   className,
@@ -31,7 +31,7 @@ export function LoginForm({
   const linkStyle =
     "font-medium text-primary-600 hover:underline dark:text-primary-500";
   return (
-    <LoginContainer className={className}>
+    <UserFormContainer className={className}>
       <h2>Login</h2>
       <form
         className="my-2 space-y-4"
@@ -73,6 +73,6 @@ export function LoginForm({
           Login
         </Button>
       </form>
-    </LoginContainer>
+    </UserFormContainer>
   );
 }

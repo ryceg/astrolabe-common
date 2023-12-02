@@ -11,9 +11,9 @@ export interface NavigationService<T = {}> {
   isReady: boolean;
   replace(path: string): void;
   push(path: string): void;
-  pathSegments: string[];
   Link: FC<AnchorHTMLAttributes<HTMLAnchorElement>>;
   route: RouteData<T>;
+  pathAndQuery(): string;
 }
 
 export interface NavigationServiceContext {

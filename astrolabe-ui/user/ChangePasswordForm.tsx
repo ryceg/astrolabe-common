@@ -1,9 +1,9 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { LoginContainer } from "./LoginContainer";
 import { ChangePasswordFormData } from "@astrolabe/client/app/user";
 import { CircularProgress } from "../CircularProgress";
+import { UserFormContainer } from "./UserFormContainer";
 
 export function ChangePasswordForm({
   className,
@@ -22,7 +22,7 @@ export function ChangePasswordForm({
   } = control;
   const passwordChanged = useControl(false);
   return (
-    <LoginContainer className={className}>
+    <UserFormContainer className={className}>
       {passwordChanged.value ? (
         <>
           <h2>You password has been changed</h2>
@@ -67,7 +67,7 @@ export function ChangePasswordForm({
           </form>
         </>
       )}
-    </LoginContainer>
+    </UserFormContainer>
   );
 
   async function doChange() {

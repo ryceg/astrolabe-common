@@ -1,10 +1,10 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { LoginContainer } from "./LoginContainer";
 import { SignupFormData, useAuthPageSetup } from "@astrolabe/client/app/user";
 import { CircularProgress } from "../CircularProgress";
 import { ReactNode } from "react";
+import { UserFormContainer } from "./UserFormContainer";
 
 export function SignupForm({
   className,
@@ -26,7 +26,7 @@ export function SignupForm({
   } = useAuthPageSetup();
   const accountCreated = useControl(false);
   return (
-    <LoginContainer className={className}>
+    <UserFormContainer className={className}>
       {accountCreated.value ? (
         <>
           <h2>Check email to continue</h2>
@@ -74,7 +74,7 @@ export function SignupForm({
           </form>
         </>
       )}
-    </LoginContainer>
+    </UserFormContainer>
   );
 
   async function doCreate() {

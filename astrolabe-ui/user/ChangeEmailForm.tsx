@@ -1,12 +1,9 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { LoginContainer } from "./LoginContainer";
-import {
-  ChangeEmailFormData,
-  ChangePasswordFormData,
-} from "@astrolabe/client/app/user";
+import { ChangeEmailFormData } from "@astrolabe/client/app/user";
 import { CircularProgress } from "../CircularProgress";
+import { UserFormContainer } from "./UserFormContainer";
 
 export function ChangeEmailForm({
   className,
@@ -23,7 +20,7 @@ export function ChangeEmailForm({
   } = control;
   const verifyEmail = useControl(false);
   return (
-    <LoginContainer className={className}>
+    <UserFormContainer className={className}>
       {verifyEmail.value ? (
         <>
           <h2>Check email to continue</h2>
@@ -59,7 +56,7 @@ export function ChangeEmailForm({
           </form>
         </>
       )}
-    </LoginContainer>
+    </UserFormContainer>
   );
 
   async function doChange() {
