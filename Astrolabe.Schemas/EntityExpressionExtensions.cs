@@ -22,6 +22,7 @@ public static class EntityExpressionExtensions
             return value == null;
         return (node, value) switch
         {
+            (JsonArray a, JsonElement e) => a.Contains(JsonValue.Create(e)),
             ({} n, JsonElement e) => n.AsValue() == JsonValue.Create(e),
             _ => throw new NotImplementedException()
         };
