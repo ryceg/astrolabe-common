@@ -12,15 +12,18 @@ export function useNextNavigationService<T = {}>(
   const router = useRouter();
   const searchParams = useSearchParams()!;
   const pathname = usePathname()!;
-  const segments = pathname ? pathname.split("/").filter((x) => x.length) : [];
+  const pathSegments = pathname
+    ? pathname.split("/").filter((x) => x.length)
+    : [];
 
   const query = parse(searchParams.toString());
   const route =
-    (routes && getMatchingRoute(routes, segments)) ??
+    (routes && getMatchingRoute(routes, pathSegments)) ??
     defaultRoute ??
     ({} as RouteData<T>);
   return {
     query,
+    pathSegments,
     pathname,
     isReady: true,
     ...router,

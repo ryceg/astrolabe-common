@@ -7,6 +7,7 @@ export interface NavigationService<T = {}> {
   query: ParsedUrlQuery;
   get(queryParam: string): string | null;
   getAll(queryParam: string): string[];
+  pathSegments: string[];
   pathname: string;
   isReady: boolean;
   replace(path: string): void;
