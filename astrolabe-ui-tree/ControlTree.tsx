@@ -58,6 +58,7 @@ export interface ControlTreeItemProps {
   indicator: boolean;
   insertState: Control<TreeInsertState | undefined>;
   active: Control<any>;
+  displayedNodes: ControlTreeNode[];
   onCollapse?: () => void;
   actions?: ReactNode;
 }
@@ -240,6 +241,7 @@ export function ControlTree({
           title={title ?? ""}
           indentationWidth={indentationWidth}
           indicator={indicator}
+          displayedNodes={treeItems}
           insertState={treeFields.dragInsert}
           active={dragState.fields.active}
           onCollapse={hasChildren ? () => onCollapse(x) : undefined}
