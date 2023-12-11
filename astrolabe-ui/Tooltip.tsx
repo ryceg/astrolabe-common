@@ -14,6 +14,7 @@ const tooltipVariants = cva(
 		variants: {
 			variant: {
 				default: "bg-white text-primary-950",
+				danger: "bg-danger-100 border-danger-700 text-danger-900",
 			},
 		},
 		defaultVariants: {
