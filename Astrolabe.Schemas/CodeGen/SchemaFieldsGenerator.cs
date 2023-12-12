@@ -74,7 +74,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         "EntityExpression",
         "DynamicProperty",
         "ControlAdornment",
-        "SchemaRestrictions"
+        "SchemaRestrictions",
+        "AdornmentPlacement"
     };
 
     public static string FormTypeName(Type type)

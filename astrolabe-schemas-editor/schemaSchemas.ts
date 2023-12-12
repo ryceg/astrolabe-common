@@ -10,6 +10,7 @@ import {
   SchemaField,
   EntityExpression,
   DynamicProperty,
+  AdornmentPlacement,
   ControlAdornment,
   IconMapping,
   SyncTextType,
@@ -18,7 +19,6 @@ import {
   DisplayData,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
-import { AdornmentPlacement } from "../client";
 
 export interface FieldOptionForm {
   name: string;
