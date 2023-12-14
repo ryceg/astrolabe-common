@@ -17,7 +17,7 @@ public class CodeGenController : ControllerBase
         var visitor = new SimpleTypeVisitor();
         var schemaFieldType = visitor.VisitType(typeof(SchemaField).ToContextualType());
         var controls = visitor.VisitType(typeof(ControlDefinition).ToContextualType());
-        var declarations = gen.CreateDeclarations(schemaFieldType).Concat(gen.CreateDeclarations(controls));
+        var declarations = gen.CollectData(schemaFieldType).Concat(gen.CollectData(controls));
         var file = TsFile.FromDeclarations(declarations.ToList());
         return file.ToSource();
     }

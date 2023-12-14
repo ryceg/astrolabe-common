@@ -1,19 +1,18 @@
 namespace Astrolabe.CodeGen.Typescript;
 
-public abstract class CodeGenerator<T>
+public abstract class CodeGenerator<T, D>
 {
     private HashSet<string> _alreadyAdded = new();
 
-    public IEnumerable<TsDeclaration> CreateDeclarations(T typeData)
+    public IEnumerable<D> CollectData(T typeData)
     {
         var key = TypeKey(typeData);
-        if (_alreadyAdded.Contains(key))
-            return Array.Empty<TsDeclaration>();
-        _alreadyAdded.Add(key);
-        return ToDeclarations(typeData);
+        if (!_alreadyAdded.Add(key))
+            return Array.Empty<D>();
+        return ToData(typeData);
     }
 
     protected abstract string TypeKey(T typeData);
 
-    protected abstract IEnumerable<TsDeclaration> ToDeclarations(T typeData);
+    protected abstract IEnumerable<D> ToData(T typeData);
 }

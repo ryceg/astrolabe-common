@@ -8,7 +8,7 @@ using Astrolabe.CodeGen.Typescript;
 
 namespace Astrolabe.Schemas.CodeGen;
 
-public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
+public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration>
 {
     private readonly SchemaFieldsGeneratorOptions _options;
     private readonly IEnumerable<TsType> _customFieldTypeParams;
@@ -131,11 +131,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
         };
     }
 
-    protected override IEnumerable<TsDeclaration> ToDeclarations(SimpleTypeData typeData)
+    protected override IEnumerable<TsDeclaration> ToData(SimpleTypeData typeData)
     {
         return typeData switch
         {
-            EnumerableTypeData enumerableTypeData => CreateDeclarations(enumerableTypeData.Element()),
+            EnumerableTypeData enumerableTypeData => CollectData(enumerableTypeData.Element()),
             ObjectTypeData objectTypeData => ObjectDeclarations(objectTypeData),
             _ => Array.Empty<TsDeclaration>()
         };
@@ -149,7 +149,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData>
             var controlsInterface = new TsInterface(FormTypeName(type),
                 new TsObjectType(members.Select(ControlsMember)));
 
-            var deps = objectTypeData.Members.SelectMany(x => CreateDeclarations(x.Data()));
+            var deps = objectTypeData.Members.SelectMany(x => CollectData(x.Data()));
 
             var tsConstName = SchemaConstName(type);
             var tsAllName = FormTypeName(type);
