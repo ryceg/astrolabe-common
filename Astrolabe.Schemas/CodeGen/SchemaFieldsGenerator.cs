@@ -345,6 +345,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
             return stringEnum ? info.Name : (int)info.GetValue(null)!;
         }
     }
+
+    public IEnumerable<TsDeclaration> CreateDeclarations(SimpleTypeData visitType)
+    {
+        return CollectData(visitType);
+    }
 }
 
 public class SchemaFieldsGeneratorOptions
