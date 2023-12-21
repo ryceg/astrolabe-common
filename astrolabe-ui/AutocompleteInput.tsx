@@ -1,10 +1,8 @@
 import { useAutocomplete } from "@mui/base";
 import * as React from "react";
-import { forwardRef, Key, ReactElement, ReactNode } from "react";
+import { Key, ReactElement, ReactNode } from "react";
 import { Control, useControl } from "@react-typed-forms/core";
 import { UseAutocompleteProps } from "@mui/base/useAutocomplete/useAutocomplete";
-import { PatternFormat } from "react-number-format";
-import { InternalNumberFormatBase } from "react-number-format/types/types";
 
 export const defaultAutocompleteClasses: AutocompleteClasses = {
   container: "relative",
@@ -14,11 +12,6 @@ export const defaultAutocompleteClasses: AutocompleteClasses = {
   input: "w-full",
   option: "",
 };
-
-export interface PatternFormatInputProps {
-  format: string;
-  mask?: string | string[];
-}
 
 export interface AutocompleteInputProps<A>
   extends UseAutocompleteProps<A, false, false, true> {
@@ -36,7 +29,12 @@ export interface AutocompleteInputProps<A>
     a: A,
   ) => ReactElement;
   classes?: Partial<AutocompleteClasses>;
-  inputPattern?: PatternFormatInputProps;
+  renderInput?: (
+    inputProps: React.InputHTMLAttributes<HTMLInputElement> & {
+      ref: React.Ref<HTMLInputElement>;
+    },
+  ) => ReactElement;
+  dontFilter?: boolean;
 }
 
 export interface AutocompleteClasses {
@@ -46,21 +44,6 @@ export interface AutocompleteClasses {
   optionList: string;
   option: string;
 }
-
-const PatternFormatInput = forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement> &
-    PatternFormatInputProps & { className: string }
->(({ className, mask, format, ...props }, ref) => (
-  <PatternFormat
-    className={className}
-    format={format}
-    mask={mask ?? "_"}
-    allowEmptyFormatting
-    getInputRef={ref}
-    {...(props as InternalNumberFormatBase)}
-  />
-));
 
 export function AutocompleteInput<A>({
   getOptionText,
@@ -73,7 +56,8 @@ export function AutocompleteInput<A>({
   selectedControl: sc,
   classes,
   getOptionContent,
-  inputPattern,
+  renderInput = (p) => <input {...p} />,
+  dontFilter,
   ...useProps
 }: AutocompleteInputProps<A>) {
   const textControl = useControl("", { use: tc });
@@ -92,7 +76,7 @@ export function AutocompleteInput<A>({
     value: selectedControl.value,
     getOptionLabel: (v) => (typeof v === "string" ? v : getOptionText(v)),
     filterOptions: (o, s) =>
-      inputPattern
+      dontFilter
         ? o
         : o.filter((o) =>
             getOptionMatchText(o)
@@ -130,21 +114,12 @@ export function AutocompleteInput<A>({
             {label}
           </label>
         )}
-        {inputPattern ? (
-          <PatternFormatInput
-            className={input}
-            {...inputPattern}
-            {...inputProps}
-            ref={ref}
-          />
-        ) : (
-          <input
-            className={input}
-            type="text"
-            placeholder={inputPlaceholder}
-            {...getInputProps()}
-          />
-        )}
+        {renderInput({
+          className: input,
+          type: "text",
+          placeholder: inputPlaceholder,
+          ...getInputProps(),
+        })}
       </div>
       {groupedOptions.length > 0 ? (
         <ul className={optionList} {...getListboxProps()}>
