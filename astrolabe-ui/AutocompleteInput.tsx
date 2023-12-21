@@ -29,6 +29,12 @@ export interface AutocompleteInputProps<A>
     a: A,
   ) => ReactElement;
   classes?: Partial<AutocompleteClasses>;
+  renderInput?: (
+    inputProps: React.InputHTMLAttributes<HTMLInputElement> & {
+      ref: React.Ref<HTMLInputElement>;
+    },
+  ) => ReactElement;
+  dontFilter?: boolean;
 }
 
 export interface AutocompleteClasses {
@@ -50,6 +56,8 @@ export function AutocompleteInput<A>({
   selectedControl: sc,
   classes,
   getOptionContent,
+  renderInput = (p) => <input {...p} />,
+  dontFilter,
   ...useProps
 }: AutocompleteInputProps<A>) {
   const textControl = useControl("", { use: tc });
@@ -68,11 +76,13 @@ export function AutocompleteInput<A>({
     value: selectedControl.value,
     getOptionLabel: (v) => (typeof v === "string" ? v : getOptionText(v)),
     filterOptions: (o, s) =>
-      o.filter((o) =>
-        getOptionMatchText(o)
-          .toLowerCase()
-          .includes(s.inputValue.toLowerCase()),
-      ),
+      dontFilter
+        ? o
+        : o.filter((o) =>
+            getOptionMatchText(o)
+              .toLowerCase()
+              .includes(s.inputValue.toLowerCase()),
+          ),
     inputValue: textControl.value,
     onChange: (e, v, reason, d) => {
       if (reason === "selectOption") selectedControl.value = v as A;
@@ -93,6 +103,7 @@ export function AutocompleteInput<A>({
     ...defaultAutocompleteClasses,
     ...classes,
   };
+
   return (
     <div className={container}>
       <div {...getRootProps()}>
@@ -101,12 +112,12 @@ export function AutocompleteInput<A>({
             {label}
           </label>
         )}
-        <input
-          className={input}
-          type="text"
-          placeholder={inputPlaceholder}
-          {...getInputProps()}
-        />
+        {renderInput({
+          className: input,
+          type: "text",
+          placeholder: inputPlaceholder,
+          ...getInputProps(),
+        })}
       </div>
       {groupedOptions.length > 0 ? (
         <ul className={optionList} {...getListboxProps()}>
