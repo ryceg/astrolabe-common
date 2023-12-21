@@ -104,8 +104,6 @@ export function AutocompleteInput<A>({
     ...classes,
   };
 
-  const { ref, ...inputProps } = getInputProps();
-
   return (
     <div className={container}>
       <div {...getRootProps()}>
