@@ -10,7 +10,7 @@ export const defaultAutocompleteClasses: AutocompleteClasses = {
   container: "relative",
   label: "font-bold",
   optionList:
-      "absolute border border-black p-2 rounded cursor-pointer bg-white",
+    "absolute border border-black p-2 rounded cursor-pointer bg-white",
   input: "w-full",
   option: "",
 };
@@ -20,7 +20,8 @@ export interface PatternFormatInputProps {
   mask?: string | string[];
 }
 
-export interface AutocompleteInputProps<A> extends UseAutocompleteProps<A, false, false, true> {
+export interface AutocompleteInputProps<A>
+  extends UseAutocompleteProps<A, false, false, true> {
   label?: ReactNode;
   textControl?: Control<string>;
   selectedControl?: Control<A | null>;
@@ -30,9 +31,9 @@ export interface AutocompleteInputProps<A> extends UseAutocompleteProps<A, false
   getOptionContent?: (a: A) => ReactNode;
   inputPlaceholder?: string;
   renderOption?: (
-      props: React.HTMLAttributes<HTMLLIElement>,
-      key: Key,
-      a: A,
+    props: React.HTMLAttributes<HTMLLIElement>,
+    key: Key,
+    a: A,
   ) => ReactElement;
   classes?: Partial<AutocompleteClasses>;
   inputPattern?: PatternFormatInputProps;
@@ -47,34 +48,34 @@ export interface AutocompleteClasses {
 }
 
 const PatternFormatInput = forwardRef<
-    HTMLInputElement,
-    React.InputHTMLAttributes<HTMLInputElement> &
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement> &
     PatternFormatInputProps & { className: string }
 >(({ className, mask, format, ...props }, ref) => (
-    <PatternFormat
-        className={className}
-        format={format}
-        mask={mask ?? "_"}
-        allowEmptyFormatting
-        getInputRef={ref}
-        {...(props as InternalNumberFormatBase)}
-    />
+  <PatternFormat
+    className={className}
+    format={format}
+    mask={mask ?? "_"}
+    allowEmptyFormatting
+    getInputRef={ref}
+    {...(props as InternalNumberFormatBase)}
+  />
 ));
 
 export function AutocompleteInput<A>({
-                                       getOptionText,
-                                       options,
-                                       inputPlaceholder,
-                                       label,
-                                       getOptionMatchText = getOptionText,
-                                       renderOption = defaultRenderOption,
-                                       textControl: tc,
-                                       selectedControl: sc,
-                                       classes,
-                                       getOptionContent,
-                                       inputPattern,
-                                       ...useProps
-                                     }: AutocompleteInputProps<A>) {
+  getOptionText,
+  options,
+  inputPlaceholder,
+  label,
+  getOptionMatchText = getOptionText,
+  renderOption = defaultRenderOption,
+  textControl: tc,
+  selectedControl: sc,
+  classes,
+  getOptionContent,
+  inputPattern,
+  ...useProps
+}: AutocompleteInputProps<A>) {
   const textControl = useControl("", { use: tc });
   const selectedControl = useControl(null, { use: sc });
 
@@ -91,13 +92,13 @@ export function AutocompleteInput<A>({
     value: selectedControl.value,
     getOptionLabel: (v) => (typeof v === "string" ? v : getOptionText(v)),
     filterOptions: (o, s) =>
-        inputPattern
-            ? o
-            : o.filter((o) =>
-                getOptionMatchText(o)
-                    .toLowerCase()
-                    .includes(s.inputValue.toLowerCase()),
-            ),
+      inputPattern
+        ? o
+        : o.filter((o) =>
+            getOptionMatchText(o)
+              .toLowerCase()
+              .includes(s.inputValue.toLowerCase()),
+          ),
     inputValue: textControl.value,
     onChange: (e, v, reason, d) => {
       if (reason === "selectOption") selectedControl.value = v as A;
@@ -122,49 +123,49 @@ export function AutocompleteInput<A>({
   const { ref, ...inputProps } = getInputProps();
 
   return (
-      <div className={container}>
-        <div {...getRootProps()}>
-          {label && (
-              <label className={labelClass} {...getInputLabelProps()}>
-                {label}
-              </label>
-          )}
-          {inputPattern ? (
-              <PatternFormatInput
-                  className={input}
-                  {...inputPattern}
-                  {...inputProps}
-                  ref={ref}
-              />
-          ) : (
-              <input
-                  className={input}
-                  type="text"
-                  placeholder={inputPlaceholder}
-                  {...getInputProps()}
-              />
-          )}
-        </div>
-        {groupedOptions.length > 0 ? (
-            <ul className={optionList} {...getListboxProps()}>
-              {(groupedOptions as A[]).map((x, i) => {
-                const { key, ...optionProps } = getOptionProps({
-                  index: i,
-                  option: x,
-                }) as React.HTMLAttributes<HTMLLIElement> & { key: Key };
-                optionProps.className = option;
-                optionProps.children = getOptionContent?.(x) ?? getOptionText(x);
-                return renderOption(optionProps, key, x);
-              })}
-            </ul>
-        ) : null}
+    <div className={container}>
+      <div {...getRootProps()}>
+        {label && (
+          <label className={labelClass} {...getInputLabelProps()}>
+            {label}
+          </label>
+        )}
+        {inputPattern ? (
+          <PatternFormatInput
+            className={input}
+            {...inputPattern}
+            {...inputProps}
+            ref={ref}
+          />
+        ) : (
+          <input
+            className={input}
+            type="text"
+            placeholder={inputPlaceholder}
+            {...getInputProps()}
+          />
+        )}
       </div>
+      {groupedOptions.length > 0 ? (
+        <ul className={optionList} {...getListboxProps()}>
+          {(groupedOptions as A[]).map((x, i) => {
+            const { key, ...optionProps } = getOptionProps({
+              index: i,
+              option: x,
+            }) as React.HTMLAttributes<HTMLLIElement> & { key: Key };
+            optionProps.className = option;
+            optionProps.children = getOptionContent?.(x) ?? getOptionText(x);
+            return renderOption(optionProps, key, x);
+          })}
+        </ul>
+      ) : null}
+    </div>
   );
 }
 
 function defaultRenderOption(
-    props: React.HTMLAttributes<HTMLLIElement>,
-    key: Key,
+  props: React.HTMLAttributes<HTMLLIElement>,
+  key: Key,
 ) {
   return <li key={key} {...props} />;
 }

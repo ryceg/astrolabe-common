@@ -25,12 +25,12 @@ importers:
       typescript: 5.2.2
     dependencies:
       '@react-typed-forms/core': 3.0.0-dev.108
+      '@types/node': 20.8.6
       clsx: 2.0.0
       react: 18.2.0
       react-dnd: 16.0.1_zjyz4fgrnxzkanarnnocfvifxm
       tailwind-merge: 1.14.0
     devDependencies:
-      '@types/node': 20.8.6
       '@types/react': 18.2.37
       '@types/shallowequal': 1.1.2
       prettier: 3.0.3
@@ -92,6 +92,7 @@ importers:
       react-dnd: 16.0.1
       react-dnd-html5-backend: 16.0.1
       react-dom: ^18.2.0
+      react-number-format: 5.3.1
       shallowequal: ^1.1.0
       tailwind-merge: 1.14.0
       typescript: 5.2.2
@@ -117,6 +118,7 @@ importers:
       react-dnd: 16.0.1_zjyz4fgrnxzkanarnnocfvifxm
       react-dnd-html5-backend: 16.0.1
       react-dom: 18.2.0_react@18.2.0
+      react-number-format: 5.3.1_biqbaboplfbrettd7655fr4n2y
       shallowequal: 1.1.0
       tailwind-merge: 1.14.0
     devDependencies:
@@ -6488,6 +6490,17 @@ packages:
 
   /react-is/18.2.0:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
+    dev: false
+
+  /react-number-format/5.3.1_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-qpYcQLauIeEhCZUZY9jXZnnroOtdy3jYaS1zQ3M1Sr6r/KMOBEIGNIb7eKT19g2N1wbYgFgvDzs19hw5TrB8XQ==}
+    peerDependencies:
+      react: ^0.14 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^0.14 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      prop-types: 15.8.1
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
     dev: false
 
   /react-refresh/0.14.0:
