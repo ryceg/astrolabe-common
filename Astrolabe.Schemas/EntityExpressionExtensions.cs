@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Astrolabe.JSON;
+using Jsonata.Net.Native;
+using Jsonata.Net.Native.Json;
+using Jsonata.Net.Native.SystemTextJson;
 
 namespace Astrolabe.Schemas;
 
@@ -11,9 +14,19 @@ public static class EntityExpressionExtensions
         return expression switch
         {
             FieldValueExpression expr => NodeEquals(context.Field(expr.Field).Traverse(data), expr.Value),
-            _ => throw new NotImplementedException()
+            JsonataExpression expr => RunJsonata(expr.Expression)
         };
         
+        bool RunJsonata(string expr)
+        {
+            var result = new JsonataQuery(expr).Eval(
+                JsonataExtensions.FromSystemTextJson(JsonDocument.Parse(data.ToJsonString())));
+            if (result.Type == JTokenType.Boolean)
+            {
+                return (bool)result;
+            }
+            return false;
+        }
     }
 
     private static bool NodeEquals(JsonNode? node, object? value)
