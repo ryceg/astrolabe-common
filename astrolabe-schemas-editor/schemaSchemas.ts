@@ -7,6 +7,7 @@ import {
   applyDefaultValues,
   makeCompoundField,
   SchemaRestrictions,
+  SchemaValidator,
   SchemaField,
   EntityExpression,
   DynamicProperty,
@@ -66,6 +67,39 @@ export function toSchemaRestrictionsForm(
   return applyDefaultValues(v, SchemaRestrictionsSchema);
 }
 
+export interface SchemaValidatorForm {
+  type: string;
+  expression: string;
+}
+
+export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
+  type: makeScalarField({
+    type: FieldType.String,
+    isTypeField: true,
+    required: true,
+    displayName: "Type",
+    options: [
+      {
+        name: "Jsonata",
+        value: "Jsonata",
+      },
+    ],
+  }),
+  expression: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Jsonata"],
+    required: true,
+    displayName: "Expression",
+  }),
+});
+
+export const defaultSchemaValidatorForm: SchemaValidatorForm =
+  defaultValueForFields(SchemaValidatorSchema);
+
+export function toSchemaValidatorForm(v: SchemaValidator): SchemaValidatorForm {
+  return applyDefaultValues(v, SchemaValidatorSchema);
+}
+
 export interface SchemaFieldForm {
   type: string;
   field: string;
@@ -80,6 +114,7 @@ export interface SchemaFieldForm {
   searchable: boolean | null;
   options: FieldOptionForm[] | null;
   restrictions: SchemaRestrictionsForm | null;
+  validators: SchemaValidatorForm[] | null;
   entityRefType: string;
   parentField: string | null;
   children: SchemaFieldForm[];
@@ -143,6 +178,11 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   restrictions: makeCompoundField({
     children: SchemaRestrictionsSchema,
     displayName: "Restrictions",
+  }),
+  validators: makeCompoundField({
+    children: SchemaValidatorSchema,
+    collection: true,
+    displayName: "Validators",
   }),
   entityRefType: makeScalarField({
     type: FieldType.String,
@@ -631,6 +671,7 @@ export interface ControlDefinitionForm {
   renderOptions: RenderOptionsForm | null;
   defaultValue: any | null;
   readonly: boolean | null;
+  validators: SchemaValidatorForm[] | null;
   children: ControlDefinitionForm[];
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
@@ -705,6 +746,12 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     onlyForTypes: ["Data"],
     defaultValue: false,
     displayName: "Readonly",
+  }),
+  validators: makeCompoundField({
+    children: SchemaValidatorSchema,
+    collection: true,
+    onlyForTypes: ["Data"],
+    displayName: "Validators",
   }),
   children: makeCompoundField({
     treeChildren: true,

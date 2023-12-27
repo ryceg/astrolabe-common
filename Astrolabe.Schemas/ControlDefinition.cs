@@ -42,6 +42,8 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     
     [DefaultValue(false)]
     public bool? Readonly { get; set; }
+    
+    public IEnumerable<SchemaValidator>? Validators { get; set; }
 }
 
 public record GroupedControlsDefinition([property: SchemaTag(SchemaTags.NoControl)]  IEnumerable<ControlDefinition> Children) : ControlDefinition(ControlDefinitionType.Group.ToString()) 

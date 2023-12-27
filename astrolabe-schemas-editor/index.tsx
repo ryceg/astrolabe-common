@@ -145,7 +145,7 @@ export function makeEditorFormHooks(
     },
     useDataProperties: (fs, c, sf) => {
       const control = fs.data.fields[sf.field];
-      const visible = useIsControlVisible(c, fs, editHooks.useExpression);
+      const visible = useIsControlVisible(c, fs, editHooks.schemaHooks);
       const fieldList = fields.value;
       const otherField = sf.tags?.find(isSchemaOptionTag);
       const [options, field] = otherField
@@ -214,7 +214,7 @@ export function makeEditorFormHooks(
       }
     },
     useActionProperties(fs, def): ActionRendererProps {
-      const visible = useIsControlVisible(def, fs, editHooks.useExpression);
+      const visible = useIsControlVisible(def, fs, editHooks.schemaHooks);
       return {
         visible,
         definition: def,

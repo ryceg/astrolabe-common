@@ -31,6 +31,8 @@ public abstract record SchemaField(string Type, string Field)
     
     public SchemaRestrictions? Restrictions { get; set; }
     
+    public IEnumerable<SchemaValidator>? Validators { get; set; }
+    
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 
