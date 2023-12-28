@@ -77,7 +77,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         "SchemaRestrictions",
         "AdornmentPlacement",
         "SchemaValidator",
-        "JsonataValidator"
+        "JsonataValidator",
+        "DateComparison",
+        "DateValidator",
     };
 
     public static string FormTypeName(Type type)

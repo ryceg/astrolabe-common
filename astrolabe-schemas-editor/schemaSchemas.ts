@@ -7,6 +7,7 @@ import {
   applyDefaultValues,
   makeCompoundField,
   SchemaRestrictions,
+  DateComparison,
   SchemaValidator,
   SchemaField,
   EntityExpression,
@@ -70,6 +71,9 @@ export function toSchemaRestrictionsForm(
 export interface SchemaValidatorForm {
   type: string;
   expression: string;
+  comparison: DateComparison;
+  fixedDate: string | null;
+  daysFromCurrent: number | null;
 }
 
 export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
@@ -83,6 +87,10 @@ export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
         name: "Jsonata",
         value: "Jsonata",
       },
+      {
+        name: "Date",
+        value: "Date",
+      },
     ],
   }),
   expression: makeScalarField({
@@ -90,6 +98,32 @@ export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
     onlyForTypes: ["Jsonata"],
     required: true,
     displayName: "Expression",
+  }),
+  comparison: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Date"],
+    required: true,
+    displayName: "Comparison",
+    options: [
+      {
+        name: "Not Before",
+        value: "NotBefore",
+      },
+      {
+        name: "Not After",
+        value: "NotAfter",
+      },
+    ],
+  }),
+  fixedDate: makeScalarField({
+    type: FieldType.Date,
+    onlyForTypes: ["Date"],
+    displayName: "FixedDate",
+  }),
+  daysFromCurrent: makeScalarField({
+    type: FieldType.Int,
+    onlyForTypes: ["Date"],
+    displayName: "DaysFromCurrent",
   }),
 });
 
