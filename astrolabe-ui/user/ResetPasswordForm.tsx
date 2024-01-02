@@ -26,15 +26,15 @@ export function ResetPasswordForm({
           <h2>Check email to continue</h2>
           <p className="font-light text-gray-500 dark:text-gray-400">
             You will receive an email with furthers instructions on how to reset
-            your password
+            your password.
           </p>
         </>
       ) : (
         <>
           <h2>Forgot your password?</h2>
           <p className="font-light text-gray-500 dark:text-gray-400">
-            Don't fret! Just type in your email and we will send you a code to
-            reset your password!
+            Just type in your email and we will send you a code to reset your
+            password.
           </p>
           <form
             className="space-y-4 md:space-y-6"
