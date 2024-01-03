@@ -109,7 +109,7 @@ export function controlDropData(
   };
 }
 
-interface InternalHooksContext {
+export interface InternalHooksContext {
   makeOnClick?: (action: ActionControlDefinition) => () => void;
   tableList?: Control<FieldOption[] | undefined>;
   tableFields?: Control<SchemaFieldForm[]>;
