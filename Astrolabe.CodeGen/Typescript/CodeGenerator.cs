@@ -1,3 +1,5 @@
+using Namotion.Reflection;
+
 namespace Astrolabe.CodeGen.Typescript;
 
 public abstract class CodeGenerator<T, D>
@@ -10,6 +12,12 @@ public abstract class CodeGenerator<T, D>
         if (!_alreadyAdded.Add(key))
             return Array.Empty<D>();
         return ToData(typeData);
+    }
+
+    public IEnumerable<D> CollectDataForTypes(TypeVisitor<T> visitor, params Type[] types)
+    {
+        return types.Aggregate(Enumerable.Empty<D>(),
+            (o, t) => o.Concat(CollectData(visitor.VisitType(t.ToContextualType()))));
     }
 
     protected abstract string TypeKey(T typeData);

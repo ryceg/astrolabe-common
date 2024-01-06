@@ -4,10 +4,10 @@ using Astrolabe.Annotation;
 
 namespace Astrolabe.Schemas;
 
-[JsonBaseType("SchemaType", typeof(SimpleSchemaField))]
+[JsonBaseType("type", typeof(SimpleSchemaField))]
 [JsonSubType("EntityRef", typeof(EntityRefField))]
 [JsonSubType("Compound", typeof(CompoundField))]
-public abstract record SchemaField(string Type, string Field)
+public abstract record SchemaField([property: SchemaOptions(typeof(FieldType))] string Type, string Field)
 {
     public string? DisplayName { get; set; }
     
