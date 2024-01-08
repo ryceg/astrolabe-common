@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using Astrolabe.Annotation;
+using Astrolabe.CodeGen;
 using Astrolabe.CodeGen.Typescript;
 
 namespace Astrolabe.Schemas.CodeGen;
@@ -17,7 +18,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
     {
     }
 
-    public SchemaFieldsGenerator(SchemaFieldsGeneratorOptions options)
+    public SchemaFieldsGenerator(SchemaFieldsGeneratorOptions options) : base(options, new SimpleTypeVisitor())
     {
         _options = options;
         if (_options.CustomFieldTypes != null)
@@ -31,24 +32,34 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         }
     }
 
+    private static TsImport FormLibImport(string type)
+    {
+        return new TsImport("@react-typed-forms/schemas", type);
+    }
+
+    private static TsImport EditorLibImport(string type)
+    {
+        return new TsImport("@astrolabe/schemas-editor/schemaSchemas", type);
+    }
+
     private static readonly TsRawExpr MakeScalarField =
-        new("makeScalarField", new TsImport("@react-typed-forms/schemas", "makeScalarField"));
+        new("makeScalarField", FormLibImport("makeScalarField"));
 
     private static readonly TsExpr MakeEntryExpr = new TsRawExpr("mkEntry", new TsImport(".", "mkEntry"));
-    private static readonly TsImport FieldTypeImport = new("@react-typed-forms/schemas", "FieldType");
+    private static readonly TsImport FieldTypeImport = FormLibImport("FieldType");
 
 
     private static readonly TsImport ApplyDefaultValuesImport =
-        new TsImport("@react-typed-forms/schemas", "applyDefaultValues");
+        FormLibImport("applyDefaultValues");
 
     private static readonly TsImport DefaultValueForFields =
-        new TsImport("@react-typed-forms/schemas", "defaultValueForFields");
+        FormLibImport("defaultValueForFields");
 
     private static readonly TsRawExpr MakeCompoundField = new TsRawExpr("makeCompoundField",
-        new TsImport("@react-typed-forms/schemas", "makeCompoundField"));
+        FormLibImport("makeCompoundField"));
 
     private static readonly TsRawExpr BuildSchemaFunc =
-        new("buildSchema", new TsImport("@react-typed-forms/schemas", "buildSchema"));
+        new("buildSchema", FormLibImport("buildSchema"));
 
     private static readonly HashSet<string> FormLibTypes = new()
     {
@@ -79,7 +90,15 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         "SchemaValidator",
         "JsonataValidator",
         "DateComparison",
-        "DateValidator",
+        "DateValidator"
+    };
+
+    private static readonly HashSet<string> EditorLibImports = new()
+    {
+        "SchemaFieldForm",
+        "SchemaFieldSchema",
+        "ControlDefinitionForm",
+        "ControlDefinitionSchema"
     };
 
     public static string FormTypeName(Type type)
@@ -116,20 +135,17 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
                                  $"return applyDefaultValues(v, {SchemaConstName(type)});" + "\n}\n",
             new TsImports(new[] { ClientImport(type), ApplyDefaultValuesImport }));
     }
-
-
+    
     private TsImport ClientImport(Type type)
     {
-        return FormLibTypes.Contains(type.Name)
-            ? new TsImport("@react-typed-forms/schemas", type.Name)
-            : _options.ImportType(type);
+        return FormLibTypes.Contains(type.Name) ? FormLibImport(type.Name) : _options.ImportType(type);
     }
 
     protected override string TypeKey(SimpleTypeData typeData)
     {
         return typeData switch
         {
-            EnumerableTypeData enumerableTypeData => enumerableTypeData.Element().Type.Name+"[]",
+            EnumerableTypeData enumerableTypeData => enumerableTypeData.Element().Type.Name + "[]",
             ObjectTypeData objectTypeData => objectTypeData.Type.Name,
             _ => ""
         };
@@ -212,7 +228,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
     }
 
     private Type? GetEnumType(SimpleTypeData data)
-    {     
+    {
         return data switch
         {
             EnumerableTypeData enumerableTypeData => GetEnumType(enumerableTypeData.Element()),
@@ -249,7 +265,10 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         if (type == typeof(object) ||
             (type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition())))
             return new TsTypeRef("any");
-        return new TsTypeRef(FormTypeName(type));
+        var formName = FormTypeName(type);
+        return !_options.ForEditorLib && EditorLibImports.Contains(formName)
+            ? EditorLibImport(formName).TypeRef
+            : new TsTypeRef(formName);
     }
 
     private static TsCallExpression SetOptions(TsCallExpression call, IDictionary<string, object?> options)
@@ -307,9 +326,17 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
                 }
                 : new[]
                 {
-                    TsObjectField.NamedField("children", new TsRawExpr(SchemaConstName(objectTypeData.Type)))
+                    TsObjectField.NamedField("children", ChildSchemaExpr(objectTypeData.Type))
                 };
             return TsCallExpression.Make(MakeCompoundField, TsObjectExpr.Make(fields));
+        }
+
+        TsExpr ChildSchemaExpr(Type type)
+        {
+            var constName = SchemaConstName(type);
+            return !_options.ForEditorLib && EditorLibImports.Contains(constName)
+                ? EditorLibImport(constName).Ref
+                : new TsRawExpr(constName);
         }
     }
 
@@ -356,7 +383,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
     }
 }
 
-public class SchemaFieldsGeneratorOptions
+public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
 {
     public Func<Type, TsImport> ImportType { get; }
 
@@ -374,6 +401,8 @@ public class SchemaFieldsGeneratorOptions
     public Func<Type, string?>? CustomFieldType { get; set; }
 
     public IEnumerable<string>? CustomFieldTypes { get; set; }
+
+    public bool ForEditorLib { get; set; }
 
     public bool ShouldCreateConvert(Type type)
     {

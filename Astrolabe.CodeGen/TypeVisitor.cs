@@ -3,7 +3,7 @@ using System.Reflection;
 using CaseExtensions;
 using Namotion.Reflection;
 
-namespace Astrolabe.CodeGen.Typescript;
+namespace Astrolabe.CodeGen;
 
 public abstract class TypeVisitor<T>
 {

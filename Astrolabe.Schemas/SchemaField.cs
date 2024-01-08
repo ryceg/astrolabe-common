@@ -29,8 +29,6 @@ public abstract record SchemaField([property: SchemaOptions(typeof(FieldType))] 
     
     public IEnumerable<FieldOption>? Options { get; set; }
     
-    public SchemaRestrictions? Restrictions { get; set; }
-    
     public IEnumerable<SchemaValidator>? Validators { get; set; }
     
     [JsonExtensionData]

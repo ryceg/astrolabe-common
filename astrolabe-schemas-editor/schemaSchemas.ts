@@ -5,10 +5,9 @@ import {
   defaultValueForFields,
   FieldOption,
   applyDefaultValues,
-  makeCompoundField,
-  SchemaRestrictions,
   DateComparison,
   SchemaValidator,
+  makeCompoundField,
   SchemaField,
   EntityExpression,
   DynamicProperty,
@@ -45,27 +44,6 @@ export const defaultFieldOptionForm: FieldOptionForm =
 
 export function toFieldOptionForm(v: FieldOption): FieldOptionForm {
   return applyDefaultValues(v, FieldOptionSchema);
-}
-
-export interface SchemaRestrictionsForm {
-  options: FieldOptionForm[] | null;
-}
-
-export const SchemaRestrictionsSchema = buildSchema<SchemaRestrictionsForm>({
-  options: makeCompoundField({
-    children: FieldOptionSchema,
-    collection: true,
-    displayName: "Options",
-  }),
-});
-
-export const defaultSchemaRestrictionsForm: SchemaRestrictionsForm =
-  defaultValueForFields(SchemaRestrictionsSchema);
-
-export function toSchemaRestrictionsForm(
-  v: SchemaRestrictions,
-): SchemaRestrictionsForm {
-  return applyDefaultValues(v, SchemaRestrictionsSchema);
 }
 
 export interface SchemaValidatorForm {
@@ -147,7 +125,6 @@ export interface SchemaFieldForm {
   isTypeField: boolean | null;
   searchable: boolean | null;
   options: FieldOptionForm[] | null;
-  restrictions: SchemaRestrictionsForm | null;
   validators: SchemaValidatorForm[] | null;
   entityRefType: string;
   parentField: string | null;
@@ -158,8 +135,55 @@ export interface SchemaFieldForm {
 export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   type: makeScalarField({
     type: FieldType.String,
+    isTypeField: true,
     required: true,
     displayName: "Type",
+    options: [
+      {
+        name: "String",
+        value: "String",
+      },
+      {
+        name: "Bool",
+        value: "Bool",
+      },
+      {
+        name: "Int",
+        value: "Int",
+      },
+      {
+        name: "Date",
+        value: "Date",
+      },
+      {
+        name: "DateTime",
+        value: "DateTime",
+      },
+      {
+        name: "Double",
+        value: "Double",
+      },
+      {
+        name: "EntityRef",
+        value: "EntityRef",
+      },
+      {
+        name: "Compound",
+        value: "Compound",
+      },
+      {
+        name: "AutoId",
+        value: "AutoId",
+      },
+      {
+        name: "Image",
+        value: "Image",
+      },
+      {
+        name: "Any",
+        value: "Any",
+      },
+    ],
   }),
   field: makeScalarField({
     type: FieldType.String,
@@ -208,10 +232,6 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
     children: FieldOptionSchema,
     collection: true,
     displayName: "Options",
-  }),
-  restrictions: makeCompoundField({
-    children: SchemaRestrictionsSchema,
-    displayName: "Restrictions",
   }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,

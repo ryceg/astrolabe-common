@@ -1,3 +1,4 @@
+using Astrolabe.CodeGen;
 using Astrolabe.CodeGen.Typescript;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
@@ -13,11 +14,8 @@ public class CodeGenController : ControllerBase
     [HttpGet("Schemas")]
     public string GetSchemas()
     {
-        var gen = new SchemaFieldsGenerator("../client");
-        var visitor = new SimpleTypeVisitor();
-        var schemaFieldType = visitor.VisitType(typeof(SchemaField).ToContextualType());
-        var controls = visitor.VisitType(typeof(ControlDefinition).ToContextualType());
-        var declarations = gen.CollectData(schemaFieldType).Concat(gen.CollectData(controls));
+        var gen = new SchemaFieldsGenerator(new SchemaFieldsGeneratorOptions("../client") {ForEditorLib = true});
+        var declarations = gen.CollectDataForTypes(typeof(SchemaField), typeof(ControlDefinition));
         var file = TsFile.FromDeclarations(declarations.ToList());
         return file.ToSource();
     }

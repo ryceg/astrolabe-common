@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using Astrolabe.Annotation;
+using Astrolabe.CodeGen;
 using Astrolabe.CodeGen.Typescript;
 
 namespace Astrolabe.Schemas.CodeGen;
@@ -14,7 +15,7 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
     
     private readonly Dictionary<Type, IEnumerable<SchemaField>> _typeToFields = new();
     
-    public SchemaFieldsInstanceGenerator(SchemaFieldsGeneratorOptions options)
+    public SchemaFieldsInstanceGenerator(SchemaFieldsGeneratorOptions options) : base(options, new SimpleTypeVisitor())
     {
         _options = options;
     }

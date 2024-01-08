@@ -143,7 +143,9 @@ export const SchemaFieldStructure: () => ControlSetup<
     true,
     (b) =>
       b
-        .withChildren((n) => n.fields.children)
+        .withChildren((n) =>
+          n.fields.type.value === "Compound" ? n.fields.children : undefined,
+        )
         .withDragging()
         .withDropping((n) => n === SchemaFieldNode)
         .withCustomRender((n, { children, renderItem }) => (

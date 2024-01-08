@@ -1,4 +1,4 @@
-namespace Astrolabe.CodeGen.Typescript;
+namespace Astrolabe.CodeGen;
 
 public class SimpleTypeVisitor : TypeVisitor<SimpleTypeData>
 {
