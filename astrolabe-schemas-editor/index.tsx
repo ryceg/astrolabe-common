@@ -204,8 +204,7 @@ export function makeEditorFormHooks(
                 (x) => x.fields.field.value === otherFieldName,
               ) ?? NonExistentField;
             const opts =
-              fieldInSchema.fields.options.value ??
-              fieldInSchema.fields.restrictions.fields?.options.value;
+              fieldInSchema.fields.options.value;
             return [
               opts && opts.length > 0 ? opts : undefined,
               { ...sf, type: fieldInSchema.fields.type.value },
