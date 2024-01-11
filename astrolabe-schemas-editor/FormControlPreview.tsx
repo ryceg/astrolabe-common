@@ -15,10 +15,10 @@ import {
   DisplayControlDefinition,
   DynamicPropertyType,
   FormEditHooks,
+  FormRenderer,
   getDefaultScalarControlProperties,
   GroupedControlsDefinition,
   SchemaField,
-  useFormRendererComponents,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import {
@@ -46,6 +46,7 @@ export interface FormControlPreviewContext {
   readonly?: boolean;
   VisibilityIcon: ReactNode;
   hooks: FormEditHooks;
+  renderer: FormRenderer;
 }
 
 export interface FormControlPreviewDataProps extends FormControlPreviewProps {
@@ -109,8 +110,10 @@ function ActionControlPreview({
   isSelected,
   item,
 }: FormControlPreviewDataProps) {
-  const { selected } = usePreviewContext();
-  const { renderAction } = useFormRendererComponents();
+  const {
+    selected,
+    renderer: { renderAction },
+  } = usePreviewContext();
 
   return (
     <motion.div
@@ -138,8 +141,10 @@ function DisplayControlPreview({
   isSelected,
   item,
 }: FormControlPreviewDataProps) {
-  const { renderDisplay } = useFormRendererComponents();
-  const { selected } = usePreviewContext();
+  const {
+    selected,
+    renderer: { renderDisplay },
+  } = usePreviewContext();
   return (
     <motion.div
       layout={defaultLayoutChange}
@@ -173,7 +178,7 @@ function DataControlPreview({
   fields,
   dropIndex,
 }: FormControlPreviewDataProps) {
-  const { selected, readonly } = usePreviewContext();
+  const { selected, readonly, renderer, hooks } = usePreviewContext();
   const fieldDetails = item.value;
   const schemaField = useFindScalarField(fields, fieldDetails.field!);
   const isCollection = Boolean(schemaField?.collection);
@@ -183,7 +188,6 @@ function DataControlPreview({
   );
   const onlyForTypes = !isNullOrEmpty(schemaField?.onlyForTypes);
 
-  const renderer = useFormRendererComponents();
   return (
     <motion.div
       layout={defaultLayoutChange}
@@ -219,7 +223,7 @@ function DataControlPreview({
       AlwaysVisible,
       undefined,
       control,
-      { fields: [], data: newControl({}), readonly },
+      { fields: [], data: newControl({}), readonly, renderer, hooks },
     );
     const finalProps = !field.collection
       ? dataProps
@@ -246,8 +250,13 @@ function DataControlPreview({
 }
 
 function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
-  const { treeDrag, dropSuccess, selected, hooks } = usePreviewContext();
-  const { renderGroup } = useFormRendererComponents();
+  const {
+    treeDrag,
+    dropSuccess,
+    selected,
+    hooks,
+    renderer: { renderGroup },
+  } = usePreviewContext();
 
   const children = item.fields.children.elements ?? [];
 

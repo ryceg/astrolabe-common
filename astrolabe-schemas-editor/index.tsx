@@ -8,6 +8,7 @@ import {
   DataControlDefinition,
   DataRendererProps,
   DataRenderType,
+  defaultControlForField,
   defaultValueForFields,
   fieldHasTag,
   FieldOption,
@@ -125,23 +126,20 @@ export function makeEditorFormHooks(
     useGroupProperties(
       formState: FormEditState,
       definition: GroupedControlsDefinition,
-      hooks,
-      renderers,
     ): GroupRendererProps {
       const nestedField = useFieldLookup(fields, definition.compoundField);
+      let newFS = formState;
       if (nestedField !== NonExistentField) {
-        hooks = makeEditorFormHooks(
-          nestedField.fields.children,
-          editHooks,
-          context,
-        );
+        newFS = {
+          ...formState,
+          hooks: makeEditorFormHooks(
+            nestedField.fields.children,
+            editHooks,
+            context,
+          ),
+        };
       }
-      return editHooks.useGroupProperties(
-        formState,
-        definition,
-        hooks,
-        renderers,
-      );
+      return editHooks.useGroupProperties(newFS, definition);
     },
     useDataProperties: (fs, c, sf) => {
       const control = fs.data.fields[sf.field];
@@ -203,8 +201,7 @@ export function makeEditorFormHooks(
               fields.current.elements.find(
                 (x) => x.fields.field.value === otherFieldName,
               ) ?? NonExistentField;
-            const opts =
-              fieldInSchema.fields.options.value;
+            const opts = fieldInSchema.fields.options.value;
             return [
               opts && opts.length > 0 ? opts : undefined,
               { ...sf, type: fieldInSchema.fields.type.value },
@@ -228,6 +225,7 @@ function RenderDefaultValueControls(
     editHooks,
     fields,
     tableFields,
+    formState: { renderer },
   }: {
     fields: Control<SchemaFieldForm[]>;
     tableFields?: Control<SchemaFieldForm[]>;
@@ -259,103 +257,21 @@ function RenderDefaultValueControls(
   }
   return renderControl(
     groupControl,
-    { fields: currentFields, data: control },
-    makeEditorFormHooks(
-      tableFields ?? newControl<SchemaFieldForm[]>([]),
-      editHooks,
-    ),
+    control,
+    {
+      fields: currentFields,
+      renderer,
+      hooks: makeEditorFormHooks(
+        tableFields ?? newControl<SchemaFieldForm[]>([]),
+        editHooks,
+      ),
+    },
     "nested",
   );
 }
 
 function schemaFieldOption(c: SchemaFieldForm): FieldOption {
   return { name: c.field, value: c.field };
-}
-
-export function defaultControlForField(
-  sf: SchemaField,
-): DataControlDefinition | GroupedControlsDefinition {
-  if (isCompoundField(sf)) {
-    return {
-      ...defaultControlDefinitionForm,
-      type: ControlDefinitionType.Group,
-      title: sf.displayName,
-      compoundField: sf.field,
-      groupOptions: {
-        type: GroupRenderType.Grid,
-        hideTitle: false,
-      } as GridRenderer,
-      children: sf.children.map(defaultControlForField),
-    };
-  } else if (isScalarField(sf)) {
-    const htmlEditor = sf.tags?.includes(SchemaOptionTag.HtmlEditor);
-    return {
-      ...defaultControlDefinitionForm,
-      type: ControlDefinitionType.Data,
-      title: sf.displayName,
-      field: sf.field,
-      required: sf.required,
-      renderOptions: {
-        type: htmlEditor ? DataRenderType.HtmlEditor : DataRenderType.Standard,
-      },
-    };
-  }
-  throw "Unknown schema field";
-}
-function findReferencedControl(
-  field: string,
-  control: ControlDefinition,
-): ControlDefinition | undefined {
-  if (isDataControl(control) && field === control.field) return control;
-  if (isGroupControl(control)) {
-    if (control.compoundField)
-      return field === control.compoundField ? control : undefined;
-    return findReferencedControlInArray(field, control.children);
-  }
-  return undefined;
-}
-
-function findReferencedControlInArray(
-  field: string,
-  controls: ControlDefinition[],
-): ControlDefinition | undefined {
-  for (const c of controls) {
-    const ref = findReferencedControl(field, c);
-    if (ref) return ref;
-  }
-  return undefined;
-}
-
-export function addMissingControls(
-  fields: SchemaField[],
-  controls: ControlDefinition[],
-): ControlDefinition[] {
-  const changes: {
-    field: SchemaField;
-    existing: ControlDefinition | undefined;
-  }[] = fields.flatMap((x) => {
-    if (fieldHasTag(x, "_NoControl")) return [];
-    const existing = findReferencedControlInArray(x.field, controls);
-    if (!existing || isCompoundField(x)) return { field: x, existing };
-    return [];
-  });
-  const changedCompounds = controls.map((x) => {
-    const ex = changes.find((c) => c.existing === x);
-    if (!ex) return x;
-    const cf = x as GroupedControlsDefinition;
-    return {
-      ...cf,
-      children: addMissingControls(
-        (ex.field as CompoundField).children,
-        cf.children,
-      ),
-    };
-  });
-  return changedCompounds.concat(
-    changes
-      .filter((x) => !x.existing)
-      .map((x) => defaultControlForField(x.field)),
-  );
 }
 
 interface CustomRenderOptions {
