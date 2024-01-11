@@ -258,7 +258,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         if (type == typeof(string) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateOnly) ||
             type == typeof(DateTimeOffset))
             return new TsTypeRef("string");
-        if (type == typeof(int) || type == typeof(double) || type == typeof(long))
+        if (type == typeof(int) || type == typeof(double) || type == typeof(long) || type == typeof(short) || type == typeof(ushort))
             return new TsTypeRef("number");
         if (type == typeof(bool))
             return new TsTypeRef("boolean");
@@ -292,7 +292,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
             _ when type == typeof(DateTimeOffset) => FieldType.DateTime,
             _ when type == typeof(DateOnly) => FieldType.Date,
             _ when type == typeof(string) || type == typeof(Guid) => FieldType.String,
-            _ when type == typeof(int) || type == typeof(long) => FieldType.Int,
+            _ when type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(ushort) => FieldType.Int,
             _ when type == typeof(double) => FieldType.Double,
             _ when type == typeof(bool) => FieldType.Bool,
             _ when type == typeof(object) => FieldType.Any,
