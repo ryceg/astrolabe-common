@@ -21,7 +21,6 @@ export function SortableHeader({
   const currentDir = currentSort?.[1];
   return (
     <button
-      className="w-full"
       onClick={() => {
         sort.setValue(rotateSort(column));
         page.value = 0;
