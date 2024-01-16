@@ -19,10 +19,8 @@ export function useQueryControl(): Control<ParsedUrlQuery> {
   const queryControl = useControl(parsedQuery, { equals: shallowEqual });
 
   useEffect(() => {
-    if (router.isReady) {
-      queryControl.value = router.query;
-    }
-  }, [router.isReady]);
+    queryControl.value = parsedQuery;
+  }, [parsedQuery, router.isReady]);
 
   useValueChangeEffect(
     queryControl,

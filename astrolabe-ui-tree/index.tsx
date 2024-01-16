@@ -145,19 +145,19 @@ export function listToArray<V>(list: List<V> | undefined): V[] {
   }
   return outList;
 }
-export function findAllTreeParentsInArray(
-  node: Control<any>,
-  nodes: Control<any[]>,
-): List<Control<any>> {
+export function findAllTreeParentsInArray<V>(
+  node: Control<V>,
+  nodes: Control<V[]>,
+): List<Control<V>> {
   return findMatchingNodeInArray(nodes.current.elements, (c) => c === node);
 }
 
-export function findMatchingNode(
-  node: Control<any>,
-  match: (c: Control<any>) => boolean,
-  parents: List<Control<any>>,
-): List<Control<any>> | undefined {
-  const withParent = [node, parents] satisfies List<Control<any>>;
+export function findMatchingNode<V>(
+  node: Control<V>,
+  match: (c: Control<V>) => boolean,
+  parents: List<Control<V>>,
+): List<Control<V>> | undefined {
+  const withParent = [node, parents] satisfies List<Control<V>>;
   if (match(node)) {
     return withParent;
   }
@@ -167,9 +167,9 @@ export function findMatchingNode(
 }
 export function findMatchingNodeInArray<V>(
   nodes: Control<V>[],
-  match: (c: Control<any>) => boolean,
-  parents: List<Control<any>> = null,
-): List<Control<any>> {
+  match: (c: Control<V>) => boolean,
+  parents: List<Control<V>> = null,
+): List<Control<V>> {
   for (const node of nodes) {
     const r = findMatchingNode(node, match, parents);
     if (r) return r;
