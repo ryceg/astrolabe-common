@@ -413,6 +413,10 @@
       "projectFolder": "../astrolabe-client"
     },
     {
+      "packageName": "@astrolabe/client-nextjs",
+      "projectFolder": "../astrolabe-client-nextjs"
+    },
+    {
       "packageName": "@astrolabe/schemas-editor",
       "projectFolder": "../astrolabe-schemas-editor"
     },

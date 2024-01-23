@@ -3,7 +3,11 @@
   <component name="UserContentModel">
     <attachedFolders>
       <Path>astrolabe-client</Path>
+      <Path>astrolabe-client-nextjs</Path>
+      <Path>astrolabe-quill-editor</Path>
+      <Path>astrolabe-schemas-editor</Path>
       <Path>astrolabe-ui</Path>
+      <Path>astrolabe-ui-tree</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes />
