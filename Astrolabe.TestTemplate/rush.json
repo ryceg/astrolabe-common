@@ -410,7 +410,8 @@
     },
     {
       "packageName": "@astrolabe/client",
-      "projectFolder": "../astrolabe-client"
+      "projectFolder": "../astrolabe-client",
+      "shouldPublish": true
     },
     {
       "packageName": "@astrolabe/client-nextjs",
