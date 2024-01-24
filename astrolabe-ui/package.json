@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"dependencies": {
-		"@astroapps/client": "workspace:^0.1.0",
+		"@astroapps/client": "^0.1.0",
 		"@react-typed-forms/core": "^3.0.0-dev.116",
 		"@react-typed-forms/schemas": "^1.0.0-dev.22",
 		"@mui/base": "^5.0.0-beta.23",

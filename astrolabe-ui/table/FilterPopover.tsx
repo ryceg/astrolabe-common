@@ -1,5 +1,5 @@
 import { Popover } from "../Popover";
-import { SearchingState } from "@astrolabe/client/app/searching";
+import { SearchingState } from "@astroapps/client/app/searching";
 import { ColumnDef, setFilterValue } from "./index";
 import {
   RenderArrayElements,

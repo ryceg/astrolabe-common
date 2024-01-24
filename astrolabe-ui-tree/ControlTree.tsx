@@ -37,7 +37,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { setIncluded } from "@astrolabe/client/util/arrays";
+import { setIncluded } from "@astroapps/client/util/arrays";
 import update from "immutability-helper";
 import {
   ControlTreeNode,
