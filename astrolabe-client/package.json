@@ -1,9 +1,18 @@
 {
-	"name": "@astrolabe/client",
+	"name": "@astroapps/client",
 	"version": "0.1.0",
 	"type": "module",
 	"main": "index.js",
 	"types": "index.d.ts",
+	"author": "Astrolabe Enterprises",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+	},
+	"homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+	"publishConfig": {
+		"access": "public"
+	},
 	"dependencies": {
 		"@react-typed-forms/core": "^3.0.0-dev.116",
 		"clsx": "^2.0.0",
@@ -14,7 +23,8 @@
 		"@types/node": "^20.8.4"
 	},
 	"scripts": {
-		"build": "rimraf ./tsconfig.tsbuildinfo && tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline"
+		"prepack": "npm run build",
+		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline"
 	},
 	"devDependencies": {
 		"@react-typed-forms/transform": "^0.2.0",

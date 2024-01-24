@@ -409,7 +409,7 @@
       "projectFolder": "../astrolabe-ui"
     },
     {
-      "packageName": "@astrolabe/client",
+      "packageName": "@astroapps/client",
       "projectFolder": "../astrolabe-client",
       "shouldPublish": true
     },

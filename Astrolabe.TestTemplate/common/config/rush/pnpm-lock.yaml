@@ -48,7 +48,7 @@ importers:
 
   ../../../astrolabe-client-nextjs:
     specifiers:
-      '@astrolabe/client': workspace:^0.1.0
+      '@astroapps/client': workspace:^0.1.0
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
       next: ^14.0.1
@@ -57,7 +57,7 @@ importers:
       react-dom: ^18.2.0
       typescript: 5.2.2
     dependencies:
-      '@astrolabe/client': link:../astrolabe-client
+      '@astroapps/client': link:../astrolabe-client
       next: 14.1.0_biqbaboplfbrettd7655fr4n2y
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -69,7 +69,7 @@ importers:
 
   ../../../astrolabe-schemas-editor:
     specifiers:
-      '@astrolabe/client': workspace:*
+      '@astroapps/client': workspace:*
       '@astrolabe/ui-tree': workspace:*
       '@dnd-kit/core': ^6.0.5
       '@react-typed-forms/core': ^3.0.0-dev.116
@@ -82,7 +82,7 @@ importers:
       react: ^18.2.0
       typescript: 5.2.2
     dependencies:
-      '@astrolabe/client': link:../astrolabe-client
+      '@astroapps/client': link:../astrolabe-client
       '@astrolabe/ui-tree': link:../astrolabe-ui-tree
       '@dnd-kit/core': 6.0.8_react@18.2.0
       '@react-typed-forms/core': 3.0.0-dev.116
@@ -98,7 +98,7 @@ importers:
 
   ../../../astrolabe-ui:
     specifiers:
-      '@astrolabe/client': workspace:^0.1.0
+      '@astroapps/client': workspace:^0.1.0
       '@mui/base': ^5.0.0-beta.23
       '@radix-ui/react-accordion': 1.1.2
       '@radix-ui/react-dialog': 1.0.5
@@ -127,7 +127,7 @@ importers:
       tailwind-merge: 1.14.0
       typescript: 5.2.2
     dependencies:
-      '@astrolabe/client': link:../astrolabe-client
+      '@astroapps/client': link:../astrolabe-client
       '@mui/base': 5.0.0-beta.23_wh47g5ajjaiodohliq4abgp5yu
       '@radix-ui/react-accordion': 1.1.2_wh47g5ajjaiodohliq4abgp5yu
       '@radix-ui/react-dialog': 1.0.5_wh47g5ajjaiodohliq4abgp5yu
@@ -159,7 +159,7 @@ importers:
 
   ../../../astrolabe-ui-tree:
     specifiers:
-      '@astrolabe/client': workspace:*
+      '@astroapps/client': workspace:*
       '@dnd-kit/core': ^6.0.8
       '@dnd-kit/sortable': ^7.0.2
       '@dnd-kit/utilities': ^3.2.1
@@ -171,7 +171,7 @@ importers:
       react: ^18.2.0
       typescript: 5.2.2
     dependencies:
-      '@astrolabe/client': link:../astrolabe-client
+      '@astroapps/client': link:../astrolabe-client
       '@dnd-kit/core': 6.0.8_react@18.2.0
       '@dnd-kit/sortable': 7.0.2_52scne4zmdeyjh2otzkgz2xfvu
       '@dnd-kit/utilities': 3.2.1_react@18.2.0
@@ -186,7 +186,7 @@ importers:
 
   ../../ClientApp:
     specifiers:
-      '@astrolabe/client': workspace:*
+      '@astroapps/client': workspace:*
       '@astrolabe/ui': workspace:*
       '@remix-run/css-bundle': ^2.1.0
       '@remix-run/dev': ^2.1.0
@@ -202,7 +202,7 @@ importers:
       react-dom: ^18.2.0
       typescript: ^5.1.6
     dependencies:
-      '@astrolabe/client': link:../../astrolabe-client
+      '@astroapps/client': link:../../astrolabe-client
       '@astrolabe/ui': link:../../astrolabe-ui
       '@remix-run/css-bundle': 2.1.0
       '@remix-run/node': 2.1.0_typescript@5.2.2
