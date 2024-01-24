@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/client",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"type": "module",
 	"main": "index.js",
 	"types": "index.d.ts",
@@ -19,8 +19,7 @@
 		"tailwind-merge": "1.14.0",
 		"react": "^18.2.0",
 		"react-dnd": "16.0.1",
-		"tslib": "^2.6.2",
-		"@types/node": "^20.8.4"
+		"tslib": "^2.6.2"
 	},
 	"scripts": {
 		"prepack": "npm run build",
