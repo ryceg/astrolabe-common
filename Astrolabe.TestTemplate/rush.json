@@ -421,6 +421,10 @@
       "projectFolder": "../astrolabe-ui-tree"
     },
     {
+      "packageName": "@astrolabe/storybook",
+      "projectFolder": "../astrolabe-storybook"
+    },
+    {
       "packageName": "clientapp",
       "projectFolder": "ClientApp"
     }

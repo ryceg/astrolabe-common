@@ -3,6 +3,7 @@
   <component name="UserContentModel">
     <attachedFolders>
       <Path>astrolabe-client</Path>
+      <Path>astrolabe-storybook</Path>
       <Path>astrolabe-ui</Path>
     </attachedFolders>
     <explicitIncludes />
