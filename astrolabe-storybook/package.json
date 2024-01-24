@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "next": "14.1.0",
@@ -14,14 +16,28 @@
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@astrolabe/ui": "workspace:*",
+    "@react-typed-forms/core": "^3.0.0-dev.107",
+    "@react-typed-forms/schemas": "^1.0.0-dev.12",
+    "@storybook/addon-essentials": "^7.6.10",
+    "@storybook/addon-interactions": "^7.6.10",
+    "@storybook/addon-links": "^7.6.10",
+    "@storybook/addon-onboarding": "^1.0.11",
+    "@storybook/blocks": "^7.6.10",
+    "@storybook/nextjs": "^7.6.10",
+    "@storybook/react": "^7.6.10",
+    "@storybook/test": "^7.6.10",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.17",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
+    "eslint-plugin-storybook": "^0.6.15",
     "postcss": "^8.4.33",
+    "storybook": "^7.6.10",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5.2.2",
+    "prettier": "^3.0.3"
   }
 }

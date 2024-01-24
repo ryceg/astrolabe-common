@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
 
+module.exports = {
+  content: [
+    "./src/stories/**/*.{js,ts,jsx,tsx,mdx}",
+    "../astrolabe-ui/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  presets: [require("./tailwind.config.ts")],
+};
