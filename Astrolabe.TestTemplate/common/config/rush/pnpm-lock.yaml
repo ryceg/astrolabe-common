@@ -4819,7 +4819,7 @@ packages:
     dependencies:
       '@storybook/client-logger': 7.6.10
       memoizerific: 1.11.3
-      qs: 6.11.0
+      qs: 6.11.2
     dev: true
 
   /@storybook/telemetry/7.6.10:
