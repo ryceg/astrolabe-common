@@ -150,10 +150,6 @@ export const theme = {
         950: "#660022",
       },
     },
-    backgroundImage: {
-      home: "url('/assets/images/landing/HVAMS_shot2.png')",
-      "manager-home": "url('/assets/images/hvams.svg')",
-    },
     keyframes: {
       wiggle: {
         "0%": { transform: "rotate(-5deg)" },
