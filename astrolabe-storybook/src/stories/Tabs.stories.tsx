@@ -19,6 +19,19 @@ const meta: Meta<typeof Tabs> = {
     ],
     contentClass: "text-surface-950",
   },
+  decorators: [
+    (Story, params) => {
+      const tabsControl = useControl("1");
+      return (
+        <Story
+          args={{
+            ...params.args,
+            control: tabsControl,
+          }}
+        />
+      );
+    },
+  ],
 };
 
 export default meta;
@@ -29,8 +42,7 @@ export const Primary: Story = {
     color: "primary",
   },
   render: (args) => {
-    const tabsControl = useControl("1");
-    return <Tabs {...args} control={tabsControl} />;
+    return <Tabs {...args} />;
   },
 };
 

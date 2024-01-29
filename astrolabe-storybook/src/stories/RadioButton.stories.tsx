@@ -7,18 +7,30 @@ const meta: Meta<typeof RadioButton> = {
   parameters: {
     layout: "centered",
   },
+  decorators: [
+    (Story, params) => {
+      const radioButtonControl = useControl(0);
+      return (
+        <Story
+          args={{
+            ...params.args,
+            control: radioButtonControl as any,
+          }}
+        />
+      );
+    },
+  ],
 };
 
 export default meta;
 type Story = StoryObj<typeof RadioButton>;
 
 export const Primary: Story = {
-  render: ({}) => {
-    const radioButtonControl = useControl(0);
+  render: (args) => {
     return (
       <div className="flex justify-center gap-2">
         <RadioButton
-          control={radioButtonControl}
+          control={args.control as any}
           value={0}
           disabled={false}
           className=""
@@ -31,16 +43,18 @@ export const Primary: Story = {
 };
 
 export const RadioButtonGroup: Story = {
-  render: ({}) => {
-    const radioButtonControl = useControl(1);
-
+  render: (args) => {
+    useControlEffect(
+      () => args.control.value,
+      (v) => console.log(v),
+    );
     return (
       <div className="flex flex-col gap-2">
         {Array.from({ length: 4 }).map((r, i) => (
           <label className="flex gap-2 justify-center">
             <RadioButton
-              control={radioButtonControl}
-              value={i + 1}
+              control={args.control as any}
+              value={i}
               isNumber
               disabled={i === 2}
               key={i}

@@ -9,10 +9,16 @@ const meta: Meta<typeof SearchField> = {
   },
   args: {
     control: undefined,
-    className: "",
-    widthClass: "",
+    className: "text-surface-950",
+    widthClass: "w-full",
     placeholder: "Search field",
   },
+  decorators: [
+    (Story, params) => {
+      const control = useControl("");
+      return <Story args={{ ...params.args, control: control }} />;
+    },
+  ],
 };
 
 export default meta;
@@ -20,8 +26,6 @@ type Story = StoryObj<typeof SearchField>;
 
 export const Primary: Story = {
   render: (args) => {
-    const searchField = useControl("");
-
-    return <SearchField {...args} control={searchField} />;
+    return <SearchField {...args} />;
   },
 };

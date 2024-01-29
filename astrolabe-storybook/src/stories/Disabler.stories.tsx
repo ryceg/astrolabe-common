@@ -3,28 +3,37 @@ import { Meta, StoryObj } from "@storybook/react";
 import { useControl } from "@react-typed-forms/core";
 import { Numberfield } from "@astrolabe/ui/Numberfield";
 
-const meta: Meta<typeof Disabler> = {
+const meta: Meta<typeof Disabler<any>> = {
   component: Disabler,
-
   parameters: {
     layout: "centered",
   },
+  decorators: [
+    (Story, params) => {
+      const disablerControl = useControl(1);
+      return (
+        <Story
+          args={{
+            ...params.args,
+            control: disablerControl,
+          }}
+        />
+      );
+    },
+  ],
   args: {
-    control: undefined,
     label: "Label placeholder",
   },
 };
 
 export default meta;
-type Story = StoryObj<typeof Disabler>;
+type Story = StoryObj<typeof Disabler<any>>;
 
 export const Primary: Story = {
   render: (args) => {
-    const disablerControl = useControl(999);
-
     return (
       <Disabler
-        control={disablerControl}
+        control={args.control}
         label={args.label}
         render={(p) => <Numberfield {...p} label={args.label} />}
       />

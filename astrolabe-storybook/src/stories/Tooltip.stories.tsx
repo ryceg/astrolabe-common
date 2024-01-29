@@ -1,12 +1,14 @@
-﻿import { Tooltip } from "@astrolabe/ui/Tooltip";
+﻿import { defaultTooltipProvider, Tooltip } from "@astrolabe/ui/Tooltip";
 import { Meta, StoryObj } from "@storybook/react";
 import { Button } from "@astrolabe/ui/Button";
+import { AppContextProvider } from "@astroapps/client/service";
+import { useArgs } from "@storybook/preview-api";
 
 const meta: Meta<typeof Tooltip> = {
   component: Tooltip,
-  // parameters: {
-  //   layout: "centered",
-  // },
+  parameters: {
+    layout: "centered",
+  },
   args: {
     children: (
       <Button variant="primary" size="default">
@@ -21,6 +23,13 @@ const meta: Meta<typeof Tooltip> = {
     onOpenChange: (c) => {},
     asChild: false,
   },
+  decorators: [
+    (Story) => (
+      <AppContextProvider providers={[defaultTooltipProvider]} value={{}}>
+        <Story />
+      </AppContextProvider>
+    ),
+  ],
 };
 
 export default meta;
@@ -31,7 +40,19 @@ export const DefaultTooltip: Story = {
     variant: "default",
   },
   render: (args) => {
-    return <Tooltip {...args}>{args.children}</Tooltip>;
+    const [{ open }, updateArgs] = useArgs();
+
+    return (
+      <Tooltip
+        {...args}
+        open={open}
+        onOpenChange={(v) => {
+          updateArgs({ open: v });
+        }}
+      >
+        {args.children}
+      </Tooltip>
+    );
   },
 };
 
@@ -40,6 +61,18 @@ export const DangerTooltip: Story = {
     variant: "danger",
   },
   render: (args) => {
-    return <Tooltip {...args}>{args.children}</Tooltip>;
+    const [{ open }, updateArgs] = useArgs();
+
+    return (
+      <Tooltip
+        {...args}
+        open={open}
+        onOpenChange={(v) => {
+          updateArgs({ open: v });
+        }}
+      >
+        {args.children}
+      </Tooltip>
+    );
   },
 };

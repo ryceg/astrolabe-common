@@ -7,8 +7,20 @@ const meta: Meta<typeof Numberfield> = {
   parameters: {
     layout: "centered",
   },
+  decorators: [
+    (Story, params) => {
+      const fieldControl = useControl(1);
+      return (
+        <Story
+          args={{
+            ...params.args,
+            control: fieldControl,
+          }}
+        />
+      );
+    },
+  ],
   args: {
-    control: undefined,
     required: false,
     label: "Number field",
     inputClass: "",
@@ -21,17 +33,6 @@ type Story = StoryObj<typeof Numberfield>;
 
 export const Primary: Story = {
   render: (args) => {
-    const fieldControl = useControl(1);
-
-    return (
-      <Numberfield
-        {...args}
-        className={args.className}
-        inputClass={args.inputClass}
-        control={fieldControl}
-        label={args.label}
-        required={args.required}
-      />
-    );
+    return <Numberfield {...args} />;
   },
 };

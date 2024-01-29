@@ -16,6 +16,7 @@
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@astroapps/client": "^0.1.2",
     "@astrolabe/ui": "workspace:*",
     "@react-typed-forms/core": "^3.0.0-dev.114",
     "@react-typed-forms/schemas": "^1.0.0-dev.12",
