@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
-import { setIncluded } from "@astrolabe/client/util/arrays";
+import { setIncluded } from "@astroapps/client/util/arrays";
 import { Control } from "@react-typed-forms/core";
 import {
   SearchFilters,
@@ -15,7 +15,7 @@ import {
   sortFieldToString,
   stringToSortField,
   useSearchingState,
-} from "@astrolabe/client/app/searching";
+} from "@astroapps/client/app/searching";
 
 export { DataTableView } from "./DataTableView";
 export { DataTable } from "./DataTable";

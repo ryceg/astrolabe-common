@@ -1,21 +1,37 @@
 {
-  "name": "@astrolabe/quill-editor",
-  "version": "1.0.0",
+  "name": "@astroapps/quill-editor",
+  "version": "1.0.2",
   "description": "",
+  "type": "module",
   "main": "index.js",
-  "scripts": {
-    "build": "tsc"
-  },
-  "author": "",
+  "types": "index.d.ts",
+  "author": "Astrolabe Enterprises",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline"
+  },
   "dependencies": {
     "react": "^18.2.0",
-    "@react-typed-forms/core": "^3.0.0-dev.111",
-    "@react-typed-forms/schemas": "^1.0.0-dev.19",
+    "@react-typed-forms/core": "^3.0.0-dev.116",
+    "@react-typed-forms/schemas": "^1.0.0-dev.22",
     "react-quill": "^2.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.2.2",
+    "@react-typed-forms/transform": "^0.2.0",
+    "@babel/core": "^7.23.7",
+    "@babel/cli": "^7.23.4",
+    "@babel/preset-env": "^7.23.8",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
+    "typescript": "5.2.2",
     "@types/react": "^18.2.37",
     "prettier": "^3.0.3"
   }

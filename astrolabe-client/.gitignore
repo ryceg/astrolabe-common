@@ -1,3 +1,6 @@
 node_modules/
 *.tsbuildinfo
 client.build.log
+dist/
+*.js
+*.d.ts

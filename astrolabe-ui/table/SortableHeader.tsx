@@ -1,4 +1,4 @@
-import { findSortField, SearchingState } from "@astrolabe/client/app/searching";
+import { findSortField, SearchingState } from "@astroapps/client/app/searching";
 import { ColumnDef, rotateSort } from "./index";
 import { ReactNode } from "react";
 import clsx from "clsx";

@@ -113,10 +113,6 @@
    * PNPM documentation: https://pnpm.io/package_json#pnpmoverrides
    */
   "globalOverrides": {
-    "@react-typed-forms/core": "^3.0.0-dev.114",
-    "@react-typed-forms/mui": "^3.0.0-dev.114",
-    "@react-typed-forms/schemas": "^1.0.0-dev.14",
-    "@react-typed-forms/schemas-mui": "^1.0.0-dev.14"
   },
 
   /**
