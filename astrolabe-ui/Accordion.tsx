@@ -52,6 +52,9 @@ const AccordionContent = React.forwardRef<
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 
+/**
+ * A vertically stacked set of interactive headings that each reveal an associated section of content.
+ */
 function Accordion({
   children,
   type = "single",
