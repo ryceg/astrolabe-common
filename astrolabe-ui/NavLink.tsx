@@ -32,6 +32,7 @@ interface NavListClasses {
   labelClass: string;
   iconClass: string;
 }
+
 export interface NavListProps {
   links: NavLink[];
   defaultRenderLink?: (link: NavLinkProps) => ReactNode;
@@ -46,6 +47,9 @@ export const defaultNavListClasses: NavListClasses = {
   linkClass: "flex gap-x-4 items-center font-bold",
 };
 
+/**
+ * <div className="text-danger-500">This component is not currently in use</div>
+ */
 export function NavList({
   links,
   classes,
@@ -121,6 +125,7 @@ export function createNavLinks(
   function specOrder(s: NavLinkSpec) {
     return typeof s === "string" ? 0 : s.order;
   }
+
   function matchingSpec(
     v?: NavLinkSpec | NavLinkSpec[],
   ): NavLinkSpec | undefined {

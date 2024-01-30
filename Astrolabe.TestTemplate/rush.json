@@ -434,6 +434,10 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astrolabe/storybook",
+      "projectFolder": "../astrolabe-storybook"
+    },
+    {
       "packageName": "clientapp",
       "projectFolder": "ClientApp"
     }
