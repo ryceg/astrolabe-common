@@ -1,13 +1,13 @@
 import { Control } from "@react-typed-forms/core";
 import { scrollToElement } from "./scrollToElement";
 
-type FluentError = {
+export type FluentError = {
   path: string;
   error: Record<string, any>;
 };
-type FluentErrors = { errors: FluentError[] };
+export type FluentErrors = { errors: FluentError[] };
 
-function isFluentError(errors: any): errors is FluentErrors {
+export function isFluentError(errors: any): errors is FluentErrors {
   return Boolean(errors.errors);
 }
 
@@ -16,7 +16,7 @@ function isFluentError(errors: any): errors is FluentErrors {
  * @param path The string path to convert.
  * @returns An array of path segments.
  */
-function convertPath(path: string): (string | number)[] {
+export function convertPath(path: string): (string | number)[] {
   const paths = path.split(".");
   let out: (string | number)[] = [];
   paths.forEach((part) => {
@@ -39,7 +39,7 @@ function convertPath(path: string): (string | number)[] {
  * @param err The error object to generate a message for.
  * @returns An error message.
  */
-export function errorMessage(err: Record<string, any>) {
+export function errorMessage(err: Record<string, any>): string {
   if (err.NotEmptyValidator) {
     return "Please enter a value";
   }
@@ -53,13 +53,13 @@ export function errorMessage(err: Record<string, any>) {
  * Applies errors to a control based on a list of paths and optionally scrolls to the first error.
  * @param control The control to apply errors to.
  * @param paths The list of paths and errors to apply to the control.
- * @param errorMap A function to map errors to error messages.
+ * @param applyError A function to set the error(s) on the control
  * @param scrollToError If true, the function will scroll to the first error.
  */
-function pathBasedErrors(
+export function pathBasedErrors(
   control: Control<any>,
   paths: { path: (string | number)[]; error: Record<string, any> }[],
-  errorMap: (err: Record<string, any>) => string,
+  applyError: (c: Control<any>, err: Record<string, any>) => void,
   scrollToError: boolean,
 ) {
   let firstError: HTMLElement | undefined;
@@ -68,7 +68,7 @@ function pathBasedErrors(
     const ctrl = control.lookupControl(err.path);
     if (ctrl && !ctrl.error) {
       if (!firstError && ctrl.element) firstError = ctrl.element;
-      ctrl.error = errorMap(err.error);
+      applyError(ctrl, err.error);
       ctrl.touched = true;
       controlsArray.push(ctrl);
     } else if (!ctrl) {
@@ -99,9 +99,9 @@ export function applyErrors(
       error,
     }));
     return pathBasedErrors(
-      control.as(),
+      control,
       errorsMap,
-      errorMap ?? errorMessage,
+      (c, e) => (c.error = (errorMap ?? errorMessage)(e)),
       !Boolean(dontScrollToError),
     );
   } else {

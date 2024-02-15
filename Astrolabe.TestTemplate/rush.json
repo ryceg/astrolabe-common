@@ -411,7 +411,8 @@
     {
       "packageName": "@astroapps/client",
       "projectFolder": "../astrolabe-client",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "client"
     },
     {
       "packageName": "@astroapps/quill-editor",
