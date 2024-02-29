@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using Astrolabe.Annotation;
@@ -199,7 +200,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
 
         TsFieldType ControlsMember(TypeMember<SimpleTypeData> member)
         {
-            return new TsFieldType(member.FieldName, false, FormType(member.Data()));
+            return new TsFieldType(GetFieldName(member.Properties.First()), false, FormType(member.Data()));
         }
     }
 
@@ -211,12 +212,13 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
                 .Where(x => x != null).ToList();
         var memberData = member.Data();
         var firstProp = member.Properties.First();
+        var fieldName = GetFieldName(firstProp); 
         var tags = firstProp.GetCustomAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
         var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         var buildFieldCall = SetOptions(FieldForType(memberData, parent), new Dictionary<string, object?>
         {
-            { "isTypeField", baseType != null && baseType.TypeField == member.FieldName ? true : null },
+            { "isTypeField", baseType != null && baseType.TypeField == fieldName ? true : null },
             { "onlyForTypes", onlyForTypes.Count > 0 ? onlyForTypes : null },
             { "required", memberData.Nullable ? null : true },
             { "defaultValue", firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value },
@@ -224,7 +226,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
             { "tags", tags.Count > 0 ? tags : null },
             { "options", options != null ? new TsConstExpr(options) : null }
         });
-        return TsObjectField.NamedField(member.FieldName, buildFieldCall);
+        return TsObjectField.NamedField(fieldName, buildFieldCall);
     }
 
     private Type? GetEnumType(SimpleTypeData data)
@@ -380,6 +382,14 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
     public IEnumerable<TsDeclaration> CreateDeclarations(SimpleTypeData visitType)
     {
         return CollectData(visitType);
+    }
+
+    public static string GetFieldName(PropertyInfo propertyInfo)
+    {
+        var nameAttr = propertyInfo.GetCustomAttribute<JsonPropertyNameAttribute>();
+        if (nameAttr != null)
+            return nameAttr.Name;
+        return JsonNamingPolicy.CamelCase.ConvertName(propertyInfo.Name);
     }
 }
 

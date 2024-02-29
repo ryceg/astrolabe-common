@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Globalization;
-using CaseExtensions;
+using System.Text.Json;
 
 namespace Astrolabe.CodeGen.Typescript;
 
@@ -244,7 +244,7 @@ public static class TsToSource
             IEnumerable v => new TsArrayExpr(((IEnumerable<object>)v).Select(x => new TsConstExpr(x)).ToList())
                 .ToSource(),
             var v => new TsObjectExpr(v.GetType().GetProperties().Select(x =>
-                    new TsObjectField(new TsRawExpr(x.Name.ToCamelCase()),
+                    new TsObjectField(new TsRawExpr(JsonNamingPolicy.CamelCase.ConvertName(x.Name)),
                         new TsConstExpr(x.GetMethod!.Invoke(v, new object[] { }))))
                 .ToList()).ToSource(),
         };

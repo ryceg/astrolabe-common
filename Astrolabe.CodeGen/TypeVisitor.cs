@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Reflection;
-using CaseExtensions;
 using Namotion.Reflection;
 
 namespace Astrolabe.CodeGen;
@@ -42,7 +41,7 @@ public abstract class TypeVisitor<T>
 
         var allMembers = type.Assembly.GetTypes()
             .Where(x => x.BaseType == type || x == type).SelectMany(x =>
-                x.GetProperties().Select(p => new FlattenedProperty(p.Name.ToCamelCase(), p, x))).ToList();
+                x.GetProperties().Select(p => new FlattenedProperty(p.Name, p, x))).ToList();
         var onlyForTypeLookup = allMembers.ToLookup(x => x.Name);
 
         var members = onlyForTypeLookup.Select(x =>

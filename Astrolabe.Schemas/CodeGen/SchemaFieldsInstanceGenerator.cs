@@ -64,12 +64,13 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
             member.Properties.Select(x => subTypes.FirstOrDefault(s => s.SubType == x.DeclaringType)?.Discriminator)
                 .Cast<string>().ToList();
         var memberData = member.Data();
-        var schemaField = FieldForType(memberData, parent, member.FieldName);
         var firstProp = member.Properties.First();
+        var fieldName = SchemaFieldsGenerator.GetFieldName(firstProp);
+        var schemaField = FieldForType(memberData, parent, fieldName);
         var tags = firstProp.GetCustomAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
         var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
-        schemaField.IsTypeField = baseType != null && baseType.TypeField == member.FieldName ? true : null;
+        schemaField.IsTypeField = baseType != null && baseType.TypeField == fieldName ? true : null;
         schemaField.OnlyForTypes = onlyForTypes.Count > 0 ? onlyForTypes : null;
         schemaField.Required = memberData.Nullable ? null : true;
         schemaField.DefaultValue = firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value;
