@@ -40,6 +40,7 @@ public class WorkflowRules<T, TAction>
 
     public List<TAction> GetCreateActions(T? context) =>
         FilterRules(context, Rules.Where(x => x.Type is WorkflowRuleType.Save or WorkflowRuleType.Create));
+    
 }
 
 public static class WorkflowRuleExtensions
