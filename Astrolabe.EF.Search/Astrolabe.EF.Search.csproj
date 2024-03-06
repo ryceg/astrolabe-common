@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Astrolabe.Common" Version="1.0.0" />
+      <PackageReference Include="Astrolabe.JSON" Version="1.0.0" />
+      <PackageReference Include="Azure.Search.Documents" Version="11.5.1" />
+    </ItemGroup>
+    
+</Project>
