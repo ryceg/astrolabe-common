@@ -7,40 +7,43 @@ using Azure.Search.Documents.Indexes.Models;
 
 namespace Astrolabe.EF.Search;
 
-public delegate SimpleSearchDocument SimpleSearchIndexer<in T>(T document);
-
-public static class SimpleSearchIndexer
+public class SimpleSearchIndexer<T>
 {
-    public static SimpleSearchIndexer<T> Create<T>(JsonSerializerOptions? options = null, Func<SearchField, bool>? textFields = null, Func<SearchField, bool>? filterFields = null)
+    private readonly JsonSerializerOptions? _options;
+    private readonly SearchField[] _textFieldList;
+    private readonly SearchField[] _filterFieldList;
+    public SearchField[] KeywordFields { get; init; }
+
+    public SimpleSearchIndexer(JsonSerializerOptions? options = null, Func<SearchField, bool>? textFields = null,
+        Func<SearchField, bool>? filterFields = null)
     {
+        _options = options;
         var serializer = options != null ? new JsonObjectSerializer(options) : new JsonObjectSerializer();
-        var fields = (new FieldBuilder { Serializer = serializer }.Build(typeof(T))).Concat(GetEnumFields(typeof(T), serializer)).ToList();
-        var textFieldList = fields.Where(textFields ?? (x => x.IsSearchable ?? false)).ToArray();
-        var filterFieldList = fields.Where(filterFields ?? (x => x.IsFilterable ?? false)).ToArray();
-        return doc =>
-        {
-            var jsonDoc = JsonSerializer.SerializeToElement(doc, options);
-            var searchStrings = textFieldList.SelectMany(x =>
-            {
-                return jsonDoc.TryGetProperty(x.Name, out var value)
-                    ? new [] { (ElementValue(value, x.Type)?.ToString() ?? "").Trim() }
-                    : Enumerable.Empty<string>();
-            }).Where(x => !string.IsNullOrEmpty(x));
-            return new SimpleSearchDocument(string.Join(" ", searchStrings), filterFieldList
-                .SelectMany(x =>
-                {
-                    return jsonDoc.TryGetProperty(x.Name, out var value)
-                        ? new FieldValue[] { new(x.Name, ElementValue(value, x.Type)) }
-                        : Enumerable.Empty<FieldValue>();
-                }));
-        };
+        var fields = new FieldBuilder { Serializer = serializer }.Build(typeof(T))
+            .Concat(GetEnumFields(typeof(T), serializer)).ToList();
+        _textFieldList = fields.Where(textFields ?? (x => x.IsSearchable.GetValueOrDefault() && x.AnalyzerName != "keyword")).ToArray();
+        _filterFieldList = fields.Where(filterFields ?? (x => x.IsFilterable.GetValueOrDefault() || x.AnalyzerName == "keyword")).ToArray();
+        KeywordFields = fields.Where(x => x.AnalyzerName == "keyword").ToArray();
     }
 
-    public static string? ElementValue(JsonElement element, SearchFieldDataType type)
+    public SimpleSearchDocument Index(T doc)
+    {
+        var jsonDoc = JsonSerializer.SerializeToElement(doc, _options);
+        var searchStrings = _textFieldList.SelectMany(x => jsonDoc.TryGetProperty(x.Name, out var value)
+            ? new[] { (ElementValue(value, x.Type)?.ToString() ?? "").Trim() }
+            : Enumerable.Empty<string>()).Where(x => !string.IsNullOrEmpty(x));
+        
+        return new SimpleSearchDocument(string.Join(" ", searchStrings), _filterFieldList.SelectMany(x =>
+            jsonDoc.TryGetProperty(x.Name, out var value)
+                ? new FieldValue[] { new(x.Name, ElementValue(value, x.Type)) }
+                : Enumerable.Empty<FieldValue>()));
+    }
+
+    private static string ElementValue(JsonElement element, SearchFieldDataType type)
     {
         return type.ToString() switch
         {
-            "Edm.String" => element.GetString(),
+            "Edm.String" => element.GetString() ?? "",
             "Edm.Int32" => element.GetInt32().ToString(),
             "Edm.Int64" => element.GetInt64().ToString(),
             _ => throw new ArgumentOutOfRangeException()
@@ -50,16 +53,17 @@ public static class SimpleSearchIndexer
     private static IEnumerable<SearchField> GetEnumFields(Type type, JsonObjectSerializer serializer)
     {
         var convert = (IMemberNameConverter)serializer;
-        return type.GetProperties(BindingFlags.Public|BindingFlags.Instance).SelectMany(p =>
+        return type.GetProperties(BindingFlags.Public | BindingFlags.Instance).SelectMany(p =>
         {
             var name = convert.ConvertMemberName(p);
             var enumType = GetEnumType(p.PropertyType);
             return enumType != null ? [CreateSimpleField()] : Array.Empty<SearchField>();
-            
+
             SearchField CreateSimpleField()
             {
                 var isStringEnum = enumType.GetCustomAttribute<JsonStringAttribute>() != null;
-                SearchField field = new SimpleField(name, isStringEnum ? SearchFieldDataType.String : SearchFieldDataType.Int32);
+                SearchField field = new SimpleField(name,
+                    isStringEnum ? SearchFieldDataType.String : SearchFieldDataType.Int32);
                 foreach (var attribute in p.GetCustomAttributes())
                 {
                     switch (attribute)
@@ -73,6 +77,7 @@ public static class SimpleSearchIndexer
                             break;
                     }
                 }
+
                 return field;
 
                 void ProcessSimpleField(SimpleFieldAttribute sf)
@@ -92,5 +97,4 @@ public static class SimpleSearchIndexer
             return null;
         }
     }
-    
 }
