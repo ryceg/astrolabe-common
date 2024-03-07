@@ -7,9 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Astrolabe.Common" Version="1.0.0" />
-      <PackageReference Include="Astrolabe.JSON" Version="1.0.0" />
-      <PackageReference Include="Azure.Search.Documents" Version="11.5.1" />
+        <PackageReference Include="Astrolabe.Annotation" Version="1.0.0" />
+        <PackageReference Include="Astrolabe.Common" Version="1.0.0"/>
+        <PackageReference Include="Astrolabe.JSON" Version="1.0.0"/>
+        <PackageReference Include="Azure.Search.Documents" Version="11.5.1"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2"/>
     </ItemGroup>
-    
+
 </Project>
