@@ -306,3 +306,60 @@ export function addCustomRenderOptions(
     };
   }
 }
+
+export function findSchemaFieldListForParents(
+  fields: Control<SchemaFieldForm[]>,
+  parents: ControlForm[],
+): Control<SchemaFieldForm[]> | undefined {
+  for (const p of parents) {
+    const compoundField = p.fields.compoundField.current.value;
+    if (
+      p.fields.type.current.value === ControlDefinitionType.Group &&
+      compoundField
+    ) {
+      const nextFields = fields.elements.find(
+        (x) => x.fields.field.current.value === compoundField,
+      );
+      if (!nextFields) return undefined;
+      fields = nextFields.fields.children;
+    }
+  }
+  return fields;
+}
+
+export function isChildOf<T extends { children: T[] }>(
+  node: Control<T>,
+  child: Control<T>,
+): boolean {
+  return Boolean(
+    node.fields.children.elements.some(
+      (x) => x === child || isChildOf(x, child),
+    ),
+  );
+}
+
+export function isDirectChildOf<T extends { children: T[] }>(
+  node: Control<T>,
+  child: Control<T>,
+): boolean {
+  return Boolean(node.fields.children.elements.find((x) => x === child));
+}
+
+export function findAllParentsInControls<T extends { children: T[] }>(
+  node: Control<T>,
+  nodes: Control<T[]>,
+): Control<T>[] {
+  return nodes.elements.flatMap((x) => findAllParents(node, x)) ?? [];
+}
+
+export function findAllParents<T extends { children: T[] }>(
+  node: Control<T>,
+  rootNode: Control<T>,
+): Control<T>[] {
+  if (!isChildOf(rootNode, node)) return [];
+
+  return [
+    rootNode,
+    ...findAllParentsInControls(node, rootNode.fields.children),
+  ];
+}
