@@ -214,19 +214,17 @@ export function makeEditorFormHooks(
   };
 }
 
-function RenderDefaultValueControls(
-  {
-    editHooks,
-    fields,
-    tableFields,
-    formState: { renderer },
-  }: {
-    fields: Control<SchemaFieldForm[]>;
-    tableFields?: Control<SchemaFieldForm[]>;
-    editHooks: FormEditHooks;
-  } & DataRendererProps,
-  control: Control<any>,
-) {
+function RenderDefaultValueControls({
+  editHooks,
+  fields,
+  tableFields,
+  control,
+  formState: { renderer },
+}: {
+  fields: Control<SchemaFieldForm[]>;
+  tableFields?: Control<SchemaFieldForm[]>;
+  editHooks: FormEditHooks;
+} & DataRendererProps) {
   const currentFields = fields.value;
   const currentValue = control.value;
   useEffect(() => {
