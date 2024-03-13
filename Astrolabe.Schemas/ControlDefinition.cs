@@ -89,6 +89,8 @@ public enum DataRenderType
 [JsonSubType("DateTime", typeof(DateTimeRenderOptions))]
 public abstract record RenderOptions([property: DefaultValue("Standard")] [property: SchemaOptions(typeof(DataRenderType))] string Type)
 {
+    public bool? HideTitle { get; set; }
+    
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 }

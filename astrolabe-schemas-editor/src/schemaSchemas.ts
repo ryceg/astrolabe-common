@@ -1,24 +1,24 @@
 import {
-  AdornmentPlacement,
-  applyDefaultValues,
-  buildSchema,
-  ControlAdornment,
-  ControlDefinition,
-  DateComparison,
-  defaultValueForFields,
-  DisplayData,
-  DynamicProperty,
-  EntityExpression,
-  FieldOption,
   FieldType,
-  GroupRenderOptions,
-  IconMapping,
-  makeCompoundField,
   makeScalarField,
-  RenderOptions,
-  SchemaField,
+  buildSchema,
+  defaultValueForFields,
+  FieldOption,
+  applyDefaultValues,
+  DateComparison,
   SchemaValidator,
+  makeCompoundField,
+  SchemaField,
+  EntityExpression,
+  DynamicProperty,
+  AdornmentPlacement,
+  ControlAdornment,
+  IconMapping,
   SyncTextType,
+  RenderOptions,
+  GroupRenderOptions,
+  DisplayData,
+  ControlDefinition,
 } from "@react-typed-forms/schemas";
 
 export interface FieldOptionForm {
@@ -485,6 +485,7 @@ export function toIconMappingForm(v: IconMapping): IconMappingForm {
 
 export interface RenderOptionsForm {
   type: string;
+  hideTitle: boolean | null;
   noGroups: boolean;
   noUsers: boolean;
   format: string | null;
@@ -547,6 +548,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         value: "Dropdown",
       },
     ],
+  }),
+  hideTitle: makeScalarField({
+    type: FieldType.Bool,
+    displayName: "HideTitle",
   }),
   noGroups: makeScalarField({
     type: FieldType.Bool,
