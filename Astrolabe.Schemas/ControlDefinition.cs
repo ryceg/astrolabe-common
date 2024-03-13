@@ -48,6 +48,9 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     public bool? Readonly { get; set; }
     
     public IEnumerable<SchemaValidator>? Validators { get; set; }
+    
+    public bool? HideTitle { get; set; }
+
 }
 
 public record GroupedControlsDefinition() : ControlDefinition(ControlDefinitionType.Group.ToString()) 
@@ -89,8 +92,6 @@ public enum DataRenderType
 [JsonSubType("DateTime", typeof(DateTimeRenderOptions))]
 public abstract record RenderOptions([property: DefaultValue("Standard")] [property: SchemaOptions(typeof(DataRenderType))] string Type)
 {
-    public bool? HideTitle { get; set; }
-    
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 }

@@ -485,7 +485,6 @@ export function toIconMappingForm(v: IconMapping): IconMappingForm {
 
 export interface RenderOptionsForm {
   type: string;
-  hideTitle: boolean | null;
   noGroups: boolean;
   noUsers: boolean;
   format: string | null;
@@ -548,10 +547,6 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         value: "Dropdown",
       },
     ],
-  }),
-  hideTitle: makeScalarField({
-    type: FieldType.Bool,
-    displayName: "HideTitle",
   }),
   noGroups: makeScalarField({
     type: FieldType.Bool,
@@ -732,6 +727,7 @@ export interface ControlDefinitionForm {
   defaultValue: any | null;
   readonly: boolean | null;
   validators: SchemaValidatorForm[] | null;
+  hideTitle: boolean | null;
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
@@ -817,6 +813,11 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     collection: true,
     onlyForTypes: ["Data"],
     displayName: "Validators",
+  }),
+  hideTitle: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Data"],
+    displayName: "HideTitle",
   }),
   compoundField: makeScalarField({
     type: FieldType.String,
