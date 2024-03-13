@@ -10,6 +10,7 @@ import {
   defaultValueForFields,
   fieldHasTag,
   FieldOption,
+  FieldType,
   FormEditHooks,
   FormEditState,
   getOptionsForScalarField,
@@ -174,12 +175,7 @@ export function makeEditorFormHooks(
       ): [FieldOptionForm[] | undefined, SchemaField] {
         switch (ot) {
           case SchemaOptionTag.SchemaField:
-            return [
-              fieldList
-                .filter((x) => !isCompoundField(x))
-                .map(schemaFieldOption),
-              sf,
-            ];
+            return [fieldList.map(schemaFieldOption), sf];
           case SchemaOptionTag.NestedSchemaField:
             return [
               fieldList.filter(isCompoundField).map(schemaFieldOption),
@@ -325,12 +321,12 @@ export function findSchemaFieldListForParents(
   return fields;
 }
 
-export function isChildOf<T extends { children: T[] }>(
+export function isChildOf<T extends { children: T[] | null }>(
   node: Control<T>,
   child: Control<T>,
 ): boolean {
   return Boolean(
-    node.fields.children.elements.some(
+    node.fields.children.elements?.some(
       (x) => x === child || isChildOf(x, child),
     ),
   );
@@ -343,14 +339,14 @@ export function isDirectChildOf<T extends { children: T[] }>(
   return Boolean(node.fields.children.elements.find((x) => x === child));
 }
 
-export function findAllParentsInControls<T extends { children: T[] }>(
+export function findAllParentsInControls<T extends { children: T[] | null }>(
   node: Control<T>,
-  nodes: Control<T[]>,
+  nodes: Control<T[] | null>,
 ): Control<T>[] {
-  return nodes.elements.flatMap((x) => findAllParents(node, x)) ?? [];
+  return nodes.elements?.flatMap((x) => findAllParents(node, x)) ?? [];
 }
 
-export function findAllParents<T extends { children: T[] }>(
+export function findAllParents<T extends { children: T[] | null }>(
   node: Control<T>,
   rootNode: Control<T>,
 ): Control<T>[] {
@@ -360,4 +356,12 @@ export function findAllParents<T extends { children: T[] }>(
     rootNode,
     ...findAllParentsInControls(node, rootNode.fields.children),
   ];
+}
+
+export function controlIsGroupControl(c: Control<ControlDefinitionForm>) {
+  return c.fields.type.value === ControlDefinitionType.Group;
+}
+
+export function controlIsCompoundField(c: Control<SchemaFieldForm>) {
+  return c.fields.type.value === FieldType.Compound;
 }

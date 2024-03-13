@@ -48,6 +48,7 @@ import {
   TreeInsertState,
   TreeState,
 } from "./index";
+import { DefaultTreeItem } from "./DefaultTreeItem";
 
 export interface ControlTreeItemProps {
   node: ControlTreeNode;
@@ -60,6 +61,7 @@ export interface ControlTreeItemProps {
   active: Control<any>;
   displayedNodes: ControlTreeNode[];
   onCollapse?: () => void;
+  canHaveChildren?: boolean;
   actions?: ReactNode;
 }
 
@@ -79,7 +81,7 @@ export interface ControlTreeProps {
   canDropAtRoot: (c: Control<any>) => boolean;
   indentationWidth?: number;
   indicator?: boolean;
-  TreeItem: FC<ControlTreeItemProps>;
+  TreeItem?: FC<ControlTreeItemProps>;
   TreeContainer?: FC<ControlTreeContainerProps>;
   actions?: (node: ControlTreeNode) => ReactNode | undefined;
 }
@@ -90,7 +92,7 @@ export function ControlTree({
   indicator = true,
   treeState,
   actions,
-  TreeItem,
+  TreeItem = DefaultTreeItem,
   TreeContainer = ({ children, ...props }) => <>{children}</>,
 }: ControlTreeProps) {
   const sensors = useSensors(useSensor(PointerSensor));
@@ -255,7 +257,8 @@ export function ControlTree({
     const treeFields = treeState.fields;
     const hasChildren = nodeChildCount(x) > 0;
     return x.render({
-      renderItem: (title) => (
+      node: x,
+      renderItem: (title, itemActions, canHaveChildren) => (
         <TreeItem
           key={x.control.uniqueId}
           node={x}
@@ -268,7 +271,8 @@ export function ControlTree({
           insertState={treeFields.dragInsert}
           active={dragState.fields.active}
           onCollapse={hasChildren ? () => onCollapse(x) : undefined}
-          actions={actions?.(x)}
+          canHaveChildren={canHaveChildren}
+          actions={itemActions ?? actions?.(x)}
         />
       ),
       children: clone ? [] : x.childrenNodes.map((c) => renderTreeNode(c)),
@@ -295,7 +299,7 @@ export function ControlTree({
         if (dragParentChildren && destParentChildren) {
           const destIndex = insertedAt.childIndex;
           const currentIndex =
-            dragParentChildren.elements.indexOf(draggedControl);
+            dragParentChildren.elements?.indexOf(draggedControl) ?? -1;
           if (destParentChildren === dragParentChildren) {
             if (currentIndex !== destIndex) {
               updateElements(dragParentChildren, (childList) =>
@@ -395,7 +399,13 @@ export interface SortableTreeItem {
   setDraggableNodeRef: (elem: HTMLElement | null) => void;
   setDroppableNodeRef: (elem: HTMLElement | null) => void;
   canHaveChildren: boolean;
+  title: string;
+  clone?: boolean;
+  actions: ReactNode;
+  expanded: boolean;
+  onCollapse?: () => void;
 }
+
 export function useSortableTreeItem({
   node,
   active,
@@ -403,6 +413,10 @@ export function useSortableTreeItem({
   clone,
   selected,
   indentationWidth,
+  actions,
+  onCollapse,
+  canHaveChildren,
+  title,
 }: ControlTreeItemProps): SortableTreeItem {
   const {
     transform,
@@ -428,16 +442,19 @@ export function useSortableTreeItem({
       ? insertState.fields.parent.value.indent + 1
       : node.indent;
 
-  const canHaveChildren = !!node.children;
-
   return {
     handleProps: { ...attributes, ...listeners },
     itemProps: { style, onClick: () => (selected.value = node.control) },
     isSelected: selected.value === node.control,
-    canHaveChildren,
+    canHaveChildren: canHaveChildren ?? !!node.children,
     setDraggableNodeRef,
     setDroppableNodeRef,
     isDragging,
+    actions,
+    title,
+    clone,
+    expanded: node.expanded,
+    onCollapse,
     paddingLeft: clone ? 0 : depth * indentationWidth,
   };
 }

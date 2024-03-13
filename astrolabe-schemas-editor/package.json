@@ -16,6 +16,7 @@
 	"scripts": {
 		"prepack": "npm run build",
 		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
+		"watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
 		"genschemas": "h get http://localhost:5000/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
 	},
 	"dependencies": {

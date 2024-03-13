@@ -250,13 +250,8 @@ function DataControlPreview({
 }
 
 function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
-  const {
-    treeDrag,
-    dropSuccess,
-    selected,
-    hooks,
-    renderer: { renderGroup },
-  } = usePreviewContext();
+  const { treeDrag, dropSuccess, selected, hooks, renderer } =
+    usePreviewContext();
 
   const children = item.fields.children.elements ?? [];
 
@@ -328,12 +323,18 @@ function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
     >
       <EditorDetails control={item} />
       <LayoutGroup>
-        {renderGroup({
-          definition: groupData as Omit<GroupedControlsDefinition, "children">,
+        {renderer.renderGroup({
+          definition: groupData,
+          renderOptions: groupData.groupOptions!,
+          formState: {
+            hooks,
+            fields: fields.value,
+            renderer,
+            data: newControl({}),
+          },
           childCount: actualChildren.length,
           visible: AlwaysVisible,
           renderChild,
-          hooks,
           hideTitle: groupData.groupOptions?.hideTitle ?? false,
         })}
       </LayoutGroup>

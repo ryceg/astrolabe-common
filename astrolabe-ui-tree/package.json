@@ -15,10 +15,11 @@
 	},
 	"scripts": {
 		"prepack": "npm run build",
-		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline"
+		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
+		"watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps=inline"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.0.0-dev.116",
+		"@react-typed-forms/core": "^3.0.0-dev.118",
 		"@dnd-kit/core": "^6.0.8",
 		"@dnd-kit/utilities": "^3.2.1",
 		"@dnd-kit/sortable": "^7.0.2",

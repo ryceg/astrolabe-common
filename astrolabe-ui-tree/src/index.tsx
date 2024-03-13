@@ -9,9 +9,11 @@ import {
 import React, { Fragment, ReactElement, ReactNode } from "react";
 
 export type TreeNodeRenderProps = {
+  node: ControlTreeNode;
   renderItem: (
     title: string | undefined | null,
     actions?: ReactNode,
+    canHaveChildren?: boolean,
   ) => ReactElement;
   children: ReactNode;
 };
@@ -40,7 +42,7 @@ export interface ControlTreeNode
   extends Omit<TreeNodeData, "canDropChild" | "getChildren"> {
   control: Control<any>;
   parent: ControlTreeNode | undefined;
-  children: Control<any[]> | undefined;
+  children: Control<any[] | null> | undefined;
   childrenNodes: ControlTreeNode[];
   canDropChild: (c: Control<any>) => boolean;
   childIndex: number;
@@ -50,7 +52,7 @@ export interface ControlTreeNode
 
 export interface TreeNodeBuilder<V> {
   withChildren(
-    children: (n: Control<V>) => Control<any[]> | undefined,
+    children: (n: Control<V>) => Control<any[] | null> | undefined,
   ): TreeNodeBuilder<V>;
 
   asChildren: V extends any[] ? TreeNodeBuilder<V> : never;
@@ -232,12 +234,7 @@ export function treeNode<V>(
     : new TreeNodeBuildImpl<V>((n) => ({
         getChildren: () => undefined,
         render: (p) => (
-          <TitleNodeRender
-            key={n.uniqueId}
-            titleControl={title(n)}
-            renderItem={p.renderItem}
-            children={p.children}
-          />
+          <TitleNodeRender key={n.uniqueId} titleControl={title(n)} {...p} />
         ),
         updateTitle: (t) => (title(n).value = t),
       }));

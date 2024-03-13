@@ -1,4 +1,5 @@
 import {
+  ControlTreeNode,
   treeNode,
   TreeNodeConfigure,
   TreeNodeRenderProps,
@@ -6,7 +7,7 @@ import {
 } from "@astroapps/ui-tree";
 import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
 import { Control, ControlSetup } from "@react-typed-forms/core";
-import { ControlDefinitionType } from "@react-typed-forms/schemas";
+import { ControlDefinitionType, FieldType } from "@react-typed-forms/schemas";
 import { ControlForm, useFieldLookup } from "./index";
 import React, { createContext, ReactNode, useContext } from "react";
 
@@ -26,15 +27,15 @@ export function isSchemaFieldNode(
 
 export function getGroupControlChildren(
   n: Control<any>,
-): Control<ControlDefinitionForm[]> | undefined {
-  return isControlDefinitionNode(n) &&
-    n.fields.type.current.value === ControlDefinitionType.Group
-    ? n.fields.children
-    : undefined;
+): Control<ControlDefinitionForm[] | null> | undefined {
+  return isControlDefinitionNode(n) ? n.fields.children : undefined;
 }
 
 export function makeControlTree(
-  makeActions?: (node: ControlForm) => ReactNode | undefined,
+  makeActions?: (
+    node: ControlTreeNode,
+    field: Control<SchemaFieldForm>,
+  ) => ReactNode | undefined,
 ) {
   const ControlTreeStructure: (
     p?: TreeNodeConfigure<ControlDefinitionForm>,
@@ -62,13 +63,12 @@ export function makeControlTree(
           })
           .withDropping((nodeType) => nodeType === ControlDefNodeType)
           .withDragging()
-          .withCustomRender((n, { children, renderItem }) => (
+          .withCustomRender((c, p) => (
             <ControlDefTreeNode
-              key={n.uniqueId}
-              node={n}
-              children={children}
+              key={c.uniqueId}
+              control={c}
+              {...p}
               makeActions={makeActions}
-              renderItem={renderItem}
             />
           ))
           .and(p),
@@ -93,13 +93,17 @@ export function useSchemaFields(): Control<SchemaFieldForm[]> {
 }
 
 function ControlDefTreeNode({
-  node: n,
+  control: n,
+  node,
   makeActions,
   children,
   renderItem,
 }: {
-  node: ControlForm;
-  makeActions?: (n: ControlForm) => React.ReactNode | undefined;
+  control: ControlForm;
+  makeActions?: (
+    n: ControlTreeNode,
+    field: Control<SchemaFieldForm>,
+  ) => React.ReactNode | undefined;
 } & TreeNodeRenderProps) {
   const fields = useSchemaFields();
   const {
@@ -111,20 +115,23 @@ function ControlDefTreeNode({
   const isGroup = type === "Group";
   const lookupField = isGroup ? compoundField : field;
   const schemaField = useFieldLookup(fields, lookupField);
-  children =
-    isGroup && compoundField ? (
-      <SchemaFieldsProvider value={schemaField.fields.children}>
-        {children}
-      </SchemaFieldsProvider>
-    ) : (
-      children
-    );
+  const isCompound = schemaField.fields.type.value === FieldType.Compound;
   const schemaFieldName = schemaField.fields.displayName.value;
   const title = _title ? _title : schemaFieldName ? schemaFieldName : field;
   return (
     <>
-      {renderItem(title, makeActions?.(n))}
-      {children}
+      {renderItem(
+        title,
+        makeActions?.(node, schemaField),
+        isCompound || isGroup,
+      )}
+      {isCompound ? (
+        <SchemaFieldsProvider value={schemaField.fields.children}>
+          {children}
+        </SchemaFieldsProvider>
+      ) : (
+        children
+      )}
     </>
   );
 }
@@ -144,13 +151,8 @@ export const SchemaFieldStructure: () => ControlSetup<
         )
         .withDragging()
         .withDropping((n) => n === SchemaFieldNode)
-        .withCustomRender((n, { children, renderItem }) => (
-          <SchemaFieldTreeNode
-            key={n.uniqueId}
-            node={n}
-            children={children}
-            renderItem={renderItem}
-          />
+        .withCustomRender((n, p) => (
+          <SchemaFieldTreeNode key={n.uniqueId} control={n} {...p} />
         ))
         .withIcon((n) => <SchemaFieldIcon state={n.fields.type} />),
   ),
@@ -165,11 +167,11 @@ function SchemaFieldIcon({ state }: { state: Control<string> }) {
 }
 
 function SchemaFieldTreeNode({
-  node: n,
+  control: n,
   children,
   renderItem,
 }: {
-  node: Control<SchemaFieldForm>;
+  control: Control<SchemaFieldForm>;
 } & TreeNodeRenderProps) {
   const _title = n.fields.displayName.value;
   const field = n.fields.field.value;
