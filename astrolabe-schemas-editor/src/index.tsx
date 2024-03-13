@@ -161,6 +161,7 @@ export function makeEditorFormHooks(
         definition: c,
         field,
         formState: fs,
+        hideTitle: !!c.hideTitle,
         renderOptions: c.renderOptions ?? { type: DataRenderType.Standard },
         control,
         defaultValue: sf.defaultValue,
@@ -168,7 +169,7 @@ export function makeEditorFormHooks(
         visible,
         customRender,
         readonly: c.readonly ?? false,
-      };
+      } satisfies DataRendererProps;
 
       function otherFieldOptions(
         ot: SchemaOptionTag,

@@ -1,5 +1,11 @@
 import { Control, newControl } from "@react-typed-forms/core";
-import React, { createContext, ReactNode, useContext, useMemo } from "react";
+import React, {
+  createContext,
+  ReactElement,
+  ReactNode,
+  useContext,
+  useMemo,
+} from "react";
 import { isNullOrEmpty } from "@astroapps/client/util/arrays";
 import { SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
@@ -18,6 +24,8 @@ import {
   FormRenderer,
   getDefaultScalarControlProperties,
   GroupedControlsDefinition,
+  GroupRendererProps,
+  isCompoundField,
   SchemaField,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
@@ -25,8 +33,10 @@ import {
   ControlDragState,
   controlDropData,
   ControlForm,
+  controlIsCompoundField,
   DragData,
   DropData,
+  NonExistentField,
   useFieldLookup,
   useFindScalarField,
 } from ".";
@@ -180,13 +190,14 @@ function DataControlPreview({
 }: FormControlPreviewDataProps) {
   const { selected, readonly, renderer, hooks } = usePreviewContext();
   const fieldDetails = item.value;
-  const schemaField = useFindScalarField(fields, fieldDetails.field!);
-  const isCollection = Boolean(schemaField?.collection);
+  const schemaField = useFieldLookup(fields, fieldDetails.field!);
+  const { collection, onlyForTypes: oft } = schemaField.fields;
+  const isCollection = Boolean(collection.value);
   const control: Control<any> = useMemo(
     () => newControl(isCollection ? [undefined] : undefined),
     [isCollection],
   );
-  const onlyForTypes = !isNullOrEmpty(schemaField?.onlyForTypes);
+  const onlyForTypes = !isNullOrEmpty(oft.value);
 
   return (
     <motion.div
@@ -207,7 +218,7 @@ function DataControlPreview({
       }}
     >
       <EditorDetails control={item} schemaVisibility={onlyForTypes} />
-      {schemaField ? (
+      {schemaField !== NonExistentField ? (
         renderRealField(schemaField)
       ) : (
         <div>No schema field: {fieldDetails.field}</div>
@@ -215,35 +226,84 @@ function DataControlPreview({
     </motion.div>
   );
 
-  function renderRealField(field: SchemaField) {
+  function renderRealField(field: Control<SchemaFieldForm>) {
+    const isCompoundField = controlIsCompoundField(field);
     const definition = fieldDetails as DataControlDefinition;
+    const formState = {
+      fields: [],
+      data: newControl({}),
+      readonly,
+      renderer,
+      hooks,
+    };
     const dataProps = getDefaultScalarControlProperties(
       definition,
-      field,
+      field.value,
       AlwaysVisible,
       undefined,
       control,
-      { fields: [], data: newControl({}), readonly, renderer, hooks },
+      formState,
     );
-    const finalProps = !field.collection
-      ? dataProps
-      : {
-          ...dataProps,
-          array: makeArrayProps(),
-        };
+    const finalProps =
+      !isCollection && !isCompoundField
+        ? dataProps
+        : {
+            ...dataProps,
+            array: !isCompoundField
+              ? makeArrayProps(() =>
+                  renderer.renderData({
+                    ...dataProps,
+                    control: control.elements[0],
+                  }),
+                )
+              : undefined,
+            group: isCompoundField ? makeGroup() : undefined,
+          };
     return renderer.renderData(finalProps);
 
-    function makeArrayProps(): ArrayRendererProps {
+    function makeGroup(): GroupRendererProps {
+      const hideTitle = fieldDetails.hideTitle ?? false;
+      const noArray: GroupRendererProps = {
+        visible: AlwaysVisible,
+        definition: fieldDetails,
+        hideTitle,
+        formState,
+        renderOptions: { type: "Standard", hideTitle },
+        childCount: fieldDetails.children?.length ?? 0,
+        renderChild(i: number) {
+          const child = item.fields.children.elements![i];
+          return (
+            <FormControlPreview
+              key={child.uniqueId}
+              fields={field.fields.children}
+              dropIndex={i}
+              item={child}
+              parent={item}
+            />
+          );
+        },
+      };
+      if (isCollection)
+        return {
+          ...noArray,
+          array: makeArrayProps(() =>
+            renderer.renderGroup({ ...noArray, hideTitle: true }),
+          ),
+        };
+      return noArray;
+    }
+    function makeArrayProps(
+      renderChild: () => ReactElement,
+    ): ArrayRendererProps {
       return {
         control,
         definition,
-        field,
+        field: field.value,
         childCount: 1,
         childKey: (c) => 0,
         removeAction: (c) => createAction("Remove", () => {}, "removeElement"),
         addAction: createAction("Add", () => {}, "addElement"),
-        renderChild: (c) =>
-          renderer.renderData({ ...dataProps, control: control.elements[0] }),
+        renderChild,
       };
     }
   }
