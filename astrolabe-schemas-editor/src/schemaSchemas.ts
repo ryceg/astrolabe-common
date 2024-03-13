@@ -722,12 +722,12 @@ export interface ControlDefinitionForm {
   adornments: ControlAdornmentForm[] | null;
   children: ControlDefinitionForm[] | null;
   field: string;
+  hideTitle: boolean | null;
   required: boolean | null;
   renderOptions: RenderOptionsForm | null;
   defaultValue: any | null;
   readonly: boolean | null;
   validators: SchemaValidatorForm[] | null;
-  hideTitle: boolean | null;
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
@@ -786,6 +786,11 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     displayName: "Field",
     tags: ["_SchemaField"],
   }),
+  hideTitle: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Data"],
+    displayName: "HideTitle",
+  }),
   required: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
@@ -813,11 +818,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     collection: true,
     onlyForTypes: ["Data"],
     displayName: "Validators",
-  }),
-  hideTitle: makeScalarField({
-    type: FieldType.Bool,
-    onlyForTypes: ["Data"],
-    displayName: "HideTitle",
   }),
   compoundField: makeScalarField({
     type: FieldType.String,

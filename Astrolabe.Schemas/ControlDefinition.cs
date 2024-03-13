@@ -37,6 +37,8 @@ public abstract record ControlDefinition([property: SchemaOptions(typeof(Control
 
 public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)] string Field) : ControlDefinition(ControlDefinitionType.Data.ToString())
 {
+    public bool? HideTitle { get; set; }
+    
     [DefaultValue(false)]
     public bool? Required { get; set; }
     
@@ -49,8 +51,6 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     
     public IEnumerable<SchemaValidator>? Validators { get; set; }
     
-    public bool? HideTitle { get; set; }
-
 }
 
 public record GroupedControlsDefinition() : ControlDefinition(ControlDefinitionType.Group.ToString()) 
