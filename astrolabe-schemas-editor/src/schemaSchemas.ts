@@ -720,13 +720,13 @@ export interface ControlDefinitionForm {
   title: string | null;
   dynamic: DynamicPropertyForm[] | null;
   adornments: ControlAdornmentForm[] | null;
+  children: ControlDefinitionForm[] | null;
   field: string;
   required: boolean | null;
   renderOptions: RenderOptionsForm | null;
   defaultValue: any | null;
   readonly: boolean | null;
   validators: SchemaValidatorForm[] | null;
-  children: ControlDefinitionForm[];
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
@@ -772,6 +772,12 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     collection: true,
     displayName: "Adornments",
   }),
+  children: makeCompoundField({
+    treeChildren: true,
+    collection: true,
+    displayName: "Children",
+    tags: ["_NoControl"],
+  }),
   field: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["Data"],
@@ -806,14 +812,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     collection: true,
     onlyForTypes: ["Data"],
     displayName: "Validators",
-  }),
-  children: makeCompoundField({
-    treeChildren: true,
-    collection: true,
-    onlyForTypes: ["Group"],
-    required: true,
-    displayName: "Children",
-    tags: ["_NoControl"],
   }),
   compoundField: makeScalarField({
     type: FieldType.String,

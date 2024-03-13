@@ -27,8 +27,12 @@ public abstract record ControlDefinition([property: SchemaOptions(typeof(Control
     
     public IEnumerable<ControlAdornment>? Adornments { get; set; }
 
+    [SchemaTag(SchemaTags.NoControl)] 
+    public IEnumerable<ControlDefinition>? Children { get; set; }
+    
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
+    
 }
 
 public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)] string Field) : ControlDefinition(ControlDefinitionType.Data.ToString())
@@ -46,9 +50,9 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     public IEnumerable<SchemaValidator>? Validators { get; set; }
 }
 
-public record GroupedControlsDefinition([property: SchemaTag(SchemaTags.NoControl)]  IEnumerable<ControlDefinition> Children) : ControlDefinition(ControlDefinitionType.Group.ToString()) 
+public record GroupedControlsDefinition() : ControlDefinition(ControlDefinitionType.Group.ToString()) 
 {
-    public static readonly ControlDefinition Default = new GroupedControlsDefinition(Array.Empty<ControlDefinition>());
+    public static readonly ControlDefinition Default = new GroupedControlsDefinition();
 
     [SchemaTag(SchemaTags.NestedSchemaField)]
     public string? CompoundField { get; set; }
