@@ -8,12 +8,14 @@ namespace Astrolabe.Schemas;
 public enum ValidatorType
 {
     Jsonata,
-    Date
+    Date,
+    Length
 }
 
 [JsonBaseType("type", typeof(SimpleExpression))]
 [JsonSubType("Jsonata", typeof(JsonataValidator))]
 [JsonSubType("Date", typeof(DateValidator))]
+[JsonSubType("Length", typeof(LengthValidator))]
 public abstract record SchemaValidator([property: SchemaOptions(typeof(ValidatorType))] string Type)
 {
     [JsonExtensionData]
@@ -36,3 +38,5 @@ public enum DateComparison
 
 public record DateValidator(DateComparison Comparison, DateOnly? FixedDate, int? DaysFromCurrent)
     : SchemaValidator(ValidatorType.Date.ToString());
+
+public record LengthValidator(int? Min, int? Max) : SchemaValidator(ValidatorType.Length.ToString());

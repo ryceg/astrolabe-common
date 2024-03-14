@@ -36,7 +36,7 @@ public static class EntityExpressionExtensions
         return (node, value) switch
         {
             (JsonArray a, JsonElement e) => a.Contains(JsonValue.Create(e)),
-            ({} n, JsonElement e) => n.AsValue() == JsonValue.Create(e),
+            ({} n, JsonElement e) => JsonNode.DeepEquals(n.AsValue(), JsonValue.Create(e)),
             _ => throw new NotImplementedException()
         };
     }

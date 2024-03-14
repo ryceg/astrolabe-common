@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
-        <Version>1.0.1</Version>
+        <Version>2.0.0</Version>
         <Authors>doolse</Authors>
         <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>C# Library for dealing with @react-typed-forms/schemas</Description>
@@ -17,9 +17,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Astrolabe.Annotation\Astrolabe.Annotation.csproj" />
-      <ProjectReference Include="..\Astrolabe.CodeGen\Astrolabe.CodeGen.csproj" />
-      <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
+      <PackageReference Include="Astrolabe.Annotation" Version="1.0.0" />
+      <PackageReference Include="Astrolabe.CodeGen" Version="1.0.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -31,6 +30,10 @@
         <Pack>true</Pack>
         <PackagePath>/</PackagePath>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
     </ItemGroup>
 
 

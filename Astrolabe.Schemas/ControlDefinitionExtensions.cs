@@ -13,4 +13,20 @@ public static class ControlDefinitionExtensions
             return true;
         return dynamicVisibility.Expr.EvalBool(data, context);
     }
+
+    public static (JsonNode?, SchemaField)? FindChildField(this ControlDefinition definition, JsonObject data,
+        IEnumerable<SchemaField> fields)
+    {
+        var childField = definition switch
+        {
+            DataControlDefinition { Field: var field } => field,
+            GroupedControlsDefinition { CompoundField: { } field } => field,
+            _ => null
+        };
+        if (childField != null && fields.FirstOrDefault(x => x.Field == childField) is { } childSchema)
+        {
+            return (data[childField], childSchema);
+        }
+        return null;
+    }
 }

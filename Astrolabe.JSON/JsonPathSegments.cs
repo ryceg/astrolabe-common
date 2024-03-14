@@ -18,10 +18,25 @@ public record JsonPathSegments(ImmutableStack<object> Segments)
                 return null;
             node = segment switch
             {
-                int i => node.AsArray()[i],
-                string s => node.AsObject()[s]
+                int i => node[i],
+                string s => node[s],
+                _ => throw new ArgumentOutOfRangeException()
             };
         }
         return node;
+    }
+}
+
+
+public static class JsonPathSegmentsExtensions
+{
+    public static string ToPathString(this JsonPathSegments segments)
+    {
+        return string.Join("", segments.Segments.Reverse().Select((x, i) => x switch
+        {
+            string s when i > 0 => "." + s,
+            int v => $"[{v}]",
+            _ => x.ToString()
+        }));
     }
 }
