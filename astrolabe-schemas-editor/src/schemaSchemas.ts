@@ -52,6 +52,8 @@ export interface SchemaValidatorForm {
   comparison: DateComparison;
   fixedDate: string | null;
   daysFromCurrent: number | null;
+  min: number | null;
+  max: number | null;
 }
 
 export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
@@ -68,6 +70,10 @@ export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
       {
         name: "Date",
         value: "Date",
+      },
+      {
+        name: "Length",
+        value: "Length",
       },
     ],
   }),
@@ -102,6 +108,16 @@ export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
     type: FieldType.Int,
     onlyForTypes: ["Date"],
     displayName: "DaysFromCurrent",
+  }),
+  min: makeScalarField({
+    type: FieldType.Int,
+    onlyForTypes: ["Length"],
+    displayName: "Min",
+  }),
+  max: makeScalarField({
+    type: FieldType.Int,
+    onlyForTypes: ["Length"],
+    displayName: "Max",
   }),
 });
 
