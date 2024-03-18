@@ -68,10 +68,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     disabled: Boolean(noDrop),
     data: controlDropData(parent, dropIndex, dropSuccess),
   });
-  const mydef = item.value;
+  const mydef = trackedValue(item);
   const children = mydef.children ?? [];
   const parentControls = newControl({});
-  const cd = lookupControlData(mydef, parentControls, props.fields.value);
+  const cd = lookupControlData(
+    mydef,
+    parentControls,
+    trackedValue(props.fields),
+  );
   const layout = renderControlLayout(
     mydef,
     renderer,
@@ -79,7 +83,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     (k, i, c) => (
       <FormControlPreview
         key={k}
-        item={item.fields.children.elements![i]}
+        item={unsafeRestoreControl(children[i])}
         parent={item}
         dropIndex={0}
         fields={props.fields}
@@ -96,7 +100,30 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         setNodeRef(e);
       }}
     >
-      {renderer.renderLayout(layout)}
+      <motion.div
+        layout={defaultLayoutChange}
+        layoutId={item.uniqueId.toString()}
+        onMouseDownCapture={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+        onClickCapture={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          selected.value = item;
+        }}
+        style={{
+          backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
+          position: "relative",
+        }}
+      >
+        <EditorDetails
+          control={item}
+          schemaVisibility={!!cd.schemaField?.onlyForTypes?.length}
+        />
+
+        {renderer.renderLayout(layout)}
+      </motion.div>
     </div>
   );
 
@@ -451,4 +478,28 @@ function EditorDetails({
       )}
     </div>
   );
+}
+
+const restoreControlSymbol = Symbol("restoreControl");
+export function trackedValue<A>(c: Control<A>): A {
+  const cv: any = c.current.value;
+  if (cv == null) return cv;
+  if (typeof cv !== "object") return c.value;
+  const arr = Array.isArray(cv);
+  return new Proxy(cv, {
+    get(target: object, p: string | symbol, receiver: any): any {
+      if (p === restoreControlSymbol) return c;
+      if (arr) {
+        if (p === "length" || p === "toJSON") return Reflect.get(cv, p);
+        const nc = (c.elements as any)[p];
+        if (typeof nc === "function") return nc;
+        return trackedValue(nc);
+      }
+      return trackedValue((c.fields as any)[p]);
+    },
+  }) as A;
+}
+
+export function unsafeRestoreControl<A>(v: A): Control<A> {
+  return (v as any)[restoreControlSymbol];
 }
