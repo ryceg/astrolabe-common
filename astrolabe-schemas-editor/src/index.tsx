@@ -81,14 +81,6 @@ export function useFieldLookup(
   );
 }
 
-export function useFindScalarField(
-  fields: Control<SchemaFieldForm[]>,
-  field: string,
-): SchemaField | undefined {
-  const fc = useFieldLookup(fields, field);
-  return fc === NonExistentField ? undefined : fc.value;
-}
-
 export function controlDropData(
   parent: ControlForm | undefined,
   dropIndex: number,

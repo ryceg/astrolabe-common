@@ -1,39 +1,25 @@
 import { Control, newControl } from "@react-typed-forms/core";
-import React, {
-  createContext,
-  ReactElement,
-  ReactNode,
-  useContext,
-  useMemo,
-} from "react";
+import React, { createContext, ReactNode, useContext, useMemo } from "react";
 import { isNullOrEmpty } from "@astroapps/client/util/arrays";
 import { SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import { LayoutGroup, motion } from "framer-motion";
 import update from "immutability-helper";
 import {
-  ActionControlDefinition,
-  ArrayRendererProps,
   ControlDefinitionType,
-  DataControlDefinition,
-  DisplayControlDefinition,
   DynamicPropertyType,
   FormRenderer,
-  GroupRendererProps,
-  isCompoundField,
-  SchemaField,
+  lookupControlData,
+  renderControlLayout,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import {
   ControlDragState,
   controlDropData,
   ControlForm,
-  controlIsCompoundField,
   DragData,
   DropData,
-  NonExistentField,
   useFieldLookup,
-  useFindScalarField,
 } from ".";
 
 export interface FormControlPreviewProps {
@@ -73,7 +59,7 @@ function usePreviewContext() {
 
 export function FormControlPreview(props: FormControlPreviewProps) {
   const { item, parent, dropIndex, noDrop } = props;
-  const { selected, dropSuccess } = usePreviewContext();
+  const { selected, dropSuccess, renderer } = usePreviewContext();
   const type = item.fields.type.value;
   const isSelected = selected.value === item;
   const scrollRef = useScrollIntoView(isSelected);
@@ -82,6 +68,27 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     disabled: Boolean(noDrop),
     data: controlDropData(parent, dropIndex, dropSuccess),
   });
+  const mydef = item.value;
+  const children = mydef.children ?? [];
+  const parentControls = newControl({});
+  const cd = lookupControlData(mydef, parentControls, props.fields.value);
+  const layout = renderControlLayout(
+    mydef,
+    renderer,
+    children.length,
+    (k, i, c) => (
+      <FormControlPreview
+        key={k}
+        item={item.fields.children.elements![i]}
+        parent={item}
+        dropIndex={0}
+        fields={props.fields}
+      />
+    ),
+    parentControls,
+    cd.control,
+    cd.schemaField,
+  );
   return (
     <div
       ref={(e) => {
@@ -89,7 +96,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         setNodeRef(e);
       }}
     >
-      {contents()}
+      {renderer.renderLayout(layout)}
     </div>
   );
 
