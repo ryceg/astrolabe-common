@@ -1,12 +1,12 @@
-import {Control} from "@react-typed-forms/core";
-import React, {useRef} from "react";
-import {ReactQuillProps} from "react-quill";
-import {createDataRendererLabelled, DataRenderType,} from "@react-typed-forms/schemas";
+import { Control } from "@react-typed-forms/core";
+import React, { useRef } from "react";
+import { ReactQuillProps } from "react-quill";
+import { createDataRenderer, DataRenderType } from "@react-typed-forms/schemas";
 
 export function createQuillEditor(
   ReactQuill: React.ComponentType<ReactQuillProps>,
 ) {
-  return createDataRendererLabelled(
+  return createDataRenderer(
     ({ control }) => <HtmlEditor state={control} ReactQuill={ReactQuill} />,
     { renderType: DataRenderType.HtmlEditor },
   );

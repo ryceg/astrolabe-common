@@ -13,17 +13,12 @@ import { LayoutGroup, motion } from "framer-motion";
 import update from "immutability-helper";
 import {
   ActionControlDefinition,
-  AlwaysVisible,
   ArrayRendererProps,
   ControlDefinitionType,
-  createAction,
   DataControlDefinition,
   DisplayControlDefinition,
   DynamicPropertyType,
-  FormEditHooks,
   FormRenderer,
-  getDefaultScalarControlProperties,
-  GroupedControlsDefinition,
   GroupRendererProps,
   isCompoundField,
   SchemaField,
@@ -55,7 +50,6 @@ export interface FormControlPreviewContext {
   dropSuccess: (drag: DragData, drop: DropData) => void;
   readonly?: boolean;
   VisibilityIcon: ReactNode;
-  hooks: FormEditHooks;
   renderer: FormRenderer;
 }
 
@@ -125,6 +119,7 @@ function ActionControlPreview({
     renderer: { renderAction },
   } = usePreviewContext();
 
+  const { actionId } = item.value;
   return (
     <motion.div
       layout={defaultLayoutChange}
@@ -139,8 +134,8 @@ function ActionControlPreview({
       }}
     >
       {renderAction({
-        definition: item.value as ActionControlDefinition,
-        visible: { canChange: false, value: true },
+        actionId,
+        actionText: actionId,
         onClick: () => {},
       })}
     </motion.div>
@@ -174,8 +169,7 @@ function DisplayControlPreview({
       }}
     >
       {renderDisplay({
-        definition: item.value as DisplayControlDefinition,
-        visible: AlwaysVisible,
+        data: item.value.displayData,
       })}
     </motion.div>
   );
@@ -188,7 +182,7 @@ function DataControlPreview({
   fields,
   dropIndex,
 }: FormControlPreviewDataProps) {
-  const { selected, readonly, renderer, hooks } = usePreviewContext();
+  const { selected, readonly, renderer } = usePreviewContext();
   const fieldDetails = item.value;
   const schemaField = useFieldLookup(fields, fieldDetails.field!);
   const { collection, onlyForTypes: oft } = schemaField.fields;
@@ -218,100 +212,99 @@ function DataControlPreview({
       }}
     >
       <EditorDetails control={item} schemaVisibility={onlyForTypes} />
-      {schemaField !== NonExistentField ? (
-        renderRealField(schemaField)
-      ) : (
-        <div>No schema field: {fieldDetails.field}</div>
-      )}
+      {/*{schemaField !== NonExistentField ? (*/}
+      {/*  renderRealField(schemaField)*/}
+      {/*) : (*/}
+      {/*  <div>No schema field: {fieldDetails.field}</div>*/}
+      {/*)}*/}
     </motion.div>
   );
 
-  function renderRealField(field: Control<SchemaFieldForm>) {
-    const isCompoundField = controlIsCompoundField(field);
-    const definition = fieldDetails as DataControlDefinition;
-    const formState = {
-      fields: [],
-      data: newControl({}),
-      readonly,
-      renderer,
-      hooks,
-    };
-    const dataProps = getDefaultScalarControlProperties(
-      definition,
-      field.value,
-      AlwaysVisible,
-      undefined,
-      control,
-      formState,
-    );
-    const finalProps =
-      !isCollection && !isCompoundField
-        ? dataProps
-        : {
-            ...dataProps,
-            array: !isCompoundField
-              ? makeArrayProps(() =>
-                  renderer.renderData({
-                    ...dataProps,
-                    control: control.elements[0],
-                  }),
-                )
-              : undefined,
-            group: isCompoundField ? makeGroup() : undefined,
-          };
-    return renderer.renderData(finalProps);
-
-    function makeGroup(): GroupRendererProps {
-      const hideTitle = fieldDetails.hideTitle ?? false;
-      const noArray: GroupRendererProps = {
-        visible: AlwaysVisible,
-        definition: fieldDetails,
-        hideTitle,
-        formState,
-        renderOptions: { type: "Standard", hideTitle },
-        childCount: fieldDetails.children?.length ?? 0,
-        renderChild(i: number) {
-          const child = item.fields.children.elements![i];
-          return (
-            <FormControlPreview
-              key={child.uniqueId}
-              fields={field.fields.children}
-              dropIndex={i}
-              item={child}
-              parent={item}
-            />
-          );
-        },
-      };
-      if (isCollection)
-        return {
-          ...noArray,
-          array: makeArrayProps(() =>
-            renderer.renderGroup({ ...noArray, hideTitle: true }),
-          ),
-        };
-      return noArray;
-    }
-    function makeArrayProps(
-      renderChild: () => ReactElement,
-    ): ArrayRendererProps {
-      return {
-        control,
-        definition,
-        field: field.value,
-        childCount: 1,
-        childKey: (c) => 0,
-        removeAction: (c) => createAction("Remove", () => {}, "removeElement"),
-        addAction: createAction("Add", () => {}, "addElement"),
-        renderChild,
-      };
-    }
-  }
+  // function renderRealField(field: Control<SchemaFieldForm>) {
+  //   const isCompoundField = controlIsCompoundField(field);
+  //   const definition = fieldDetails as DataControlDefinition;
+  //   const formState = {
+  //     fields: [],
+  //     data: newControl({}),
+  //     readonly,
+  //     renderer,
+  //     hooks,
+  //   };
+  //   const dataProps = getDefaultScalarControlProperties(
+  //     definition,
+  //     field.value,
+  //     AlwaysVisible,
+  //     undefined,
+  //     control,
+  //     formState,
+  //   );
+  //   const finalProps =
+  //     !isCollection && !isCompoundField
+  //       ? dataProps
+  //       : {
+  //           ...dataProps,
+  //           array: !isCompoundField
+  //             ? makeArrayProps(() =>
+  //                 renderer.renderData({
+  //                   ...dataProps,
+  //                   control: control.elements[0],
+  //                 }),
+  //               )
+  //             : undefined,
+  //           group: isCompoundField ? makeGroup() : undefined,
+  //         };
+  //   return renderer.renderData(finalProps);
+  //
+  //   function makeGroup(): GroupRendererProps {
+  //     const hideTitle = fieldDetails.hideTitle ?? false;
+  //     const noArray: GroupRendererProps = {
+  //       visible: AlwaysVisible,
+  //       definition: fieldDetails,
+  //       hideTitle,
+  //       formState,
+  //       renderOptions: { type: "Standard", hideTitle },
+  //       childCount: fieldDetails.children?.length ?? 0,
+  //       renderChild(i: number) {
+  //         const child = item.fields.children.elements![i];
+  //         return (
+  //           <FormControlPreview
+  //             key={child.uniqueId}
+  //             fields={field.fields.children}
+  //             dropIndex={i}
+  //             item={child}
+  //             parent={item}
+  //           />
+  //         );
+  //       },
+  //     };
+  //     if (isCollection)
+  //       return {
+  //         ...noArray,
+  //         array: makeArrayProps(() =>
+  //           renderer.renderGroup({ ...noArray, hideTitle: true }),
+  //         ),
+  //       };
+  //     return noArray;
+  //   }
+  //   function makeArrayProps(
+  //     renderChild: () => ReactElement,
+  //   ): ArrayRendererProps {
+  //     return {
+  //       control,
+  //       definition,
+  //       field: field.value,
+  //       childCount: 1,
+  //       childKey: (c) => 0,
+  //       removeAction: (c) => createAction("Remove", () => {}, "removeElement"),
+  //       addAction: createAction("Add", () => {}, "addElement"),
+  //       renderChild,
+  //     };
+  //   }
+  // }
 }
 
 function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
-  const { treeDrag, dropSuccess, selected, hooks, renderer } =
-    usePreviewContext();
+  const { treeDrag, dropSuccess, selected, renderer } = usePreviewContext();
 
   const children = item.fields.children.elements ?? [];
 
@@ -384,18 +377,9 @@ function GroupedControlPreview({ item, fields }: FormControlPreviewDataProps) {
       <EditorDetails control={item} />
       <LayoutGroup>
         {renderer.renderGroup({
-          definition: groupData,
           renderOptions: groupData.groupOptions!,
-          formState: {
-            hooks,
-            fields: fields.value,
-            renderer,
-            data: newControl({}),
-          },
           childCount: actualChildren.length,
-          visible: AlwaysVisible,
           renderChild,
-          hideTitle: groupData.groupOptions?.hideTitle ?? false,
         })}
       </LayoutGroup>
       <div ref={setNodeRef} style={{ height: 5, marginTop: 20 }} />
