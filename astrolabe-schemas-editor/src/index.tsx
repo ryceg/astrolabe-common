@@ -93,8 +93,8 @@ export interface InternalHooksContext {
 export function useEditorDataHook(
   fieldList: SchemaField[],
 ): (cd: ControlDefinition) => CreateDataProps {
-  return useCallback(
-    () => (definition, sf, groupContext, control, dataOptions) => {
+  const createCB: CreateDataProps = useCallback(
+    (definition, sf, groupContext, control, dataOptions) => {
       const defaultProps = defaultDataProps(
         definition,
         sf,
@@ -141,6 +141,7 @@ export function useEditorDataHook(
     },
     [fieldList],
   );
+  return useCallback(() => createCB, []);
 }
 
 // export function makeEditorFormHooks(
