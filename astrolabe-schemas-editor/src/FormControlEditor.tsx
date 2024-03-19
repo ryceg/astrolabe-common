@@ -1,4 +1,4 @@
-import { Control } from "@react-typed-forms/core";
+import { Control, newControl, useComputed } from "@react-typed-forms/core";
 import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
 import { ReactElement } from "react";
 import {
@@ -7,7 +7,11 @@ import {
   SchemaField,
   useControlRenderer,
 } from "@react-typed-forms/schemas";
-import { useEditorDataHook } from "./index";
+import {
+  findAllParentsInControls,
+  findSchemaFieldListForParents,
+  useEditorDataHook,
+} from "./index";
 
 export function FormControlEditor({
   control,
@@ -24,13 +28,14 @@ export function FormControlEditor({
   renderer: FormRenderer;
   rootControls: Control<ControlDefinitionForm[]>;
 }): ReactElement {
-  consoleFIXME.log("Whole editor");
-  // rootControls.elements;
-  // const parentFields = findAllParentsInControls(control, rootControls);
-  // const fieldList =
-  //   findSchemaFieldListForParents(fields, parentFields) ??
-  //   newControl<SchemaFieldForm[]>([]);
-  const useDataHook = useEditorDataHook(fields.value);
+  const fieldList = useComputed(() => {
+    const parentFields = findAllParentsInControls(control, rootControls);
+    return (
+      findSchemaFieldListForParents(fields, parentFields) ??
+      newControl<SchemaFieldForm[]>([])
+    );
+  }).value;
+  const useDataHook = useEditorDataHook(fieldList.value);
   const RenderEditor = useControlRenderer(
     editorControls,
     editorFields,
