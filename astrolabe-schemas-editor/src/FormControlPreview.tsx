@@ -1,5 +1,11 @@
 import { Control, newControl } from "@react-typed-forms/core";
-import React, { createContext, ReactNode, useContext, useMemo } from "react";
+import React, {
+  createContext,
+  HTMLAttributes,
+  ReactNode,
+  useContext,
+  useMemo,
+} from "react";
 import { isNullOrEmpty } from "@astroapps/client/util/arrays";
 import { SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
@@ -7,9 +13,12 @@ import { LayoutGroup, motion } from "framer-motion";
 import update from "immutability-helper";
 import {
   ControlDefinitionType,
+  defaultDataProps,
   DynamicPropertyType,
   FormRenderer,
-  lookupControlData,
+  getControlData,
+  isGroupControlsDefinition,
+  lookupSchemaField,
   renderControlLayout,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
@@ -60,6 +69,8 @@ function usePreviewContext() {
 export function FormControlPreview(props: FormControlPreviewProps) {
   const { item, parent, dropIndex, noDrop } = props;
   const { selected, dropSuccess, renderer } = usePreviewContext();
+  const fields = trackedValue(props.fields);
+  const definition = trackedValue(item);
   const type = item.fields.type.value;
   const isSelected = selected.value === item;
   const scrollRef = useScrollIntoView(isSelected);
@@ -68,16 +79,19 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     disabled: Boolean(noDrop),
     data: controlDropData(parent, dropIndex, dropSuccess),
   });
-  const mydef = trackedValue(item);
-  const children = mydef.children ?? [];
-  const parentControls = newControl({});
-  const cd = lookupControlData(
-    mydef,
-    parentControls,
-    trackedValue(props.fields),
+  const children = definition.children ?? [];
+  const groupControl = newControl({});
+  const schemaField = lookupSchemaField(definition, fields);
+  const groupContext = {
+    groupControl,
+    fields,
+  };
+  const [childControl, childContext] = getControlData(
+    schemaField,
+    groupContext,
   );
   const layout = renderControlLayout(
-    mydef,
+    definition,
     renderer,
     children.length,
     (k, i, c) => (
@@ -86,13 +100,31 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         item={unsafeRestoreControl(children[i])}
         parent={item}
         dropIndex={0}
-        fields={props.fields}
+        fields={unsafeRestoreControl(childContext.fields).as()}
       />
     ),
-    parentControls,
-    cd.control,
-    cd.schemaField,
+    defaultDataProps,
+    {},
+    groupContext,
+    childControl,
+    schemaField,
   );
+  const mouseCapture: Pick<
+    HTMLAttributes<HTMLDivElement>,
+    "onClick" | "onClickCapture" | "onMouseDownCapture"
+  > = isGroupControlsDefinition(definition)
+    ? { onClick: (e) => (selected.value = item) }
+    : {
+        onClickCapture: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          selected.value = item;
+        },
+        onMouseDownCapture: (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        },
+      };
   return (
     <div
       ref={(e) => {
@@ -103,23 +135,15 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       <motion.div
         layout={defaultLayoutChange}
         layoutId={item.uniqueId.toString()}
-        onMouseDownCapture={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-        onClickCapture={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          selected.value = item;
-        }}
         style={{
           backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
           position: "relative",
         }}
+        {...mouseCapture}
       >
         <EditorDetails
           control={item}
-          schemaVisibility={!!cd.schemaField?.onlyForTypes?.length}
+          schemaVisibility={!!schemaField?.onlyForTypes?.length}
         />
 
         {renderer.renderLayout(layout)}

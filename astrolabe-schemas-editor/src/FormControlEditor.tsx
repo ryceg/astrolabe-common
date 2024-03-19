@@ -10,6 +10,7 @@ import {
 import {
   findAllParentsInControls,
   findSchemaFieldListForParents,
+  useEditorDataHook,
 } from "./index";
 
 export function FormControlEditor({
@@ -32,16 +33,14 @@ export function FormControlEditor({
       fields,
       findAllParentsInControls(control, rootControls),
     ) ?? newControl<SchemaFieldForm[]>([]);
+  const useDataHook = useEditorDataHook(fieldList.value);
   const RenderEditor = useControlRenderer(
     editorControls,
     editorFields,
     renderer,
+    {
+      useDataHook,
+    },
   );
   return <RenderEditor control={control} />;
-  // const editorHooks = makeEditorFormHooks(fieldList, defaultFormEditHooks);
-  // return renderControl(editorControls, control, {
-  //   fields: editorFields,
-  //   hooks: editorHooks,
-  //   renderer,
-  // });
 }

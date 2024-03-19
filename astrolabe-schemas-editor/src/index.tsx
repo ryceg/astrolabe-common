@@ -1,31 +1,22 @@
 import { Control, newControl } from "@react-typed-forms/core";
 import {
   ActionControlDefinition,
-  ActionRendererProps,
   CompoundField,
+  ControlDefinition,
   ControlDefinitionType,
-  DataRendererProps,
-  DataRenderType,
-  defaultControlForField,
-  defaultValueForFields,
-  fieldHasTag,
+  CreateDataProps,
+  defaultDataProps,
   FieldOption,
   FieldType,
-  GroupedControlsDefinition,
-  GroupRendererProps,
-  GroupRenderType,
   isCompoundField,
   SchemaField,
-  useIsControlVisible,
 } from "@react-typed-forms/schemas";
 import {
   ControlDefinitionForm,
-  defaultControlDefinitionForm,
   defaultSchemaFieldForm,
-  FieldOptionForm,
   SchemaFieldForm,
 } from "./schemaSchemas";
-import { ReactElement, useEffect, useMemo } from "react";
+import { ReactElement, useCallback } from "react";
 
 export type ControlForm = Control<ControlDefinitionForm>;
 
@@ -97,6 +88,59 @@ export interface InternalHooksContext {
   makeOnClick?: (action: ActionControlDefinition) => () => void;
   tableList?: Control<FieldOption[] | undefined>;
   tableFields?: Control<SchemaFieldForm[]>;
+}
+
+export function useEditorDataHook(
+  fieldList: SchemaField[],
+): (cd: ControlDefinition) => CreateDataProps {
+  return useCallback(
+    () => (definition, sf, groupContext, control, dataOptions) => {
+      const defaultProps = defaultDataProps(
+        definition,
+        sf,
+        groupContext,
+        control,
+        dataOptions,
+      );
+      const otherField = sf.tags?.find(isSchemaOptionTag);
+
+      if (otherField) {
+        const [newOptions, newField] = otherFieldOptions(otherField);
+        return { ...defaultProps, field: newField, options: newOptions };
+      }
+      return defaultProps;
+
+      function otherFieldOptions(
+        ot: SchemaOptionTag,
+      ): [FieldOption[] | undefined, SchemaField] {
+        switch (ot) {
+          case SchemaOptionTag.SchemaField:
+            return [fieldList.map(schemaFieldOption), sf];
+          case SchemaOptionTag.NestedSchemaField:
+            return [
+              fieldList.filter(isCompoundField).map(schemaFieldOption),
+              sf,
+            ];
+          // case SchemaOptionTag.TableList:
+          //   return [context?.tableList?.value ?? [], sf];
+
+          default:
+            const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
+            const otherFieldName =
+              groupContext.groupControl.fields[otherField].value;
+            const fieldInSchema = fieldList.find(
+              (x) => x.field === otherFieldName,
+            );
+            const opts = fieldInSchema?.options;
+            return [
+              opts && opts.length > 0 ? opts : undefined,
+              fieldInSchema ? { ...sf, type: fieldInSchema.type } : sf,
+            ];
+        }
+      }
+    },
+    [fieldList],
+  );
 }
 
 // export function makeEditorFormHooks(
@@ -247,7 +291,7 @@ export interface InternalHooksContext {
 //   );
 // }
 
-function schemaFieldOption(c: SchemaFieldForm): FieldOption {
+function schemaFieldOption(c: SchemaField): FieldOption {
   return { name: c.field, value: c.field };
 }
 
