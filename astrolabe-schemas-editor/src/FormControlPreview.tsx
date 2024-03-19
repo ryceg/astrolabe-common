@@ -90,6 +90,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     schemaField,
     groupContext,
   );
+  const adornments =
+    definition.adornments?.map((x) =>
+      renderer.renderAdornment({ adornment: x }),
+    ) ?? [];
+
   const layout = renderControlLayout(
     definition,
     renderer,
@@ -146,7 +151,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           schemaVisibility={!!schemaField?.onlyForTypes?.length}
         />
 
-        {renderer.renderLayout(layout)}
+        {renderer.renderLayout({ ...layout, adornments })}
       </motion.div>
     </div>
   );
