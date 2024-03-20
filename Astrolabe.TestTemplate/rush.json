@@ -436,7 +436,8 @@
     },
     {
       "packageName": "@astrolabe/storybook",
-      "projectFolder": "../astrolabe-storybook"
+      "projectFolder": "../astrolabe-storybook",
+      "decoupledLocalDependencies": ["@astroapps/ui-tree"]
     },
     {
       "packageName": "clientapp",

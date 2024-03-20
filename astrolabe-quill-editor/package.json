@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/quill-editor",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "",
   "type": "module",
   "main": "index.js",
@@ -20,8 +20,8 @@
   },
   "dependencies": {
     "react": "^18.2.0",
-    "@react-typed-forms/core": "^3.0.0-dev.116",
-    "@react-typed-forms/schemas": "^1.0.0-dev.22",
+    "@react-typed-forms/core": "^3.0.0-dev.118",
+    "@react-typed-forms/schemas": "^4.0.0",
     "react-quill": "^2.0.0"
   },
   "devDependencies": {
