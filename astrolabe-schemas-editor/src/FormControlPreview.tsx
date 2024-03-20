@@ -14,6 +14,7 @@ import update from "immutability-helper";
 import {
   ControlDefinitionType,
   defaultDataProps,
+  defaultValueForField,
   DynamicPropertyType,
   FormRenderer,
   getControlData,
@@ -80,15 +81,19 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     data: controlDropData(parent, dropIndex, dropSuccess),
   });
   const children = definition.children ?? [];
-  const groupControl = newControl({});
   const schemaField = lookupSchemaField(definition, fields);
+  const groupControl = newControl({});
   const groupContext = {
     groupControl,
     fields,
   };
-  const [childControl, childContext] = getControlData(
-    schemaField,
-    groupContext,
+  const [, childContext] = getControlData(schemaField, groupContext);
+  const childControl = newControl(
+    schemaField &&
+      defaultValueForField(
+        schemaField,
+        schemaField.collection || definition.required,
+      ),
   );
   const adornments =
     definition.adornments?.map((x) =>

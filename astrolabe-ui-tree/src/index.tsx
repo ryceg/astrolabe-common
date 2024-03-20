@@ -169,11 +169,11 @@ export function findMatchingNode<V>(
   return findMatchingNodeInArray(children.current.elements, match, withParent);
 }
 export function findMatchingNodeInArray<V>(
-  nodes: Control<V>[],
+  nodes: Control<V>[] | undefined,
   match: (c: Control<V>) => boolean,
   parents: List<Control<V>> = null,
 ): List<Control<V>> {
-  for (const node of nodes) {
+  for (const node of nodes ?? []) {
     const r = findMatchingNode(node, match, parents);
     if (r) return r;
   }
