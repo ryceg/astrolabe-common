@@ -109,9 +109,10 @@ export function toTreeNode(
       childrenNodes: [],
     };
     if (children && expanded && active !== c) {
-      flattened["childrenNodes"] = children.elements.map(
-        toTreeNode(expansions, active, flattened, indent + 1),
-      );
+      flattened["childrenNodes"] =
+        children.elements?.map(
+          toTreeNode(expansions, active, flattened, indent + 1),
+        ) ?? [];
     }
     return flattened;
   };
