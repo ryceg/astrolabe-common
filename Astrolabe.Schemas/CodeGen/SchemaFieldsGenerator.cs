@@ -216,11 +216,13 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         var tags = firstProp.GetCustomAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
         var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
-        var buildFieldCall = SetOptions(FieldForType(memberData, parent), new Dictionary<string, object?>
+        var (makeField, isScalar) = FieldForType(memberData, parent);
+        var buildFieldCall = SetOptions(makeField, new Dictionary<string, object?>
         {
             { "isTypeField", baseType != null && baseType.TypeField == fieldName ? true : null },
             { "onlyForTypes", onlyForTypes.Count > 0 ? onlyForTypes : null },
-            { "required", memberData.Nullable ? null : true },
+            { "notNullable", memberData.Nullable ? null : true },
+            { "required", memberData.Nullable || !isScalar ? null : true },
             { "defaultValue", firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value },
             { "displayName", firstProp.GetCustomAttribute<DisplayAttribute>()?.Name ?? firstProp.Name },
             { "tags", tags.Count > 0 ? tags : null },
@@ -302,20 +304,20 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         };
     }
 
-    private TsCallExpression FieldForType(SimpleTypeData simpleType, ObjectTypeData parentObject)
+    private (TsCallExpression, bool) FieldForType(SimpleTypeData simpleType, ObjectTypeData parentObject)
     {
         var fieldType = _options.CustomFieldType?.Invoke(simpleType.Type);
         if (fieldType != null)
         {
-            return MakeScalar(new TsConstExpr(fieldType));
+            return (MakeScalar(new TsConstExpr(fieldType)), true);
         }
 
         return simpleType switch
         {
-            EnumerableTypeData enumerableTypeData => SetOption(FieldForType(enumerableTypeData.Element(), parentObject),
-                "collection", true),
-            ObjectTypeData objectTypeData => DoObject(objectTypeData),
-            _ => MakeScalar(new TsRawExpr("FieldType." + FieldTypeForTypeOnly(simpleType.Type), FieldTypeImport))
+            EnumerableTypeData enumerableTypeData => (SetOption(FieldForType(enumerableTypeData.Element(), parentObject).Item1,
+                "collection", true), false),
+            ObjectTypeData objectTypeData => (DoObject(objectTypeData), false),
+            _ => (MakeScalar(new TsRawExpr("FieldType." + FieldTypeForTypeOnly(simpleType.Type), FieldTypeImport)), true)
         };
 
         TsCallExpression DoObject(ObjectTypeData objectTypeData)

@@ -19,6 +19,8 @@ public abstract record SchemaField([property: SchemaOptions(typeof(FieldType))] 
     
     public bool? Required { get; set; }
     
+    public bool? NotNullable { get; set; }
+    
     public bool? Collection { get; set; }
     
     public object? DefaultValue { get; set; }

@@ -72,7 +72,8 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         schemaField.IsTypeField = baseType != null && baseType.TypeField == fieldName ? true : null;
         schemaField.OnlyForTypes = onlyForTypes.Count > 0 ? onlyForTypes : null;
-        schemaField.Required = memberData.Nullable ? null : true;
+        schemaField.NotNullable = memberData.Nullable ? null : true;
+        schemaField.Required = memberData.Nullable || !schemaField.IsScalarField() ? null : true; 
         schemaField.DefaultValue = firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value;
         schemaField.DisplayName = firstProp.GetCustomAttribute<DisplayAttribute>()?.Name ?? firstProp.Name;
         schemaField.Tags = tags.Count > 0 ? tags : null;
