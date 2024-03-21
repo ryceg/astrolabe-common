@@ -21,7 +21,7 @@
 
     <ItemGroup>
       <PackageReference Include="FluentValidation" Version="11.8.0" />
-      <PackageReference Include="Astrolabe.Common" Version="1.0.0" />
+      <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
     </ItemGroup>
     
     <ItemGroup>
@@ -29,9 +29,5 @@
         <Pack>true</Pack>
         <PackagePath>/</PackagePath>
       </None>
-    </ItemGroup>
-    
-    <ItemGroup>
-      <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
     </ItemGroup>
 </Project>
