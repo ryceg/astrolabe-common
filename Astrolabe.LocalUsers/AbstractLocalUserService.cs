@@ -18,7 +18,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
     {
         var existingAccounts = await CountExisting(newUser);
         var validator = new CreateNewUserValidator<TNewUser>(existingAccounts, _localUserMessages);
-        await ApplyCreationRules(validator);
+        await ApplyCreationRules(newUser, validator);
         ApplyPasswordRules(validator);
         await validator.ValidateAndThrowAsync(newUser);
         var emailCode = CreateEmailCode();
@@ -35,7 +35,12 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         return Guid.NewGuid().ToString();
     }
 
-    protected virtual Task ApplyCreationRules(CreateNewUserValidator<TNewUser> validator)
+    protected virtual Task ApplyCreationRules(TNewUser user, AbstractValidator<TNewUser> validator)
+    {
+        return Task.CompletedTask;
+    }
+
+    protected virtual Task ApplyChangeEmailRules(ChangeEmail user, AbstractValidator<ChangeEmail> validator)
     {
         return Task.CompletedTask;
     }
@@ -45,7 +50,12 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         validator.RuleFor(x => x.Password).MinimumLength(8);
     }
 
-    protected abstract Task<int> CountExisting(TNewUser newUser);
+    protected virtual Task<int> CountExisting(TNewUser newUser)
+    {
+        return CountExistingForEmail(newUser.Email);
+    }
+    
+    protected abstract Task<int> CountExistingForEmail(string email);
     
     public async Task<string> VerifyAccount(string code)
     {
@@ -76,6 +86,10 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
 
     public async Task ChangeEmail(ChangeEmail change, Func<TUserId> userId)
     {
+        var sameEmail = await CountExistingForEmail(change.NewEmail);
+        var validator = new ChangeEmailValidator(sameEmail, _localUserMessages);
+        await ApplyChangeEmailRules(change, validator);
+        await validator.ValidateAndThrowAsync(change);
         var hashedPassword = _passwordHasher.Hash(change.Password);
         if (!await EmailChangeForUserId(userId(), hashedPassword, change.NewEmail))
             throw new UnauthorizedException();

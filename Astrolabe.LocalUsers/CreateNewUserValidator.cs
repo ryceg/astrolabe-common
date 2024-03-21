@@ -6,10 +6,17 @@ public class CreateNewUserValidator<TNewUser> : AbstractValidator<TNewUser> wher
 {
     public CreateNewUserValidator(int sameEmail, LocalUserMessages messages)
     {
-        RuleFor(x => x.Email).NotEmpty();
-        RuleFor(x => x.Email).Must(_ => sameEmail == 0).WithMessage(messages.AccountExists);
+        this.RulesForEmail(x => x.Email, sameEmail, messages);
         RuleFor(x => x.Password).NotEmpty();
         RuleFor(x => x.Confirm).Must((nu, c) => nu.Password == c)
             .WithMessage(messages.PasswordMismatch);
+    }
+}
+
+public class ChangeEmailValidator : AbstractValidator<ChangeEmail>
+{
+    public ChangeEmailValidator(int sameEmail, LocalUserMessages messages)
+    {
+        this.RulesForEmail(x => x.NewEmail, sameEmail, messages);
     }
 }
