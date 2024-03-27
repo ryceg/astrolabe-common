@@ -10,6 +10,7 @@ import {
   FieldType,
   isCompoundField,
   SchemaField,
+  useUpdatedRef,
 } from "@react-typed-forms/schemas";
 import {
   ControlDefinitionForm,
@@ -93,8 +94,10 @@ export interface InternalHooksContext {
 export function useEditorDataHook(
   fieldList: SchemaField[],
 ): (cd: ControlDefinition) => CreateDataProps {
+  const r = useUpdatedRef(fieldList);
   const createCB: CreateDataProps = useCallback(
     (definition, sf, groupContext, control, dataOptions) => {
+      const fieldList = r.current;
       const defaultProps = defaultDataProps(
         definition,
         sf,
@@ -139,9 +142,9 @@ export function useEditorDataHook(
         }
       }
     },
-    [fieldList],
+    [],
   );
-  return useCallback(() => createCB, []);
+  return useCallback(() => createCB, [r]);
 }
 
 // export function makeEditorFormHooks(
@@ -340,16 +343,21 @@ export function findSchemaFieldListForParents(
   parents: ControlForm[],
 ): Control<SchemaFieldForm[]> | undefined {
   for (const p of parents) {
-    const compoundField = p.fields.compoundField.current.value;
-    if (
-      p.fields.type.current.value === ControlDefinitionType.Group &&
-      compoundField
-    ) {
+    const controlType = p.fields.type.current.value;
+    const compoundField =
+      controlType === ControlDefinitionType.Group
+        ? p.fields.compoundField.current.value
+        : controlType === ControlDefinitionType.Data
+        ? p.fields.field.current.value
+        : undefined;
+    if (compoundField) {
       const nextFields = fields.elements.find(
         (x) => x.fields.field.current.value === compoundField,
       );
       if (!nextFields) return undefined;
-      fields = nextFields.fields.children;
+      fields = controlIsCompoundField(nextFields)
+        ? nextFields.fields.children
+        : fields;
     }
   }
   return fields;

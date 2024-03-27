@@ -23,7 +23,7 @@
 		"@react-typed-forms/core": "^3.0.0-dev.118",
 		"@react-typed-forms/schemas": "^4.0.0",
 		"@astroapps/client": "^0.1.1",
-		"@astroapps/ui-tree": "workspace:^1.0.0",
+		"@astroapps/ui-tree": "^1.0.0",
 		"@dnd-kit/core": "^6.0.5",
 		"framer-motion": "^10.16.4",
 		"react": "^18.2.0",
