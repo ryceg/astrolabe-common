@@ -7,14 +7,18 @@ using Jsonata.Net.Native.SystemTextJson;
 
 namespace Astrolabe.Schemas;
 
+public delegate bool ExprEvalBool(EntityExpression expression, JsonObject data, JsonPathSegments context);
+
 public static class EntityExpressionExtensions
 {
-    public static bool EvalBool(this EntityExpression expression, JsonObject data, JsonPathSegments context)
+    
+    public static bool DefaultEvalBool(this EntityExpression expression, JsonObject data, JsonPathSegments context)
     {
         return expression switch
         {
             FieldValueExpression expr => NodeEquals(context.Field(expr.Field).Traverse(data), expr.Value),
-            JsonataExpression expr => RunJsonata(expr.Expression)
+            JsonataExpression expr => RunJsonata(expr.Expression),
+            _ => throw new ArgumentOutOfRangeException(nameof(expression), expression, null)
         };
         
         bool RunJsonata(string expr)

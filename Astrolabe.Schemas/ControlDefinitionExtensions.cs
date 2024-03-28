@@ -6,12 +6,14 @@ namespace Astrolabe.Schemas;
 public static class ControlDefinitionExtensions
 {
     private static readonly string VisibilityType = DynamicPropertyType.Visible.ToString();
-    public static bool IsVisible(this ControlDefinition definition, JsonObject data, JsonPathSegments context)
+    
+    public static bool IsVisible(this ControlDefinition definition, JsonObject data, JsonPathSegments context, ExprEvalBool? evalBool = null)
     {
         var dynamicVisibility = definition.Dynamic?.FirstOrDefault(x => x.Type == VisibilityType);
         if (dynamicVisibility == null)
             return true;
-        return dynamicVisibility.Expr.EvalBool(data, context);
+        evalBool ??= EntityExpressionExtensions.DefaultEvalBool;
+        return evalBool(dynamicVisibility.Expr, data, context);
     }
 
     public static (JsonNode?, SchemaField)? FindChildField(this ControlDefinition definition, JsonObject data,
