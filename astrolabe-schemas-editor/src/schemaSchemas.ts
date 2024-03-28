@@ -390,6 +390,14 @@ export const DynamicPropertySchema = buildSchema<DynamicPropertyForm>({
         name: "DefaultValue",
         value: "DefaultValue",
       },
+      {
+        name: "Readonly",
+        value: "Readonly",
+      },
+      {
+        name: "Disabled",
+        value: "Disabled",
+      },
     ],
   }),
   expr: makeCompoundField({

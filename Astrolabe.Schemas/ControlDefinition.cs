@@ -143,7 +143,9 @@ public record HtmlDisplay([property: SchemaTag(SchemaTags.HtmlEditor)] string Ht
 public enum DynamicPropertyType
 {
     Visible,
-    DefaultValue
+    DefaultValue,
+    Readonly,
+    Disabled
 }
 
 public record DynamicProperty([property: SchemaOptions(typeof(DynamicPropertyType))] string Type, EntityExpression Expr);
