@@ -10,7 +10,10 @@ export function useNextNavigationService<T = {}>(
   defaultRoute?: RouteData<T>,
 ): NavigationService<T> {
   const router = useRouter();
-  const searchParams = useSearchParams()!;
+  const searchParams =
+    typeof window === "undefined"
+      ? { get: () => null, getAll: () => [], size: 0 }
+      : useSearchParams()!;
   const pathname = usePathname()!;
   const pathSegments = pathname
     ? pathname.split("/").filter((x) => x.length)
