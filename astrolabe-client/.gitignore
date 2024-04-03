@@ -4,3 +4,4 @@ client.build.log
 dist/
 *.js
 *.d.ts
+*.js.map

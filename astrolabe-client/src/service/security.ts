@@ -63,27 +63,27 @@ export function createAccessTokenFetcher(
 }
 
 export function useControlTokenSecurity(): TokenSecurityService {
-  const user = useControl<UserState>({
-    busy: true,
-    accessToken: null,
-    loggedIn: false,
+  const tokens = getTokenStorage();
+  const user = useControl<UserState>(() => {
+    const accessToken = tokens.getItem("token");
+    return {
+      busy: false,
+      accessToken,
+      loggedIn: !!accessToken,
+    };
   });
-  useEffect(() => {
-    const accessToken = getTokenStorage().getItem("token");
-    user.value = { busy: false, accessToken, loggedIn: !!accessToken };
-  }, []);
   return {
     currentUser: user,
     fetch: createAccessTokenFetcher(
       async () => user.fields.accessToken.current.value,
     ),
     async logout() {
-      getTokenStorage().removeItem("token");
+      tokens.removeItem("token");
       user.value = { busy: false, accessToken: null, loggedIn: false };
     },
     async login() {},
     async setToken(accessToken: string) {
-      getTokenStorage().setItem("token", accessToken);
+      tokens.setItem("token", accessToken);
       user.setValue((v) => ({
         ...v,
         loggedIn: true,
