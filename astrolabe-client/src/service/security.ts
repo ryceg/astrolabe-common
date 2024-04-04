@@ -64,14 +64,15 @@ export function createAccessTokenFetcher(
 
 export function useControlTokenSecurity(): TokenSecurityService {
   const tokens = getTokenStorage();
-  const user = useControl<UserState>(() => {
-    const accessToken = tokens.getItem("token");
-    return {
-      busy: false,
-      accessToken,
-      loggedIn: !!accessToken,
-    };
+  const user = useControl<UserState>({
+    busy: true,
+    accessToken: null,
+    loggedIn: false,
   });
+  useEffect(() => {
+    const accessToken = tokens.getItem("token");
+    user.value = { busy: false, accessToken, loggedIn: !!accessToken };
+  }, []);
   return {
     currentUser: user,
     fetch: createAccessTokenFetcher(
