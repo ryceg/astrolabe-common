@@ -792,6 +792,7 @@ export interface ControlDefinitionForm {
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
   actionId: string;
+  styleClass: string | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -904,6 +905,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     notNullable: true,
     required: true,
     displayName: "ActionId",
+  }),
+  styleClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "StyleClass",
   }),
 });
 
