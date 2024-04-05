@@ -90,11 +90,12 @@ public class SimpleSearchIndexer<T>
 
         Type? GetEnumType(Type t)
         {
-            if (t.IsEnum)
-                return t;
-            if (t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                return GetEnumType(t.GenericTypeArguments[0]);
-            return null;
+            while (true)
+            {
+                if (t.IsEnum) return t;
+                if (!t.IsConstructedGenericType || t.GetGenericTypeDefinition() != typeof(Nullable<>)) return null;
+                t = t.GenericTypeArguments[0];
+            }
         }
     }
 }

@@ -23,6 +23,8 @@ public abstract record ControlDefinition([property: SchemaOptions(typeof(Control
 {
     public string? Title { get; set; }
     
+    public string? StyleClass { get; set; }
+    
     public IEnumerable<DynamicProperty>? Dynamic { get; set; }
     
     public IEnumerable<ControlAdornment>? Adornments { get; set; }

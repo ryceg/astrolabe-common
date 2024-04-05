@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Astrolabe.Web.Common;
@@ -28,4 +29,22 @@ public static class BasicJwtTokenExtensions
             return tokenHandler.WriteToken(token);
         };
     }
+    
+    public static Action<JwtBearerOptions> ConfigureJwtBearer(this BasicJwtToken jwtToken)
+    {
+        return (opts) =>
+        {
+            var key = jwtToken.SecretKey;
+            opts.TokenValidationParameters = new TokenValidationParameters
+            {
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtToken.Issuer,
+                ValidateIssuer = true,
+                ValidAudience = jwtToken.Audience,
+                ValidateAudience = true,
+            };
+        };
+    }
+
 }
