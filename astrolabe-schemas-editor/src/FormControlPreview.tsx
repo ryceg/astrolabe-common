@@ -135,30 +135,39 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           e.preventDefault();
         },
       };
+  const {
+    style,
+    children: child,
+    className,
+  } = renderer.renderLayout({
+    ...layout,
+    adornments,
+    className: definition.styleClass,
+  });
+  console.log(className);
   return (
-    <div
+    <motion.div
+      layout={defaultLayoutChange}
+      layoutId={item.uniqueId.toString()}
+      style={{
+        ...style,
+        backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
+        position: "relative",
+      }}
+      {...mouseCapture}
+      className={className!}
       ref={(e) => {
         scrollRef.current = e;
         setNodeRef(e);
       }}
     >
-      <motion.div
-        layout={defaultLayoutChange}
-        layoutId={item.uniqueId.toString()}
-        style={{
-          backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
-          position: "relative",
-        }}
-        {...mouseCapture}
-      >
-        <EditorDetails
-          control={item}
-          schemaVisibility={!!schemaField?.onlyForTypes?.length}
-        />
+      <EditorDetails
+        control={item}
+        schemaVisibility={!!schemaField?.onlyForTypes?.length}
+      />
 
-        {renderer.renderLayout({ ...layout, adornments })}
-      </motion.div>
-    </div>
+      {child}
+    </motion.div>
   );
 }
 function EditorDetails({
