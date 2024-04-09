@@ -1,16 +1,13 @@
-import { Control, newControl } from "@react-typed-forms/core";
+import { Control, newControl, useControl } from "@react-typed-forms/core";
 import React, {
   createContext,
   HTMLAttributes,
   ReactNode,
   useContext,
-  useMemo,
 } from "react";
-import { isNullOrEmpty } from "@astroapps/client/util/arrays";
 import { SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
-import { LayoutGroup, motion } from "framer-motion";
-import update from "immutability-helper";
+import { motion } from "framer-motion";
 import {
   ControlDefinitionType,
   defaultDataProps,
@@ -18,6 +15,7 @@ import {
   DynamicPropertyType,
   FormRenderer,
   getControlData,
+  getDisplayOnlyOptions,
   isGroupControlsDefinition,
   lookupSchemaField,
   renderControlLayout,
@@ -29,7 +27,6 @@ import {
   ControlForm,
   DragData,
   DropData,
-  useFieldLookup,
 } from ".";
 
 export interface FormControlPreviewProps {
@@ -72,7 +69,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const { selected, dropSuccess, renderer } = usePreviewContext();
   const fields = trackedValue(props.fields);
   const definition = trackedValue(item);
-  const type = item.fields.type.value;
   const isSelected = selected.value === item;
   const scrollRef = useScrollIntoView(isSelected);
   const { setNodeRef, isOver } = useDroppable({
@@ -88,23 +84,27 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     fields,
   };
   const [, childContext] = getControlData(schemaField, groupContext);
+  const displayOptions = getDisplayOnlyOptions(definition);
   const childControl = newControl(
-    schemaField &&
-      defaultValueForField(
-        schemaField,
-        schemaField.collection || definition.required,
-      ),
+    displayOptions
+      ? displayOptions.sampleText ?? "Sample Data"
+      : schemaField &&
+          defaultValueForField(
+            schemaField,
+            schemaField.collection || definition.required,
+          ),
   );
   const adornments =
     definition.adornments?.map((x) =>
       renderer.renderAdornment({ adornment: x }),
     ) ?? [];
+  const displayControl = useControl(undefined);
 
-  const layout = renderControlLayout(
+  const layout = renderControlLayout({
     definition,
     renderer,
-    children.length,
-    (k, i, c) => (
+    childCount: children.length,
+    renderChild: (k, i, c) => (
       <FormControlPreview
         key={k}
         item={unsafeRestoreControl(children[i])}
@@ -113,12 +113,13 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         fields={unsafeRestoreControl(childContext.fields).as()}
       />
     ),
-    defaultDataProps,
-    {},
+    createDataProps: defaultDataProps,
+    formOptions: {},
     groupContext,
-    childControl,
+    control: childControl,
     schemaField,
-  );
+    displayControl,
+  });
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"
@@ -142,9 +143,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   } = renderer.renderLayout({
     ...layout,
     adornments,
-    className: definition.styleClass,
+    className: definition.layoutClass,
   });
-  console.log(className);
   return (
     <motion.div
       layout={defaultLayoutChange}
@@ -195,6 +195,7 @@ function EditorDetails({
         ? compoundField.value
         : null;
 
+  if (!fieldName && !(hasVisibilityScripting || schemaVisibility)) return <></>;
   return (
     <div
       style={{

@@ -1,24 +1,24 @@
 import {
-  FieldType,
-  makeScalarField,
-  buildSchema,
-  defaultValueForFields,
-  FieldOption,
-  applyDefaultValues,
-  DateComparison,
-  SchemaValidator,
-  makeCompoundField,
-  SchemaField,
-  EntityExpression,
-  DynamicProperty,
   AdornmentPlacement,
+  applyDefaultValues,
+  buildSchema,
   ControlAdornment,
-  IconMapping,
-  SyncTextType,
-  RenderOptions,
-  GroupRenderOptions,
-  DisplayData,
   ControlDefinition,
+  DateComparison,
+  defaultValueForFields,
+  DisplayData,
+  DynamicProperty,
+  EntityExpression,
+  FieldOption,
+  FieldType,
+  GroupRenderOptions,
+  IconMapping,
+  makeCompoundField,
+  makeScalarField,
+  RenderOptions,
+  SchemaField,
+  SchemaValidator,
+  SyncTextType,
 } from "@react-typed-forms/schemas";
 
 export interface FieldOptionForm {
@@ -320,12 +320,16 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
         value: "Jsonata",
       },
       {
-        name: "FieldValue",
+        name: "Data Match",
         value: "FieldValue",
       },
       {
         name: "UserMatch",
         value: "UserMatch",
+      },
+      {
+        name: "Data",
+        value: "Data",
       },
     ],
   }),
@@ -338,7 +342,7 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
   }),
   field: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["FieldValue"],
+    onlyForTypes: ["FieldValue", "Data"],
     notNullable: true,
     required: true,
     displayName: "Field",
@@ -398,6 +402,10 @@ export const DynamicPropertySchema = buildSchema<DynamicPropertyForm>({
         name: "Disabled",
         value: "Disabled",
       },
+      {
+        name: "Display",
+        value: "Display",
+      },
     ],
   }),
   expr: makeCompoundField({
@@ -421,6 +429,7 @@ export interface ControlAdornmentForm {
   defaultExpanded: boolean;
   helpText: string;
   placement: AdornmentPlacement | null;
+  iconClass: string;
 }
 
 export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
@@ -442,6 +451,10 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
       {
         name: "Help Text",
         value: "HelpText",
+      },
+      {
+        name: "Icon",
+        value: "Icon",
       },
     ],
   }),
@@ -473,9 +486,14 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     required: true,
     displayName: "HelpText",
   }),
+  iconClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "Icon class",
+    onlyForTypes: ["Icon"],
+  }),
   placement: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["HelpText"],
+    onlyForTypes: ["HelpText", "Icon"],
     displayName: "Placement",
     options: [
       {
@@ -541,6 +559,8 @@ export interface RenderOptionsForm {
   syncType: SyncTextType;
   iconMappings: IconMappingForm[];
   allowImages: boolean;
+  emptyText: string | null;
+  sampleText: string | null;
 }
 
 export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
@@ -596,6 +616,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         name: "Dropdown",
         value: "Dropdown",
       },
+      {
+        name: "Display Only",
+        value: "DisplayOnly",
+      },
     ],
   }),
   noGroups: makeScalarField({
@@ -616,6 +640,16 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["DateTime"],
     displayName: "Format",
+  }),
+  emptyText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["DisplayOnly"],
+    displayName: "Empty Text",
+  }),
+  sampleText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["DisplayOnly"],
+    displayName: "Sample Text",
   }),
   fieldToSync: makeScalarField({
     type: FieldType.String,
@@ -793,6 +827,7 @@ export interface ControlDefinitionForm {
   displayData: DisplayDataForm;
   actionId: string;
   styleClass: string | null;
+  layoutClass: string | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -909,6 +944,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   styleClass: makeScalarField({
     type: FieldType.String,
     displayName: "StyleClass",
+  }),
+  layoutClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "LayoutClass",
   }),
 });
 
