@@ -9,7 +9,9 @@ import { SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import {
+  ControlDataContext,
   ControlDefinitionType,
+  dataControl,
   defaultDataProps,
   defaultValueForField,
   DynamicPropertyType,
@@ -19,6 +21,7 @@ import {
   isGroupControlsDefinition,
   lookupSchemaField,
   renderControlLayout,
+  SchemaInterface,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import {
@@ -28,6 +31,7 @@ import {
   DragData,
   DropData,
 } from ".";
+import { defaultSchemaInterface } from "@react-typed-forms/schemas";
 
 export interface FormControlPreviewProps {
   item: ControlForm;
@@ -35,6 +39,7 @@ export interface FormControlPreviewProps {
   dropIndex: number;
   noDrop?: boolean;
   fields: Control<SchemaFieldForm[]>;
+  schemaInterface?: SchemaInterface;
 }
 
 export interface FormControlPreviewContext {
@@ -79,11 +84,12 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const children = definition.children ?? [];
   const schemaField = lookupSchemaField(definition, fields);
   const groupControl = newControl({});
-  const groupContext = {
+  const dataContext: ControlDataContext = {
     groupControl,
     fields,
+    schemaInterface: props.schemaInterface ?? defaultSchemaInterface,
   };
-  const [, childContext] = getControlData(schemaField, groupContext);
+  const [, childContext] = getControlData(schemaField, dataContext);
   const displayOptions = getDisplayOnlyOptions(definition);
   const childControl = newControl(
     displayOptions
@@ -98,7 +104,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     definition.adornments?.map((x) =>
       renderer.renderAdornment({ adornment: x }),
     ) ?? [];
-  const displayControl = useControl(undefined);
 
   const layout = renderControlLayout({
     definition,
@@ -115,10 +120,9 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     ),
     createDataProps: defaultDataProps,
     formOptions: {},
-    groupContext,
+    dataContext,
     control: childControl,
     schemaField,
-    displayControl,
   });
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,

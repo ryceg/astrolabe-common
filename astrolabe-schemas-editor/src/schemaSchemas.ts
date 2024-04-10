@@ -708,6 +708,7 @@ export interface GroupRenderOptionsForm {
   hideTitle: boolean | null;
   columns: number | null;
   value: any;
+  direction: string | null;
 }
 
 export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
@@ -728,6 +729,10 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
         value: "Grid",
       },
       {
+        name: "Flex",
+        value: "Flex",
+      },
+      {
         name: "GroupElement",
         value: "GroupElement",
       },
@@ -741,6 +746,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     type: FieldType.Int,
     onlyForTypes: ["Grid"],
     displayName: "Columns",
+  }),
+  direction: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Flex"],
+    displayName: "Direction",
   }),
   value: makeScalarField({
     type: FieldType.Any,
@@ -765,6 +775,7 @@ export interface DisplayDataForm {
   type: string;
   text: string;
   html: string;
+  iconClass: string;
 }
 
 export const DisplayDataSchema = buildSchema<DisplayDataForm>({
@@ -783,6 +794,10 @@ export const DisplayDataSchema = buildSchema<DisplayDataForm>({
         name: "Html",
         value: "Html",
       },
+      {
+        name: "Icon",
+        value: "Icon",
+      },
     ],
   }),
   text: makeScalarField({
@@ -799,6 +814,13 @@ export const DisplayDataSchema = buildSchema<DisplayDataForm>({
     required: true,
     displayName: "Html",
     tags: ["_HtmlEditor"],
+  }),
+  iconClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Icon"],
+    notNullable: true,
+    required: true,
+    displayName: "IconClass",
   }),
 });
 
