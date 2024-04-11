@@ -16,7 +16,7 @@ public static class EntityExpressionExtensions
     {
         return expression switch
         {
-            FieldValueExpression expr => NodeEquals(context.Field(expr.Field).Traverse(data), expr.Value),
+            DataMatchExpression expr => NodeEquals(context.Field(expr.Field).Traverse(data), expr.Value),
             JsonataExpression expr => RunJsonata(expr.Expression),
             _ => throw new ArgumentOutOfRangeException(nameof(expression), expression, null)
         };

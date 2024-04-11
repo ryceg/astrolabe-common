@@ -30,7 +30,7 @@ public abstract record ControlDefinition([property: SchemaOptions(typeof(Control
 
     public string? StyleClass { get; set; }
 
-    public string? TitleClass { get; set; }
+    public string? LayoutClass { get; set; }
 
     [SchemaTag(SchemaTags.NoControl)] 
     public IEnumerable<ControlDefinition>? Children { get; set; }
@@ -87,6 +87,7 @@ public enum DataRenderType
     [Display(Name = "Date/Time")] DateTime,
     [Display(Name = "Checkbox")] Checkbox,
     [Display(Name = "Dropdown")] Dropdown,
+    [Display(Name = "Display Only")] DisplayOnly,
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
@@ -95,6 +96,7 @@ public enum DataRenderType
 [JsonSubType("Synchronised", typeof(SynchronisedRenderOptions))]
 [JsonSubType("UserSelection", typeof(UserSelectionRenderOptions))]
 [JsonSubType("DateTime", typeof(DateTimeRenderOptions))]
+[JsonSubType("DisplayOnly", typeof(DisplayOnlyRenderOptions))]
 public abstract record RenderOptions([property: DefaultValue("Standard")] [property: SchemaOptions(typeof(DataRenderType))] string Type)
 {
     [JsonExtensionData]
@@ -102,6 +104,9 @@ public abstract record RenderOptions([property: DefaultValue("Standard")] [prope
 }
 
 public record SimpleRenderOptions(string Type) : RenderOptions(Type);
+
+public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
+    : RenderOptions(DataRenderType.DisplayOnly.ToString());
 
 public record UserSelectionRenderOptions(bool NoGroups, bool NoUsers) : RenderOptions(DataRenderType.UserSelection.ToString());
 
@@ -127,11 +132,13 @@ public enum DisplayDataType
 {
     Text,
     Html,
+    Icon,
 }
 
 [JsonBaseType("type", typeof(SimpleDisplayData))]
 [JsonSubType("Text", typeof(TextDisplay))]
 [JsonSubType("Html", typeof(HtmlDisplay))]
+[JsonSubType("Icon", typeof(IconDisplay))]
 public abstract record DisplayData([property: SchemaOptions(typeof(DisplayDataType))] string Type)
 {
     [JsonExtensionData]
@@ -140,6 +147,7 @@ public abstract record DisplayData([property: SchemaOptions(typeof(DisplayDataTy
 
 public record SimpleDisplayData(string Type) : DisplayData(Type);
 
+public record IconDisplay(string IconClass) : DisplayData(DisplayDataType.Icon.ToString());
 public record TextDisplay(string Text) : DisplayData(DisplayDataType.Text.ToString());
 
 public record HtmlDisplay([property: SchemaTag(SchemaTags.HtmlEditor)] string Html) : DisplayData(DisplayDataType.Html.ToString());
@@ -150,7 +158,8 @@ public enum DynamicPropertyType
     Visible,
     DefaultValue,
     Readonly,
-    Disabled
+    Disabled,
+    Display
 }
 
 public record DynamicProperty([property: SchemaOptions(typeof(DynamicPropertyType))] string Type, EntityExpression Expr);
@@ -160,6 +169,7 @@ public enum GroupRenderType
 {
     Standard,
     Grid,
+    Flex,
     GroupElement,
 }
 
@@ -167,6 +177,7 @@ public enum GroupRenderType
 [JsonSubType("Standard", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("GroupElement", typeof(GroupElementRenderer))]
 [JsonSubType("Grid", typeof(GridRenderer))]
+[JsonSubType("Flex", typeof(FlexRenderer))]
 public abstract record GroupRenderOptions([property: SchemaOptions(typeof(GroupRenderType))] [property: DefaultValue("Standard")] string Type)
 {
     public bool? HideTitle { get; set; }
@@ -174,10 +185,11 @@ public abstract record GroupRenderOptions([property: SchemaOptions(typeof(GroupR
 
 public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
 
+public record FlexRenderer(string? Direction) : GroupRenderOptions(GroupRenderType.Flex.ToString());
+
 public record GridRenderer(int? Columns) : GroupRenderOptions(GroupRenderType.Grid.ToString());
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value) : GroupRenderOptions(GroupRenderType.GroupElement.ToString());
-
 
 [JsonString]
 public enum AdornmentPlacement {
@@ -197,18 +209,22 @@ public enum ControlAdornmentType
     Tooltip,
     Accordion,
     [Display(Name = "Help Text")]
-    HelpText
+    HelpText,
+    Icon
 }
 
 [JsonBaseType("type", typeof(TooltipAdornment))]
 [JsonSubType("Tooltip", typeof(TooltipAdornment))]
 [JsonSubType("Accordion", typeof(AccordionAdornment))]
 [JsonSubType("HelpText", typeof(HelpTextAdornment))]
+[JsonSubType("Icon", typeof(IconAdornment))]
 public abstract record ControlAdornment([property: SchemaOptions(typeof(ControlAdornmentType))] string Type)
 {
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 }
+
+public record IconAdornment(string IconClass, AdornmentPlacement? Placement) : ControlAdornment(ControlAdornmentType.Icon.ToString());
 
 public record TooltipAdornment(string Tooltip) : ControlAdornment(ControlAdornmentType.Tooltip.ToString());
 

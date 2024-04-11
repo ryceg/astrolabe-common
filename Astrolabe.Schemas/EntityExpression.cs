@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Astrolabe.Annotation;
 
@@ -7,14 +9,17 @@ namespace Astrolabe.Schemas;
 public enum ExpressionType
 {
     Jsonata,
+    [Display(Name = "Data Match")]
     FieldValue,
-    UserMatch
+    UserMatch,
+    Data
 }
 
 [JsonBaseType("type", typeof(SimpleExpression))]
-[JsonSubType("FieldValue", typeof(FieldValueExpression))]
+[JsonSubType("FieldValue", typeof(DataMatchExpression))]
 [JsonSubType("Jsonata", typeof(JsonataExpression))]
 [JsonSubType("UserMatch", typeof(UserMatchExpression))]
+[JsonSubType("Data", typeof(DataExpression))]
 public abstract record EntityExpression([property: SchemaOptions(typeof(ExpressionType))] string Type)
 {
     [JsonExtensionData]
@@ -25,6 +30,9 @@ public record SimpleExpression(string Type) : EntityExpression(Type);
 
 public record JsonataExpression(string Expression) : EntityExpression(ExpressionType.Jsonata.ToString());
 
-public record FieldValueExpression([property: SchemaTag(SchemaTags.SchemaField)] string Field,  [property: SchemaTag("_ValuesOf:field")] object Value) : EntityExpression(ExpressionType.FieldValue.ToString());
+public record DataMatchExpression([property: SchemaTag(SchemaTags.SchemaField)] string Field,  [property: SchemaTag("_ValuesOf:field")] object Value) : EntityExpression(ExpressionType.FieldValue.ToString());
 
+public record DataExpression(
+    [property: SchemaTag(SchemaTags.SchemaField)]
+    string Field) : EntityExpression(ExpressionType.Data.ToString());
 public record UserMatchExpression(string UserMatch) : EntityExpression(ExpressionType.UserMatch.ToString());
