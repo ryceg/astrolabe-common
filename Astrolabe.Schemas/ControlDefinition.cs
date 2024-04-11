@@ -185,7 +185,7 @@ public abstract record GroupRenderOptions([property: SchemaOptions(typeof(GroupR
 
 public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
 
-public record FlexRenderer(string? Direction) : GroupRenderOptions(GroupRenderType.Flex.ToString());
+public record FlexRenderer(string? Direction, string? Gap) : GroupRenderOptions(GroupRenderType.Flex.ToString());
 
 public record GridRenderer(int? Columns) : GroupRenderOptions(GroupRenderType.Grid.ToString());
 

@@ -709,6 +709,7 @@ export interface GroupRenderOptionsForm {
   type: string;
   hideTitle: boolean | null;
   direction: string | null;
+  gap: string | null;
   columns: number | null;
   value: any;
 }
@@ -748,6 +749,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["Flex"],
     displayName: "Direction",
+  }),
+  gap: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Flex"],
+    displayName: "Gap",
   }),
   columns: makeScalarField({
     type: FieldType.Int,
