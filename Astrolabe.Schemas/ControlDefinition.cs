@@ -159,7 +159,9 @@ public enum DynamicPropertyType
     DefaultValue,
     Readonly,
     Disabled,
-    Display
+    Display,
+    Style,
+    LayoutStyle
 }
 
 public record DynamicProperty([property: SchemaOptions(typeof(DynamicPropertyType))] string Type, EntityExpression Expr);

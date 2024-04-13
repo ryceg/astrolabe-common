@@ -96,7 +96,7 @@ export function useEditorDataHook(
 ): (cd: ControlDefinition) => CreateDataProps {
   const r = useUpdatedRef(fieldList);
   const createCB: CreateDataProps = useCallback(
-    (definition, sf, groupContext, control, dataOptions) => {
+    (definition, sf, groupContext, control, dataOptions, style) => {
       const fieldList = r.current;
       const defaultProps = defaultDataProps(
         definition,
@@ -104,6 +104,7 @@ export function useEditorDataHook(
         groupContext,
         control,
         dataOptions,
+        style,
       );
       const otherField = sf.tags?.find(isSchemaOptionTag);
 
@@ -348,8 +349,8 @@ export function findSchemaFieldListForParents(
       controlType === ControlDefinitionType.Group
         ? p.fields.compoundField.current.value
         : controlType === ControlDefinitionType.Data
-        ? p.fields.field.current.value
-        : undefined;
+          ? p.fields.field.current.value
+          : undefined;
     if (compoundField) {
       const nextFields = fields.elements.find(
         (x) => x.fields.field.current.value === compoundField,
