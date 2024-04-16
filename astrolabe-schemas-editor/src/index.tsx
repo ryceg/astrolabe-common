@@ -95,56 +95,44 @@ export function useEditorDataHook(
   fieldList: SchemaField[],
 ): (cd: ControlDefinition) => CreateDataProps {
   const r = useUpdatedRef(fieldList);
-  const createCB: CreateDataProps = useCallback(
-    (definition, sf, groupContext, control, dataOptions, style) => {
-      const fieldList = r.current;
-      const defaultProps = defaultDataProps(
-        definition,
-        sf,
-        groupContext,
-        control,
-        dataOptions,
-        style,
-      );
-      const otherField = sf.tags?.find(isSchemaOptionTag);
+  const createCB: CreateDataProps = useCallback((props) => {
+    const fieldList = r.current;
+    const defaultProps = defaultDataProps(props);
+    const { field: sf, dataContext } = props;
+    const otherField = sf.tags?.find(isSchemaOptionTag);
 
-      if (otherField) {
-        const [newOptions, newField] = otherFieldOptions(otherField);
-        return { ...defaultProps, field: newField, options: newOptions };
+    if (otherField) {
+      const [newOptions, newField] = otherFieldOptions(otherField);
+      return { ...defaultProps, field: newField, options: newOptions };
+    }
+    return defaultProps;
+
+    function otherFieldOptions(
+      ot: SchemaOptionTag,
+    ): [FieldOption[] | undefined, SchemaField] {
+      switch (ot) {
+        case SchemaOptionTag.SchemaField:
+          return [fieldList.map(schemaFieldOption), sf];
+        case SchemaOptionTag.NestedSchemaField:
+          return [fieldList.filter(isCompoundField).map(schemaFieldOption), sf];
+        // case SchemaOptionTag.TableList:
+        //   return [context?.tableList?.value ?? [], sf];
+
+        default:
+          const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
+          const otherFieldName =
+            dataContext.groupControl.fields[otherField].value;
+          const fieldInSchema = fieldList.find(
+            (x) => x.field === otherFieldName,
+          );
+          const opts = fieldInSchema?.options;
+          return [
+            opts && opts.length > 0 ? opts : undefined,
+            fieldInSchema ? { ...sf, type: fieldInSchema.type } : sf,
+          ];
       }
-      return defaultProps;
-
-      function otherFieldOptions(
-        ot: SchemaOptionTag,
-      ): [FieldOption[] | undefined, SchemaField] {
-        switch (ot) {
-          case SchemaOptionTag.SchemaField:
-            return [fieldList.map(schemaFieldOption), sf];
-          case SchemaOptionTag.NestedSchemaField:
-            return [
-              fieldList.filter(isCompoundField).map(schemaFieldOption),
-              sf,
-            ];
-          // case SchemaOptionTag.TableList:
-          //   return [context?.tableList?.value ?? [], sf];
-
-          default:
-            const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
-            const otherFieldName =
-              groupContext.groupControl.fields[otherField].value;
-            const fieldInSchema = fieldList.find(
-              (x) => x.field === otherFieldName,
-            );
-            const opts = fieldInSchema?.options;
-            return [
-              opts && opts.length > 0 ? opts : undefined,
-              fieldInSchema ? { ...sf, type: fieldInSchema.type } : sf,
-            ];
-        }
-      }
-    },
-    [],
-  );
+    }
+  }, []);
   return useCallback(() => createCB, [r]);
 }
 

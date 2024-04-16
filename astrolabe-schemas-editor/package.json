@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/schemas-editor",
-	"version": "3.0.0",
+	"version": "4.0.0",
 	"type": "module",
 	"main": "index.js",
 	"types": "index.d.ts",
@@ -20,8 +20,8 @@
 		"genschemas": "h get http://localhost:5000/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.0.0-dev.118",
-		"@react-typed-forms/schemas": "^5.0.0",
+		"@react-typed-forms/core": "^3.0.0",
+		"@react-typed-forms/schemas": "^6.0.0",
 		"@astroapps/client": "^0.1.1",
 		"@astroapps/ui-tree": "^1.0.0",
 		"@dnd-kit/core": "^6.0.5",

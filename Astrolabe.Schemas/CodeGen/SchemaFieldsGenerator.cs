@@ -217,13 +217,14 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         var (makeField, isScalar) = FieldForType(memberData, parent);
+        var defaultValue = ConvertDefaultValue(firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value);
         var buildFieldCall = SetOptions(makeField, new Dictionary<string, object?>
         {
             { "isTypeField", baseType != null && baseType.TypeField == fieldName ? true : null },
             { "onlyForTypes", onlyForTypes.Count > 0 ? onlyForTypes : null },
             { "notNullable", memberData.Nullable ? null : true },
             { "required", memberData.Nullable || !isScalar ? null : true },
-            { "defaultValue", firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value },
+            { "defaultValue", defaultValue },
             { "displayName", firstProp.GetCustomAttribute<DisplayAttribute>()?.Name ?? firstProp.Name },
             { "tags", tags.Count > 0 ? tags : null },
             { "options", options != null ? new TsConstExpr(options) : null }
@@ -238,6 +239,15 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
             EnumerableTypeData enumerableTypeData => GetEnumType(enumerableTypeData.Element()),
             { Type.IsEnum: true } => data.Type,
             _ => null
+        };
+    }
+
+    private static object? ConvertDefaultValue(object? v)
+    {
+        return v switch
+        {
+            not null when v.GetType().IsEnum => IsStringEnum(v.GetType()) ? v.ToString() : (int) v,
+            _ => v
         };
     }
 
