@@ -122,8 +122,8 @@ importers:
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
       '@dnd-kit/core': ^6.0.5
-      '@react-typed-forms/core': ^3.0.0-dev.118
-      '@react-typed-forms/schemas': ^5.0.0
+      '@react-typed-forms/core': ^3.0.0
+      '@react-typed-forms/schemas': ^6.0.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.31
       framer-motion: ^10.16.4
@@ -131,15 +131,16 @@ importers:
       immutability-helper: ^3.1.1
       prettier: ^3.0.3
       react: ^18.2.0
+      react-dom: ^18.2.0
       tslib: ^2.6.2
       typescript: 5.2.2
     dependencies:
       '@astroapps/client': 0.1.2_@types+react@18.2.31
-      '@astroapps/ui-tree': 1.0.0_@types+react@18.2.31
-      '@dnd-kit/core': 6.0.8_react@18.2.0
-      '@react-typed-forms/core': 3.0.0-dev.118
-      '@react-typed-forms/schemas': 5.0.0
-      framer-motion: 10.16.4_react@18.2.0
+      '@astroapps/ui-tree': 1.0.0_nf7zrwy5ca6rqsqhedviirnufe
+      '@dnd-kit/core': 6.0.8_biqbaboplfbrettd7655fr4n2y
+      '@react-typed-forms/core': 3.0.0
+      '@react-typed-forms/schemas': 6.0.0
+      framer-motion: 10.16.4_biqbaboplfbrettd7655fr4n2y
       immutability-helper: 3.1.1
       react: 18.2.0
       tslib: 2.6.2
@@ -153,6 +154,7 @@ importers:
       '@types/react': 18.2.31
       http-request-cli: 0.2.0
       prettier: 3.0.3
+      react-dom: 18.2.0_react@18.2.0
       typescript: 5.2.2
 
   ../../../astrolabe-storybook:
@@ -429,7 +431,7 @@ packages:
       '@dnd-kit/core': 6.0.8_biqbaboplfbrettd7655fr4n2y
       '@dnd-kit/sortable': 7.0.2_52scne4zmdeyjh2otzkgz2xfvu
       '@dnd-kit/utilities': 3.2.1_react@18.2.0
-      '@react-typed-forms/core': 3.0.0-dev.118
+      '@react-typed-forms/core': 3.0.0
       clsx: 2.0.0
       immutability-helper: 3.1.1
       react: 18.2.0
@@ -441,14 +443,14 @@ packages:
       - react-dom
     dev: true
 
-  /@astroapps/ui-tree/1.0.0_@types+react@18.2.31:
+  /@astroapps/ui-tree/1.0.0_nf7zrwy5ca6rqsqhedviirnufe:
     resolution: {integrity: sha512-cZECvIT10VUa+4Dv02l5cBOwQbkmRZm4CP8ALn8M2ThRWNBRAK0CZop2NCDKmE/wozu+jKhUhQH5GlQARV5H8w==}
     dependencies:
       '@astroapps/client': 0.1.2_@types+react@18.2.31
-      '@dnd-kit/core': 6.0.8_react@18.2.0
+      '@dnd-kit/core': 6.0.8_biqbaboplfbrettd7655fr4n2y
       '@dnd-kit/sortable': 7.0.2_52scne4zmdeyjh2otzkgz2xfvu
       '@dnd-kit/utilities': 3.2.1_react@18.2.0
-      '@react-typed-forms/core': 3.0.0-dev.118
+      '@react-typed-forms/core': 3.0.0
       clsx: 2.0.0
       immutability-helper: 3.1.1
       react: 18.2.0
@@ -1943,7 +1945,6 @@ packages:
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       tslib: 2.6.2
-    dev: true
 
   /@dnd-kit/core/6.0.8_react@18.2.0:
     resolution: {integrity: sha512-lYaoP8yHTQSLlZe6Rr9qogouGUz9oRUj4AHhDQGQzq/hqaJRpFo65X+JKsdHf8oUFBzx5A+SJPUvxAwTF2OabA==}
@@ -3915,6 +3916,11 @@ packages:
   /@react-dnd/shallowequal/4.0.2:
     resolution: {integrity: sha512-/RVXdLvJxLg4QKvMoM5WlwNR9ViO9z8B/qPcc+C0Sa/teJY7QG7kJ441DwzOjMYEY7GmU4dj5EcGHIkKZiQZCA==}
 
+  /@react-typed-forms/core/3.0.0:
+    resolution: {integrity: sha512-lko2Jon8amPVQXLcIHiJdvrgFTpawSG/+YvZIqGnSBxInPnFR4X+LhiSfp/yqz3J9tf4DC/0eo2mdccmqmtApQ==}
+    dependencies:
+      react: 18.2.0
+
   /@react-typed-forms/core/3.0.0-dev.116:
     resolution: {integrity: sha512-7IKrr/h9goySdSlrCcxqmKWijlZFopOK8MAPIIgiEQY2MNCtTEzNShp+ZiZ7kzfOsb0UETzVolCn5JL8hft2/g==}
     dependencies:
@@ -3924,11 +3930,12 @@ packages:
     resolution: {integrity: sha512-RkbWsFrK31GBlKfEtsPkrxLN8/8AJDMtZpoJ1uyU2sXlKAQQ+gvyCtuGAEqVfZxykBCONoCtRBlGb+ZEOrnoKg==}
     dependencies:
       react: 18.2.0
+    dev: false
 
   /@react-typed-forms/schemas/1.0.0-dev.22:
     resolution: {integrity: sha512-9iHP6+2/MpyB+raQ3/nFwoBGsrABPgeTD1W4R1w+Ucr5kDnC+UA3wHmUk5neg3Tr2XCo9ZML9VAkYR+gxjC6DQ==}
     dependencies:
-      '@react-typed-forms/core': 3.0.0-dev.118
+      '@react-typed-forms/core': 3.0.0
       clsx: 2.0.0
       jsonata: 2.0.3
       react: 18.2.0
@@ -3942,10 +3949,10 @@ packages:
       react: 18.2.0
     dev: false
 
-  /@react-typed-forms/schemas/5.0.0:
-    resolution: {integrity: sha512-XqSPQk5BEzmjZvy5Xw1zULMFwlIQAng/LMycgfLyt9VwJbOpXM7PiOVLIUkECaiiPyrudmYPOUyjAY9JTcrTxQ==}
+  /@react-typed-forms/schemas/6.0.0:
+    resolution: {integrity: sha512-2gG7LTCqYHOWpZEgAStTHdQ2Pft68MipMaujQhNOZg59VNAtDmjh9w5QomD4ycyaHl1sbx7lnjv1qoaWGyzduQ==}
     dependencies:
-      '@react-typed-forms/core': 3.0.0-dev.118
+      '@react-typed-forms/core': 3.0.0
       clsx: 2.0.0
       jsonata: 2.0.4
       react: 18.2.0
@@ -8958,7 +8965,7 @@ packages:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
     dev: true
 
-  /framer-motion/10.16.4_react@18.2.0:
+  /framer-motion/10.16.4_biqbaboplfbrettd7655fr4n2y:
     resolution: {integrity: sha512-p9V9nGomS3m6/CALXqv6nFGMuFOxbWsmaOrdmhyQimMIlLl3LC7h7l86wge/Js/8cRu5ktutS/zlzgR7eBOtFA==}
     peerDependencies:
       react: ^18.0.0
@@ -8970,6 +8977,7 @@ packages:
         optional: true
     dependencies:
       react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
       tslib: 2.6.2
     optionalDependencies:
       '@emotion/is-prop-valid': 0.8.8
