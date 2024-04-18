@@ -84,7 +84,7 @@ export function initColumn<T, D = unknown>(
  * @param {...ColumnDefInit<T, D>[]} defs The `ColumnDefInit` objects to use to create the `ColumnDef` objects.
  * @returns {ColumnDef<T, D>[]} An array of `ColumnDef` objects.
  */
-export function columnDefinitions<T, D = undefined>(
+export function columnDefinitions<T, D = unknown>(
   ...defs: ColumnDefInit<T, D>[]
 ): ColumnDef<T, D>[] {
   return defs.map(initColumn);
