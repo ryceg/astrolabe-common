@@ -95,10 +95,9 @@ export function DataGrid<T, D = unknown>(props: DataGridProps<T, D>) {
           renderHeaderCells(rowProps, c, cIndex === lastColIndex),
         );
       };
-      return wrapHeaderRow?.(rowIndex, doRender) ?? doRender()[0];
+      return wrapHeaderRow?.(rowIndex, doRender) ?? doRender();
     },
   );
-
   const gridTemplateColumns = getColumnTemplate(
     visibleColumns,
     defaultColumnTemplate,

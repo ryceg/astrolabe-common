@@ -306,24 +306,28 @@ export function maxHeaderRows(c: ColumnDef<any, any>): number {
     : thisHeaders;
 }
 
-export function mapColumn<T, T2, D>(col: ColumnDef<T, D>, map: (from: T2) => T, 
-                                    override?: Partial<ColumnDef<T2, D>>): ColumnDef<T2, D>
-{
+export function mapColumn<T, T2, D>(
+  col: ColumnDef<T, D>,
+  map: (from: T2) => T,
+  override?: Partial<ColumnDef<T2, D>>,
+): ColumnDef<T2, D> {
   return {
     ...col,
-    render: (row: T2, rowIndex: number, col: ColumnDef<any, D>) =>
-        col.render(map(row), rowIndex, col),
     compare: col.compare ? (f, s) => col.compare!(map(f), map(s)) : undefined,
     getter: col.getter ? (r) => col.getter!(map(r)) : undefined,
     filterValue: col.filterValue ? (r) => col.filterValue!(map(r)) : undefined,
     children: col.children ? mapColumns(col.children, map) : undefined,
-    getRowSpan:
-        override?.getRowSpan ?? (col.getRowSpan ? (r) => col.getRowSpan!(map(r)) : undefined),
     renderBody: col.renderBody
-        ? (props) => col.renderBody!({ ...props, row: map(props.row) })
-        : undefined,
-    ...override
-  }
+      ? (props) => col.renderBody!({ ...props, row: map(props.row) })
+      : undefined,
+    ...override,
+    render:
+      override?.render ??
+      ((row, rowIndex, c) => col.render(map(row), rowIndex, c)),
+    getRowSpan:
+      override?.getRowSpan ??
+      (col.getRowSpan ? (r) => col.getRowSpan!(map(r)) : undefined),
+  };
 }
 
 export function mapColumns<T, T2, D>(
