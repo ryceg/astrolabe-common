@@ -32,10 +32,11 @@ type ColumnRenderInit<T, D> =
  * @template T The type of the row data.
  * @template D The type of the additional data passed to the `CellRenderer`.
  */
-export type ColumnDefInit<T, D = undefined> = IdOrTitle &
+export type ColumnDefInit<T, D = unknown> = IdOrTitle &
   ColumnRenderInit<T, D> &
   Omit<ColumnDef<T, D>, "id" | "title" | "filterField" | "render">;
-export function initColumn<T, D = undefined>(
+
+export function initColumn<T, D = unknown>(
   x: ColumnDefInit<T, D>,
   i?: number,
 ): ColumnDef<T, D> {

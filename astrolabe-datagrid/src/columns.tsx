@@ -30,7 +30,7 @@ export type ColumnRenderer<T, D> = (
   col: ColumnDef<any, D>,
 ) => ReactNode;
 
-export interface CellRenderProps<T, D> {
+export interface CellRenderProps<T, D = unknown> {
   key: Key;
   row: T;
   column: ColumnDef<any, D>;
@@ -41,14 +41,14 @@ export interface CellRenderProps<T, D> {
   children: ReactNode;
 }
 
-export interface ColumnRender<T, D = undefined> extends ColumnHeader {
+export interface ColumnRender<T, D> extends ColumnHeader {
   render: ColumnRenderer<T, D>;
   data?: D;
   renderBody?: (cell: CellRenderProps<T, D>) => ReactElement;
   renderHeader?: (cell: CellRenderProps<number, D>) => ReactElement;
 }
 
-export interface ColumnDef<T, D = undefined> extends ColumnRender<T, D> {
+export interface ColumnDef<T, D = unknown> extends ColumnRender<T, D> {
   compare?: (first: T, second: T) => number;
   getter?: (row: T) => Sortable;
   filterValue?: (row: T) => [string, string];
@@ -57,21 +57,21 @@ export interface ColumnDef<T, D = undefined> extends ColumnRender<T, D> {
   headerRowSpans?: number[];
 }
 
-export function isColumnGroup(c: ColumnDef<any, any>) {
+export function isColumnGroup(c: ColumnDef<any>) {
   return !!c.children;
 }
 
-export interface RenderHeaderRowProps<T> {
+export interface RenderHeaderRowProps<T, D> {
   rowIndex: number;
   totalRows: number;
   gridRowOffset: number;
-  makeClassName: (column: ColumnDef<T, any>, lastColumn: boolean) => string;
-  headerContents: (column: ColumnDef<any, any>) => ReactNode;
+  makeClassName: (column: ColumnDef<T, D>, lastColumn: boolean) => string;
+  headerContents: (column: ColumnDef<any, D>) => ReactNode;
 }
 
-export function renderHeaderCells<T>(
-  headerRowProps: RenderHeaderRowProps<T>,
-  column: ColumnDef<T, any>,
+export function renderHeaderCells<T, D>(
+  headerRowProps: RenderHeaderRowProps<T, D>,
+  column: ColumnDef<T, D>,
   lastColumn: boolean,
 ): ReactElement[] | ReactElement {
   const { rowIndex, gridRowOffset, totalRows, makeClassName } = headerRowProps;
@@ -111,7 +111,7 @@ export interface RenderRowProps<T> {
   totalRows: number;
   gridRowOffset: number;
   makeClassName: (
-    column: ColumnDef<T, any>,
+    column: ColumnDef<T>,
     lastRow: boolean,
     lastColumn: boolean,
   ) => string;
@@ -120,7 +120,7 @@ export interface RenderRowProps<T> {
 
 export function renderBodyCells<T>(
   rowProps: RenderRowProps<T>,
-  column: ColumnDef<T, any>,
+  column: ColumnDef<T>,
   lastColumn: boolean,
 ): ReactElement[] | ReactElement {
   const { row, rowKey, rowIndex, totalRows, makeClassName, gridRowOffset } =
@@ -270,7 +270,7 @@ function writeLineNames(names: string[]) {
   return "[" + names.join(" ") + "]";
 }
 function addColumnTemplate<T>(
-  col: ColumnDef<T, any>,
+  col: ColumnDef<T>,
   defaultColumnTemplate: string,
   [current, lineNames]: [string, string[]],
 ): [string, string[]] {
@@ -306,23 +306,30 @@ export function maxHeaderRows(c: ColumnDef<any, any>): number {
     : thisHeaders;
 }
 
+export function mapColumn<T, T2, D>(col: ColumnDef<T, D>, map: (from: T2) => T, 
+                                    override?: Partial<ColumnDef<T2, D>>): ColumnDef<T2, D>
+{
+  return {
+    ...col,
+    render: (row: T2, rowIndex: number, col: ColumnDef<any, D>) =>
+        col.render(map(row), rowIndex, col),
+    compare: col.compare ? (f, s) => col.compare!(map(f), map(s)) : undefined,
+    getter: col.getter ? (r) => col.getter!(map(r)) : undefined,
+    filterValue: col.filterValue ? (r) => col.filterValue!(map(r)) : undefined,
+    children: col.children ? mapColumns(col.children, map) : undefined,
+    getRowSpan:
+        override?.getRowSpan ?? (col.getRowSpan ? (r) => col.getRowSpan!(map(r)) : undefined),
+    renderBody: col.renderBody
+        ? (props) => col.renderBody!({ ...props, row: map(props.row) })
+        : undefined,
+    ...override
+  }
+}
+
 export function mapColumns<T, T2, D>(
   cols: ColumnDef<T, D>[],
   map: (from: T2) => T,
-  getRowSpan?: (from: T2) => number | [number, boolean],
+  override?: (cd: ColumnDef<T, D>) => Partial<ColumnDef<T2, D>>,
 ): ColumnDef<T2, D>[] {
-  return cols.map((x) => ({
-    ...x,
-    render: (row: T2, rowIndex: number, col: ColumnDef<any, D>) =>
-      x.render(map(row), rowIndex, col),
-    compare: x.compare ? (f, s) => x.compare!(map(f), map(s)) : undefined,
-    getter: x.getter ? (r) => x.getter!(map(r)) : undefined,
-    filterValue: x.filterValue ? (r) => x.filterValue!(map(r)) : undefined,
-    children: x.children ? mapColumns(x.children, map) : undefined,
-    getRowSpan:
-      getRowSpan ?? (x.getRowSpan ? (r) => x.getRowSpan!(map(r)) : undefined),
-    renderBody: x.renderBody
-      ? (props) => x.renderBody!({ ...props, row: map(props.row) })
-      : undefined,
-  }));
+  return cols.map((x) => mapColumn(x, map, override?.(x)));
 }

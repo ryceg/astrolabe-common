@@ -40,7 +40,7 @@ export interface DataGridProps<T, D = unknown> extends DataGridClasses {
   getBodyRow(index: number): T;
   extraHeaderRows?: ReactElement[];
   wrapBodyContent?: (render: () => ReactNode) => ReactNode;
-  renderHeaderContent?: (col: ColumnDef<any, any>) => ReactNode;
+  renderHeaderContent?: (col: ColumnDef<T, D>) => ReactNode;
   renderExtraRows?: (rowNum: number) => ReactElement;
   wrapBodyRow?: (
     rowIndex: number,
@@ -84,7 +84,7 @@ export function DataGrid<T, D = unknown>(props: DataGridProps<T, D>) {
   const headerCells = Array.from({ length: totalHeaderRows }).flatMap(
     (_, rowIndex) => {
       const doRender = () => {
-        const rowProps: RenderHeaderRowProps<T> = {
+        const rowProps: RenderHeaderRowProps<T, D> = {
           totalRows: totalHeaderRows,
           rowIndex,
           makeClassName: makeHeaderClass,
@@ -145,7 +145,7 @@ export function DataGrid<T, D = unknown>(props: DataGridProps<T, D>) {
   );
 
   function makeBodyClass(
-    column: ColumnDef<T, any>,
+    column: ColumnDef<T>,
     lastRow: boolean,
     lastColumn: boolean,
   ) {
@@ -161,7 +161,7 @@ export function DataGrid<T, D = unknown>(props: DataGridProps<T, D>) {
     );
   }
 
-  function makeHeaderClass(column: ColumnDef<T, any>, lastColumn: boolean) {
+  function makeHeaderClass(column: ColumnDef<T>, lastColumn: boolean) {
     if (isColumnGroup(column))
       return clsx(column.headerCellClass, column.cellClass);
     return clsx(
