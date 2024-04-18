@@ -126,13 +126,29 @@ export function TestThis() {
       render: (r) => <div className="px-2">A DATE</div>,
     },
   );
+  const rows: AdminUserRouteIssue[] = [
+    {
+      id: "ok",
+      comment: "asd",
+      routeId: "asd",
+      note: "sadfa",
+      createdAt: "sadfsdf",
+      travelMode: "sadfsdf",
+    },
+    {
+      id: "ok",
+      comment: "asd",
+      routeId: "asd",
+      note: "sadfa",
+      createdAt: "sadfsdf",
+      travelMode: "sadfsdf",
+    },
+  ];
   return (
     <DataGrid
       columns={columns}
-      bodyRows={0}
-      getBodyRow={() => {
-        throw "AWHAT";
-      }}
+      bodyRows={rows.length}
+      getBodyRow={(i) => rows[i]}
     />
   );
 }

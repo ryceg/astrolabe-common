@@ -39,7 +39,7 @@ export interface DataGridProps<T, D = unknown> extends DataGridClasses {
   bodyRows: number;
   getBodyRow(index: number): T;
   extraHeaderRows?: ReactElement[];
-  wrapBodyContent?: (render: () => ReactNode) => ReactNode;
+  wrapBodyContent?: (render: () => ReactNode, key: Key) => ReactNode;
   renderHeaderContent?: (col: ColumnDef<T, D>) => ReactNode;
   renderExtraRows?: (rowNum: number) => ReactElement;
   wrapBodyRow?: (
