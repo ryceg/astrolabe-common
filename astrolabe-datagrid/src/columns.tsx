@@ -115,7 +115,7 @@ export interface RenderRowProps<T> {
     lastRow: boolean,
     lastColumn: boolean,
   ) => string;
-  wrap?: (render: () => ReactNode, key: Key) => ReactNode;
+  wrap?: (render: () => ReactNode) => ReactNode;
 }
 
 export function renderBodyCells<T>(
@@ -137,7 +137,7 @@ export function renderBodyCells<T>(
     ? visibleChildren(column.children).flatMap((c, i, arr) =>
         renderBodyCells(rowProps, c, lastColumn && i === arr.length - 1),
       )
-    : rowProps.wrap?.(doRender, rowProps.rowKey) ?? doRender();
+    : rowProps.wrap?.(doRender) ?? doRender();
   return (column.renderBody ?? defaultRenderCell)({
     row,
     rowNum,
