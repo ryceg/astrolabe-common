@@ -1,0 +1,5 @@
+node_modules/
+*.tsbuildinfo
+client.build.log
+*.js
+*.d.ts

@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@astroapps/client": "workspace:*",
+    "@astroapps/datagrid": "workspace:*",
+    "@react-typed-forms/core": "^3.0.0",
     "@astrolabe/ui": "workspace:*",
     "@remix-run/css-bundle": "^2.1.0",
     "@remix-run/node": "^2.1.0",

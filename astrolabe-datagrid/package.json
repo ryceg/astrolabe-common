@@ -1,0 +1,33 @@
+{
+  "name": "@astroapps/datagrid",
+  "version": "1.0.0",
+  "description": "",
+  "source": "src/index.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "author": "Astrolabe Enterprises",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "rimraf lib/ && microbundle -f cjs --raw --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "clsx": "^1 || ^2"
+  },
+  "devDependencies": {
+    "typescript": "5.2.2",
+    "@types/react": "^18.2.37",
+    "prettier": "^3.0.3",
+    "microbundle": "^0.15.1",
+    "rimraf": "^3.0.2"
+  }
+}
