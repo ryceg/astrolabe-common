@@ -137,6 +137,18 @@ export function createNavLinks(
   }
 
   function matchOne(n: NavLinkSpec): boolean {
-    return typeof n === "object" ? n.list === linkType : n === linkType;
+    return getListForSpec(n) === linkType;
   }
+}
+
+export function getListForSpec(n: NavLinkSpec): string {
+  return typeof n === "object" ? n.list : n;
+}
+
+export function getAllNavLinkLists(nav: NavLinkRouteData) {
+  const linkSpecs = nav.navLink;
+  if (!linkSpecs) return [];
+  return Array.isArray(linkSpecs)
+    ? linkSpecs.flatMap(getListForSpec)
+    : [getListForSpec(linkSpecs)];
 }
