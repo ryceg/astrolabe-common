@@ -3,6 +3,7 @@ import { AppContext } from "./index";
 import { Control, newControl, useControl } from "@react-typed-forms/core";
 import { RouteData } from "../app/routeData";
 import { useNavigationService } from "./navigation";
+import { parseJwt } from "../util/jwt";
 
 export interface UserState {
   busy: boolean;
@@ -11,6 +12,7 @@ export interface UserState {
   name?: string;
   accessToken?: string | null;
   afterLoginHref?: string;
+  roles?: string[];
 }
 
 export interface SecurityService {
@@ -71,7 +73,7 @@ export function useControlTokenSecurity(): TokenSecurityService {
   });
   useEffect(() => {
     const accessToken = tokens.getItem("token");
-    user.value = { busy: false, accessToken, loggedIn: !!accessToken };
+    user.value = { busy: false, ...userStateFromToken(accessToken) };
   }, []);
   return {
     currentUser: user,
@@ -87,10 +89,23 @@ export function useControlTokenSecurity(): TokenSecurityService {
       tokens.setItem("token", accessToken);
       user.setValue((v) => ({
         ...v,
-        loggedIn: true,
-        accessToken,
+        ...userStateFromToken(accessToken),
       }));
     },
+  };
+}
+
+export function userStateFromToken(jwtToken: string | null): {
+  loggedIn: boolean;
+  accessToken: string | null;
+  roles: string[];
+} {
+  if (!jwtToken) return { loggedIn: false, accessToken: null, roles: [] };
+  const jwt = parseJwt(jwtToken) as { role: string | string[] | undefined };
+  return {
+    loggedIn: true,
+    accessToken: jwtToken,
+    roles: Array.isArray(jwt.role) ? jwt.role : jwt.role ? [jwt.role] : [],
   };
 }
 
