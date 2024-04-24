@@ -5,6 +5,17 @@ import { RouteData } from "../app/routeData";
 import { useNavigationService } from "./navigation";
 import { parseJwt } from "../util/jwt";
 
+export interface JwtTokenData {
+  name: string;
+  email: string;
+  oid: string;
+  nbf: number;
+  exp: number;
+  iat: number;
+  iss: string;
+  aud: string;
+}
+
 export interface UserState {
   busy: boolean;
   loggedIn: boolean;
@@ -13,6 +24,7 @@ export interface UserState {
   accessToken?: string | null;
   afterLoginHref?: string;
   roles?: string[];
+  tokenData?: Partial<JwtTokenData>;
 }
 
 export interface SecurityService {
@@ -99,13 +111,21 @@ export function userStateFromToken(jwtToken: string | null): {
   loggedIn: boolean;
   accessToken: string | null;
   roles: string[];
+  tokenData: Partial<JwtTokenData> | undefined;
 } {
-  if (!jwtToken) return { loggedIn: false, accessToken: null, roles: [] };
+  if (!jwtToken)
+    return {
+      loggedIn: false,
+      accessToken: null,
+      roles: [],
+      tokenData: undefined,
+    };
   const jwt = parseJwt(jwtToken) as { role: string | string[] | undefined };
   return {
     loggedIn: true,
     accessToken: jwtToken,
     roles: Array.isArray(jwt.role) ? jwt.role : jwt.role ? [jwt.role] : [],
+    tokenData: jwtToken as any,
   };
 }
 
