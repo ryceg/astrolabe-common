@@ -14,6 +14,7 @@ export interface JwtTokenData {
   iat: number;
   iss: string;
   aud: string;
+  role: string | string[] | undefined;
 }
 
 export interface UserState {
@@ -111,7 +112,9 @@ export function userStateFromToken(jwtToken: string | null): {
   loggedIn: boolean;
   accessToken: string | null;
   roles: string[];
+  name?: string;
   tokenData: Partial<JwtTokenData> | undefined;
+  email?: string;
 } {
   if (!jwtToken)
     return {
@@ -119,13 +122,17 @@ export function userStateFromToken(jwtToken: string | null): {
       accessToken: null,
       roles: [],
       tokenData: undefined,
+      name: undefined,
+      email: undefined,
     };
-  const jwt = parseJwt(jwtToken) as { role: string | string[] | undefined };
+  const jwt = parseJwt(jwtToken) as Partial<JwtTokenData>;
   return {
     loggedIn: true,
     accessToken: jwtToken,
     roles: Array.isArray(jwt.role) ? jwt.role : jwt.role ? [jwt.role] : [],
-    tokenData: jwtToken as any,
+    name: jwt.name,
+    email: jwt.email,
+    tokenData: jwt as any,
   };
 }
 
