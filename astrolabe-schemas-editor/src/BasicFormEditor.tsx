@@ -45,7 +45,7 @@ import {
 } from "./controlTree";
 import { ControlTreeNode, useTreeStateControl } from "@astroapps/ui-tree";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useMemo } from "react";
+import { ReactElement, useMemo } from "react";
 import { controlIsCompoundField, controlIsGroupControl } from "./";
 
 interface PreviewData {
@@ -79,7 +79,7 @@ export default function BasicFormEditor<A extends string>({
   saveForm,
   controlDefinitionSchema = ControlDefinitionSchema,
   editorControls,
-}: BasicFormEditorProps<A>) {
+}: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
   });
