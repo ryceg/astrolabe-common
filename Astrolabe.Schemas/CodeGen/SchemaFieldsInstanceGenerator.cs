@@ -12,19 +12,20 @@ namespace Astrolabe.Schemas.CodeGen;
 public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, FieldsForType>
 {
     private readonly SchemaFieldsGeneratorOptions _options;
-    
+
     private readonly Dictionary<Type, IEnumerable<SchemaField>> _typeToFields = new();
-    
-    public SchemaFieldsInstanceGenerator(SchemaFieldsGeneratorOptions options) : base(options, new SimpleTypeVisitor())
+
+    public SchemaFieldsInstanceGenerator(SchemaFieldsGeneratorOptions options)
+        : base(options, new SimpleTypeVisitor())
     {
         _options = options;
     }
-    
+
     protected override string TypeKey(SimpleTypeData typeData)
     {
         return typeData switch
         {
-            EnumerableTypeData enumerableTypeData => enumerableTypeData.Element().Type.Name+"[]",
+            EnumerableTypeData enumerableTypeData => enumerableTypeData.Element().Type.Name + "[]",
             ObjectTypeData objectTypeData => objectTypeData.Type.Name,
             _ => ""
         };
@@ -42,47 +43,61 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         IEnumerable<FieldsForType> ObjectDeclarations(ObjectTypeData objectTypeData)
         {
             var type = objectTypeData.Type;
-            var members = objectTypeData.Members.Where(x =>
-                x.Properties.First().GetCustomAttribute<JsonExtensionDataAttribute>() == null).ToList();
-            
+            var members = objectTypeData
+                .Members.Where(x =>
+                    x.Properties.First().GetCustomAttribute<JsonExtensionDataAttribute>() == null
+                )
+                .ToList();
+
             var deps = objectTypeData.Members.SelectMany(x => CollectData(x.Data()));
 
             var baseType = type.GetCustomAttribute<JsonBaseTypeAttribute>();
             var subTypes = type.GetCustomAttributes<JsonSubTypeAttribute>();
 
-            var fieldList = members.Select(x => FieldForMember(x, objectTypeData, baseType, subTypes));
+            var fieldList = members.Select(x =>
+                FieldForMember(x, objectTypeData, baseType, subTypes)
+            );
 
             _typeToFields[type] = fieldList;
             return deps.Append(new FieldsForType(type, fieldList));
         }
     }
 
-    private SchemaField FieldForMember(TypeMember<SimpleTypeData> member, ObjectTypeData parent,
-        JsonBaseTypeAttribute? baseType, IEnumerable<JsonSubTypeAttribute> subTypes)
+    private SchemaField FieldForMember(
+        TypeMember<SimpleTypeData> member,
+        ObjectTypeData parent,
+        JsonBaseTypeAttribute? baseType,
+        IEnumerable<JsonSubTypeAttribute> subTypes
+    )
     {
-        var onlyForTypes =
-            member.Properties.Select(x => subTypes.FirstOrDefault(s => s.SubType == x.DeclaringType)?.Discriminator)
-                .Cast<string>().ToList();
+        var onlyForTypes = member
+            .Properties.SelectMany(x =>
+                subTypes.Where(s => s.SubType == x.DeclaringType).Select(s => s.Discriminator)
+            )
+            .ToList();
         var memberData = member.Data();
         var firstProp = member.Properties.First();
         var fieldName = SchemaFieldsGenerator.GetFieldName(firstProp);
         var schemaField = FieldForType(memberData, parent, fieldName);
         var tags = firstProp.GetCustomAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
-        var enumType = firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
+        var enumType =
+            firstProp.GetCustomAttribute<SchemaOptionsAttribute>()?.EnumType
+            ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         schemaField.IsTypeField = baseType != null && baseType.TypeField == fieldName ? true : null;
         schemaField.OnlyForTypes = onlyForTypes.Count > 0 ? onlyForTypes : null;
         schemaField.NotNullable = memberData.Nullable ? null : true;
-        schemaField.Required = memberData.Nullable || !schemaField.IsScalarField() ? null : true; 
+        schemaField.Required = memberData.Nullable || !schemaField.IsScalarField() ? null : true;
         schemaField.DefaultValue = firstProp.GetCustomAttribute<DefaultValueAttribute>()?.Value;
-        schemaField.DisplayName = firstProp.GetCustomAttribute<DisplayAttribute>()?.Name ?? firstProp.Name;
+        schemaField.DisplayName =
+            firstProp.GetCustomAttribute<DisplayAttribute>()?.Name ?? firstProp.Name;
         schemaField.Tags = tags.Count > 0 ? tags : null;
         schemaField.Options = options;
         return schemaField;
     }
 
     private Type? GetEnumType(SimpleTypeData data)
-    {     
+    {
         return data switch
         {
             EnumerableTypeData enumerableTypeData => GetEnumType(enumerableTypeData.Element()),
@@ -95,7 +110,8 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
     {
         return type switch
         {
-            { IsEnum: true } when IsStringEnum(type) is var stringEnum => stringEnum ? FieldType.String : FieldType.Int,
+            { IsEnum: true } when IsStringEnum(type) is var stringEnum
+                => stringEnum ? FieldType.String : FieldType.Int,
             _ when type == typeof(DateTime) => FieldType.DateTime,
             _ when type == typeof(DateTimeOffset) => FieldType.DateTime,
             _ when type == typeof(DateOnly) => FieldType.Date,
@@ -108,7 +124,11 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         };
     }
 
-    private SchemaField FieldForType(SimpleTypeData simpleType, ObjectTypeData parentObject, string field)
+    private SchemaField FieldForType(
+        SimpleTypeData simpleType,
+        ObjectTypeData parentObject,
+        string field
+    )
     {
         var fieldType = _options.CustomFieldType?.Invoke(simpleType.Type);
         if (fieldType != null)
@@ -118,7 +138,8 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
 
         return simpleType switch
         {
-            EnumerableTypeData enumerableTypeData => MakeCollection(FieldForType(enumerableTypeData.Element(), parentObject, field)),
+            EnumerableTypeData enumerableTypeData
+                => MakeCollection(FieldForType(enumerableTypeData.Element(), parentObject, field)),
             ObjectTypeData objectTypeData => DoObject(objectTypeData),
             _ => new SimpleSchemaField(FieldTypeForTypeOnly(simpleType.Type).ToString(), field)
         };
@@ -132,8 +153,11 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         CompoundField DoObject(ObjectTypeData objectTypeData)
         {
             var treeChildren = objectTypeData == parentObject;
-            return new CompoundField(field,
-                treeChildren ? new SchemaField[] { } : _typeToFields[objectTypeData.Type], treeChildren);
+            return new CompoundField(
+                field,
+                treeChildren ? new SchemaField[] { } : _typeToFields[objectTypeData.Type],
+                treeChildren
+            );
         }
     }
 
@@ -146,13 +170,16 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
     {
         return type.GetFields(BindingFlags.Static | BindingFlags.Public)
             .Select(x =>
-                (Attribute.GetCustomAttribute(x, typeof(DisplayAttribute)),
-                        Attribute.GetCustomAttribute(x, typeof(XmlEnumAttribute))) switch
-                    {
-                        (DisplayAttribute a, _) => new FieldOption(a.Name!, GetValue(x)),
-                        (_, XmlEnumAttribute a) => new FieldOption(a.Name!, GetValue(x)),
-                        _ => new FieldOption(x.Name, GetValue(x))
-                    });
+                (
+                    Attribute.GetCustomAttribute(x, typeof(DisplayAttribute)),
+                    Attribute.GetCustomAttribute(x, typeof(XmlEnumAttribute))
+                ) switch
+                {
+                    (DisplayAttribute a, _) => new FieldOption(a.Name!, GetValue(x)),
+                    (_, XmlEnumAttribute a) => new FieldOption(a.Name!, GetValue(x)),
+                    _ => new FieldOption(x.Name, GetValue(x))
+                }
+            );
 
         object GetValue(FieldInfo info)
         {
