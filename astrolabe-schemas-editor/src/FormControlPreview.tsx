@@ -1,4 +1,4 @@
-import { Control, newControl, useControl } from "@react-typed-forms/core";
+import { Control, useComputed, useControl } from "@react-typed-forms/core";
 import React, {
   createContext,
   HTMLAttributes,
@@ -11,8 +11,8 @@ import { motion } from "framer-motion";
 import {
   ControlDataContext,
   ControlDefinitionType,
-  dataControl,
   defaultDataProps,
+  defaultSchemaInterface,
   defaultValueForField,
   DynamicPropertyType,
   FormRenderer,
@@ -31,7 +31,6 @@ import {
   DragData,
   DropData,
 } from ".";
-import { defaultSchemaInterface } from "@react-typed-forms/schemas";
 
 export interface FormControlPreviewProps {
   item: ControlForm;
@@ -83,7 +82,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   });
   const children = definition.children ?? [];
   const schemaField = lookupSchemaField(definition, fields);
-  const groupControl = newControl({});
+  const groupControl = useControl({});
   const dataContext: ControlDataContext = {
     groupControl,
     fields,
@@ -91,14 +90,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   };
   const [, childContext] = getControlData(schemaField, dataContext);
   const displayOptions = getDisplayOnlyOptions(definition);
-  const childControl = newControl(
+  const childControl = useComputed(() =>
     displayOptions
       ? displayOptions.sampleText ?? "Sample Data"
       : schemaField &&
-          defaultValueForField(
-            schemaField,
-            schemaField.collection || definition.required,
-          ),
+        defaultValueForField(
+          schemaField,
+          schemaField.collection || definition.required,
+        ),
   );
   const adornments =
     definition.adornments?.map((x) =>
