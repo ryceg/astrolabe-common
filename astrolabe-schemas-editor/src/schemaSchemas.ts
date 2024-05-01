@@ -414,6 +414,10 @@ export const DynamicPropertySchema = buildSchema<DynamicPropertyForm>({
         name: "LayoutStyle",
         value: "LayoutStyle",
       },
+      {
+        name: "AllowedOptions",
+        value: "AllowedOptions",
+      },
     ],
   }),
   expr: makeCompoundField({

@@ -1,0 +1,19 @@
+@import "https://kit.fontawesome.com/95cc77b353.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.ql-container .ql-editor p {
+	margin-top: 0.75em;
+	margin-bottom: 0.75em;
+}
+
+/**
+ * This uses the adjacent sibling combinator to target the sidebar when the header is not sticky.
+ * Necessary to make the sidebar full height.
+ */
+header[data-sticky="false"] + * > aside[data-cy="sidebar"] {
+	top: 0;
+	height: 100vh;
+}
+

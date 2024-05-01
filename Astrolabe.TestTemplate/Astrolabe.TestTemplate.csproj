@@ -16,5 +16,5 @@
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
     </ItemGroup>
-
+    
 </Project>

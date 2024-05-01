@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/schemas-editor",
-	"version": "5.0.0",
+	"version": "5.1.0",
 	"type": "module",
 	"main": "index.js",
 	"types": "index.d.ts",
@@ -22,7 +22,7 @@
 	"dependencies": {
 		"@react-typed-forms/core": "^3.0.0",
 		"react-resizable-panels": "^0.0.55",
-		"@react-typed-forms/schemas": "^7.0.0",
+		"@react-typed-forms/schemas": "^7.1.0",
 		"@astroapps/client": "^0.1.1",
 		"@astroapps/ui-tree": "^1.0.0",
 		"@dnd-kit/core": "^6.0.5",
