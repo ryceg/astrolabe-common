@@ -861,12 +861,12 @@ export interface ControlDefinitionForm {
   renderOptions: RenderOptionsForm | null;
   defaultValue: any | null;
   readonly: boolean | null;
+  dontClearHidden: boolean | null;
   validators: SchemaValidatorForm[] | null;
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
   actionId: string;
-  dontClearHidden: boolean | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -958,6 +958,11 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     defaultValue: false,
     displayName: "Readonly",
   }),
+  dontClearHidden: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Data"],
+    displayName: "DontClearHidden",
+  }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,
     collection: true,
@@ -987,12 +992,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     notNullable: true,
     required: true,
     displayName: "ActionId",
-  }),
-  dontClearHidden: makeScalarField({
-    type: FieldType.Bool,
-    onlyForTypes: ["Data"],
-    displayName: "DontClearHidden",
-    notNullable: true,
   }),
 });
 
