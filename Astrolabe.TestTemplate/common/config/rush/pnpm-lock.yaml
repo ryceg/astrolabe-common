@@ -107,8 +107,8 @@ importers:
       '@babel/preset-env': ^7.23.8
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
-      '@react-typed-forms/core': ^3.0.0-dev.118
-      '@react-typed-forms/schemas': ^4.0.0
+      '@react-typed-forms/core': ^3.0.0
+      '@react-typed-forms/schemas': ^7.0.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.37
       prettier: ^3.0.3
@@ -116,8 +116,8 @@ importers:
       react-quill: ^2.0.0
       typescript: 5.2.2
     dependencies:
-      '@react-typed-forms/core': 3.0.0-dev.118
-      '@react-typed-forms/schemas': 4.0.0
+      '@react-typed-forms/core': 3.0.0
+      '@react-typed-forms/schemas': 7.0.0
       react: 18.2.0
       react-quill: 2.0.0_react@18.2.0
     devDependencies:
@@ -3929,15 +3929,6 @@ packages:
       clsx: 2.0.0
       jsonata: 2.0.3
       react: 18.2.0
-
-  /@react-typed-forms/schemas/4.0.0:
-    resolution: {integrity: sha512-c7STP9YXu7QPa/ktR6TibnfwgCzF/f3IKWUvuIEKDB+Ys417Es6O4Om9QSvdkyyoOGaez+ZYZoIdE4R9ANWusw==}
-    dependencies:
-      '@react-typed-forms/core': 3.0.0
-      clsx: 2.0.0
-      jsonata: 2.0.4
-      react: 18.2.0
-    dev: false
 
   /@react-typed-forms/schemas/7.0.0:
     resolution: {integrity: sha512-nRNArxAZ8csIvV1HYo87RDVK2WWH4bIhCJ/isMxY8zzZ6X9HXZekdqHpFWpqZPRvpinyWK0ldXrZq8D6J4GpLA==}
