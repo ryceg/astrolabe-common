@@ -12,8 +12,11 @@ import {
   Fselect,
   groupedChanges,
   RenderArrayElements,
+  RenderControl,
   RenderElements,
   RenderOptional,
+  trackedValue,
+  useComputed,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
@@ -31,7 +34,9 @@ import {
   cleanDataForSchema,
   ControlDefinition,
   ControlDefinitionType,
+  ControlRenderOptions,
   FormRenderer,
+  getAllReferencedClasses,
   groupedControl,
   GroupedControlsDefinition,
   GroupRenderType,
@@ -47,6 +52,10 @@ import { ControlTreeNode, useTreeStateControl } from "@astroapps/ui-tree";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { ReactElement, useMemo } from "react";
 import { controlIsCompoundField, controlIsGroupControl } from "./";
+import {
+  createTailwindcss,
+  TailwindConfig,
+} from "@mhsdesign/jit-browser-tailwindcss";
 
 interface PreviewData {
   showing: boolean;
@@ -64,9 +73,14 @@ export interface BasicFormEditorProps<A extends string> {
   selectedForm: Control<A>;
   formTypes: [A, string][];
   saveForm: (controls: ControlDefinition[]) => Promise<any>;
-  validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
+  validation?: (
+    data: Control<any>,
+    controls: ControlDefinition[],
+  ) => Promise<any>;
   controlDefinitionSchema?: SchemaField[];
   editorControls?: ControlDefinition[];
+  previewOptions?: ControlRenderOptions;
+  tailwindConfig?: TailwindConfig;
 }
 
 export default function BasicFormEditor<A extends string>({
@@ -79,6 +93,8 @@ export default function BasicFormEditor<A extends string>({
   saveForm,
   controlDefinitionSchema = ControlDefinitionSchema,
   editorControls,
+  previewOptions,
+  tailwindConfig,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
@@ -111,6 +127,41 @@ export default function BasicFormEditor<A extends string>({
     },
     true,
   );
+
+  const genStyles = useMemo(
+    () =>
+      typeof window === "undefined"
+        ? { generateStylesFromContent: async () => "" }
+        : createTailwindcss({
+            tailwindConfig: tailwindConfig ?? {
+              corePlugins: { preflight: false },
+            },
+          }),
+    [tailwindConfig],
+  );
+
+  const allClasses = useComputed(() => {
+    const cv = trackedValue(controls);
+    return cv.flatMap(getAllReferencedClasses).join(" ");
+  });
+  const styles = useControl("");
+
+  useControlEffect(
+    () => allClasses.value,
+    (cv) => runTailwind(cv),
+    true,
+  );
+
+  async function runTailwind(classes: string) {
+    {
+      const html = `<div class="${classes}"></div>`;
+
+      styles.value = await genStyles.generateStylesFromContent(
+        `@tailwind utilities;`,
+        [html],
+      );
+    }
+  }
 
   function button(onClick: () => void, action: string) {
     return formRenderer.renderAction({
@@ -148,6 +199,7 @@ export default function BasicFormEditor<A extends string>({
       <SchemaFieldsProvider value={fields}>
         <PanelGroup direction="horizontal">
           <Panel>
+            <RenderControl render={() => <style>{styles.value}</style>} />
             <div className="overflow-auto w-full h-full p-8">
               {previewMode ? (
                 <FormPreview
@@ -155,6 +207,7 @@ export default function BasicFormEditor<A extends string>({
                   previewData={previewData}
                   formRenderer={formRenderer}
                   validation={validation}
+                  previewOptions={previewOptions}
                 />
               ) : (
                 <RenderElements
@@ -283,17 +336,24 @@ function FormPreview({
   previewData,
   formRenderer,
   validation,
+  previewOptions,
 }: {
   previewData: Control<PreviewData>;
   formRenderer: FormRenderer;
   validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
+  previewOptions?: ControlRenderOptions;
 }) {
   const { controls, fields } = previewData.value;
   const formControl: GroupedControlsDefinition = useMemo(
     () => groupedControl(controls),
     [controls],
   );
-  const RenderPreview = useControlRenderer(formControl, fields, formRenderer);
+  const RenderPreview = useControlRenderer(
+    formControl,
+    fields,
+    formRenderer,
+    previewOptions,
+  );
   const data = useControl({});
   useControlEffect(
     () => data.value,
@@ -314,6 +374,6 @@ function FormPreview({
 
   async function runValidation() {
     data.touched = true;
-    await validation?.(data.value, controls);
+    await validation?.(data, controls);
   }
 }

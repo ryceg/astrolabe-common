@@ -866,6 +866,7 @@ export interface ControlDefinitionForm {
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
   actionId: string;
+  dontClearHidden: boolean | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -986,6 +987,12 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     notNullable: true,
     required: true,
     displayName: "ActionId",
+  }),
+  dontClearHidden: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Data"],
+    displayName: "DontClearHidden",
+    notNullable: true,
   }),
 });
 
