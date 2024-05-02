@@ -447,6 +447,11 @@
     {
       "packageName": "formserver",
       "projectFolder": "ClientApp/sites/formServer"
+    },
+    {
+      "packageName": "@react-typed-forms/schemas",
+      "projectFolder": "../schemas",
+      "shouldPublish": true
     }
   ]
 }

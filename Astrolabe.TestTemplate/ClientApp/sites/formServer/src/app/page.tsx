@@ -6,11 +6,13 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   buildSchema,
+  compoundField,
   createDefaultRenderers,
   createFormRenderer,
   defaultTailwindTheme,
   stringField,
   stringOptionsField,
+  withScalarOptions,
 } from "@react-typed-forms/schemas";
 import { addCustomRenderOptions } from "@astroapps/schemas-editor";
 import { ControlDefinitionSchema } from "@astroapps/schemas-editor/schemaSchemas";
@@ -31,13 +33,25 @@ enum MyEnum {
 
 interface OurData {
   greeting: MyEnum;
+  greetings: {
+    pls: MyEnum[];
+  };
 }
 
+const myEnumField = stringOptionsField(
+  "Greeting",
+  { name: "HAI", value: MyEnum.Hai },
+  { name: "Hello", value: MyEnum.Hello },
+);
+
 const fields = buildSchema<OurData>({
-  greeting: stringOptionsField(
-    "Greeting",
-    { name: "HAI", value: MyEnum.Hai },
-    { name: "Hello", value: MyEnum.Hello },
+  greeting: myEnumField,
+  greetings: compoundField(
+    "PLS",
+    buildSchema<{ pls: MyEnum[] }>({
+      pls: withScalarOptions({ collection: true }, myEnumField),
+    }),
+    {},
   ),
 });
 

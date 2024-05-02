@@ -10,6 +10,7 @@
       <Path>astrolabe-storybook</Path>
       <Path>astrolabe-ui</Path>
       <Path>astrolabe-ui-tree</Path>
+      <Path>schemas</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes />

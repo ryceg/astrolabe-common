@@ -22,7 +22,7 @@
 	"dependencies": {
 		"@react-typed-forms/core": "^3.0.0",
 		"react-resizable-panels": "^0.0.55",
-		"@react-typed-forms/schemas": "^7.1.0",
+		"@react-typed-forms/schemas": "workspace:^7.2.0",
 		"@astroapps/client": "^0.1.1",
 		"@astroapps/ui-tree": "^1.0.0",
 		"@dnd-kit/core": "^6.0.5",
