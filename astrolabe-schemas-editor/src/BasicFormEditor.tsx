@@ -60,6 +60,7 @@ import {
 interface PreviewData {
   showing: boolean;
   key: number;
+  data: any;
   fields: SchemaField[];
   controls: ControlDefinition[];
 }
@@ -106,6 +107,7 @@ export default function BasicFormEditor<A extends string>({
   const previewData = useControl<PreviewData>({
     showing: false,
     key: 0,
+    data: {},
     controls: [],
     fields: [],
   });
@@ -203,7 +205,6 @@ export default function BasicFormEditor<A extends string>({
             <div className="overflow-auto w-full h-full p-8">
               {previewMode ? (
                 <FormPreview
-                  key={previewData.fields.key.current.value}
                   previewData={previewData}
                   formRenderer={formRenderer}
                   validation={validation}
@@ -293,6 +294,7 @@ export default function BasicFormEditor<A extends string>({
     if (previewMode) previewData.fields.showing.value = false;
     else
       previewData.setValue((v) => ({
+        ...v,
         showing: true,
         key: v.key + 1,
         controls: controls.value,
@@ -343,6 +345,7 @@ function FormPreview({
   validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
   previewOptions?: ControlRenderOptions;
 }) {
+  const data = previewData.fields.data;
   const { controls, fields } = previewData.value;
   const formControl: GroupedControlsDefinition = useMemo(
     () => groupedControl(controls),
@@ -354,7 +357,6 @@ function FormPreview({
     formRenderer,
     previewOptions,
   );
-  const data = useControl({});
   useControlEffect(
     () => data.value,
     (v) => console.log(v),

@@ -5,13 +5,19 @@ import { useControl } from "@react-typed-forms/core";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import {
+  addMissingControls,
   buildSchema,
   compoundField,
   createDefaultRenderers,
   createFormRenderer,
+  dataControl,
   defaultTailwindTheme,
+  DynamicPropertyType,
+  dynamicVisibility,
+  jsonataExpr,
   stringField,
   stringOptionsField,
+  textDisplayControl,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
 import { addCustomRenderOptions } from "@astroapps/schemas-editor";
@@ -34,7 +40,7 @@ enum MyEnum {
 interface OurData {
   greeting: MyEnum;
   greetings: {
-    pls: MyEnum[];
+    pls: { cool: MyEnum }[];
   };
 }
 
@@ -47,9 +53,13 @@ const myEnumField = stringOptionsField(
 const fields = buildSchema<OurData>({
   greeting: myEnumField,
   greetings: compoundField(
-    "PLS",
-    buildSchema<{ pls: MyEnum[] }>({
-      pls: withScalarOptions({ collection: true }, myEnumField),
+    "Greetings",
+    buildSchema<{ pls: { cool: MyEnum }[] }>({
+      pls: compoundField(
+        "PLS",
+        buildSchema<{ cool: MyEnum }>({ cool: myEnumField }),
+        { collection: true },
+      ),
     }),
     {},
   ),
@@ -74,16 +84,30 @@ export default function Editor() {
     ),
   );
   return (
-    <DndProvider backend={HTML5Backend}>
-      <BasicFormEditor<string>
-        formRenderer={StdFormRenderer}
-        editorRenderer={StdFormRenderer}
-        loadForm={async (c) => ({ fields, controls: [] })}
-        selectedForm={selectedForm}
-        formTypes={[["MyForm", "MyForm"]]}
-        saveForm={async (controls) => {}}
-        controlDefinitionSchema={CustomControlSchema}
-      />
-    </DndProvider>
+    <BasicFormEditor<string>
+      formRenderer={StdFormRenderer}
+      editorRenderer={StdFormRenderer}
+      loadForm={async (c) => {
+        const controls = addMissingControls(fields, []);
+        controls[1].children![0].children!.push(
+          textDisplayControl("", {
+            dynamic: [
+              {
+                type: DynamicPropertyType.Display,
+                expr: jsonataExpr("cool"),
+              },
+            ],
+          }),
+        );
+        return {
+          fields,
+          controls,
+        };
+      }}
+      selectedForm={selectedForm}
+      formTypes={[["MyForm", "MyForm"]]}
+      saveForm={async (controls) => {}}
+      controlDefinitionSchema={CustomControlSchema}
+    />
   );
 }

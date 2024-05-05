@@ -428,8 +428,8 @@ export function createDefaultGroupRenderer(
     const { style, className: gcn } = isGridRenderer(renderOptions)
       ? gridStyles(renderOptions)
       : isFlexRenderer(renderOptions)
-      ? flexStyles(renderOptions)
-      : ({ className: standardClassName } as StyleProps);
+        ? flexStyles(renderOptions)
+        : ({ className: standardClassName } as StyleProps);
 
     return (cp: ControlLayoutProps) => {
       return {
@@ -531,7 +531,11 @@ export function createDefaultDataRenderer(
         style: props.style,
         className: props.className,
         renderOptions: { type: "Standard", hideTitle: true },
-        renderChild: (i) => props.renderChild(i, i, { control: props.control }),
+        renderChild: (i) =>
+          props.renderChild(i, i, {
+            control: props.dataContext.data,
+            parentPath: props.dataContext.path,
+          }),
         childCount: props.childCount,
       });
     }

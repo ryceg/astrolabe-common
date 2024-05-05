@@ -1,5 +1,8 @@
 lockfileVersion: 5.4
 
+overrides:
+  '@react-typed-forms/schemas': workspace:*
+
 importers:
 
   .:
@@ -108,7 +111,7 @@ importers:
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
       '@react-typed-forms/core': ^3.0.0
-      '@react-typed-forms/schemas': ^7.0.0
+      '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.37
       prettier: ^3.0.3
@@ -117,7 +120,7 @@ importers:
       typescript: 5.2.2
     dependencies:
       '@react-typed-forms/core': 3.0.0
-      '@react-typed-forms/schemas': 7.0.0
+      '@react-typed-forms/schemas': link:../schemas
       react: 18.2.0
       react-quill: 2.0.0_react@18.2.0
     devDependencies:
@@ -143,7 +146,7 @@ importers:
       '@dnd-kit/core': ^6.0.5
       '@mhsdesign/jit-browser-tailwindcss': ^0.4.0
       '@react-typed-forms/core': ^3.0.0
-      '@react-typed-forms/schemas': workspace:^7.1.0
+      '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.31
       framer-motion: ^10.16.4
@@ -186,7 +189,7 @@ importers:
       '@astroapps/ui-tree': ^0.1.1
       '@astrolabe/ui': workspace:*
       '@react-typed-forms/core': ^3.0.0
-      '@react-typed-forms/schemas': ^7.0.0
+      '@react-typed-forms/schemas': workspace:*
       '@storybook/addon-a11y': ^7.6.10
       '@storybook/addon-essentials': ^7.6.10
       '@storybook/addon-interactions': ^7.6.10
@@ -220,7 +223,7 @@ importers:
       '@astroapps/ui-tree': 0.1.1_2qwbtxfzlajplfl3qy3maoww5e
       '@astrolabe/ui': link:../astrolabe-ui
       '@react-typed-forms/core': 3.0.0
-      '@react-typed-forms/schemas': 7.0.0
+      '@react-typed-forms/schemas': link:../schemas
       '@storybook/addon-a11y': 7.6.10
       '@storybook/addon-essentials': 7.6.10_xsjvyk4r43ijslniwy3mzxewpy
       '@storybook/addon-interactions': 7.6.10
@@ -256,7 +259,7 @@ importers:
       '@radix-ui/react-toast': 1.1.5
       '@radix-ui/react-tooltip': 1.0.7
       '@react-typed-forms/core': ^3.0.0
-      '@react-typed-forms/schemas': ^7.0.0
+      '@react-typed-forms/schemas': workspace:*
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
       '@types/shallowequal': ^1.1.2
@@ -285,7 +288,7 @@ importers:
       '@radix-ui/react-toast': 1.1.5_wh47g5ajjaiodohliq4abgp5yu
       '@radix-ui/react-tooltip': 1.0.7_wh47g5ajjaiodohliq4abgp5yu
       '@react-typed-forms/core': 3.0.0
-      '@react-typed-forms/schemas': 7.0.0
+      '@react-typed-forms/schemas': link:../schemas
       class-variance-authority: 0.7.0
       clsx: 2.0.0
       focus-trap-react: 10.2.2_v2m5e27vhdewzwhryxwfaorcca
@@ -3778,14 +3781,6 @@ packages:
     dependencies:
       react: 18.2.0
     dev: false
-
-  /@react-typed-forms/schemas/7.0.0:
-    resolution: {integrity: sha512-nRNArxAZ8csIvV1HYo87RDVK2WWH4bIhCJ/isMxY8zzZ6X9HXZekdqHpFWpqZPRvpinyWK0ldXrZq8D6J4GpLA==}
-    dependencies:
-      '@react-typed-forms/core': 3.0.0
-      clsx: 2.0.0
-      jsonata: 2.0.4
-      react: 18.2.0
 
   /@react-typed-forms/transform/0.2.0:
     resolution: {integrity: sha512-P8qYhc5b801cI8uJ8/5Ks8Ja2iJNADw+KiMw2t55Zb1y3RtbWxz7H9tXR2ZFdkf4J9CoAJ+At1XEqMkd0Z8ieQ==}
@@ -9961,6 +9956,7 @@ packages:
   /jsonata/2.0.4:
     resolution: {integrity: sha512-vfavX4/G/yrYxE+UrmT/oUJ3ph7KqUrb0R7b0LVRcntQwxw+Z5kA1pNUIQzX5hF04Oe1eKxyoIPsmXtc2LgJTQ==}
     engines: {node: '>= 8'}
+    dev: false
 
   /jsonfile/6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}

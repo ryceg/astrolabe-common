@@ -9,6 +9,7 @@ import {
   FieldOption,
   FieldType,
   isCompoundField,
+  lookupChildControl,
   SchemaField,
   useUpdatedRef,
 } from "@react-typed-forms/schemas";
@@ -120,8 +121,8 @@ export function useEditorDataHook(
 
         default:
           const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
-          const otherFieldName =
-            dataContext.groupControl.fields[otherField].value;
+          const otherFieldName = lookupChildControl(dataContext, otherField)
+            ?.value;
           const fieldInSchema = fieldList.find(
             (x) => x.field === otherFieldName,
           );
@@ -337,8 +338,8 @@ export function findSchemaFieldListForParents(
       controlType === ControlDefinitionType.Group
         ? p.fields.compoundField.current.value
         : controlType === ControlDefinitionType.Data
-          ? p.fields.field.current.value
-          : undefined;
+        ? p.fields.field.current.value
+        : undefined;
     if (compoundField) {
       const nextFields = fields.elements.find(
         (x) => x.fields.field.current.value === compoundField,

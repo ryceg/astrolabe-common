@@ -10,12 +10,14 @@ import {
   SchemaField,
   SchemaInterface,
 } from "./types";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
+  addAfterChangesCallback,
   Control,
   useComputed,
   useControl,
   useControlEffect,
+  useRefState,
 } from "@react-typed-forms/core";
 
 import {
@@ -25,10 +27,17 @@ import {
   getDisplayOnlyOptions,
   getTypeField,
   isControlReadonly,
+  jsonPathString,
+  lookupChildControl,
   useUpdatedRef,
 } from "./util";
 import jsonata from "jsonata";
-import { useCalculatedControl } from "./internal";
+import {
+  makeChangeTracker,
+  trackedStructure,
+  useCalculatedControl,
+} from "./internal";
+import { DataContext } from "./controlRender";
 
 export type UseEvalExpressionHook = (
   expr: EntityExpression | undefined,
@@ -192,20 +201,24 @@ export type EvalExpressionHook<A = any> = (
 function useDataExpression(
   fvExpr: DataExpression,
   fields: SchemaField[],
-  data: Control<any>,
+  data: DataContext,
 ) {
   const refField = findField(fields, fvExpr.field);
-  const otherField = refField ? data.fields[refField.field] : undefined;
+  const otherField = refField
+    ? lookupChildControl(data, refField.field)
+    : undefined;
   return useCalculatedControl(() => otherField?.value);
 }
 
 function useDataMatchExpression(
   fvExpr: DataMatchExpression,
   fields: SchemaField[],
-  data: Control<any>,
+  data: DataContext,
 ) {
   const refField = findField(fields, fvExpr.field);
-  const otherField = refField ? data.fields[refField.field] : undefined;
+  const otherField = refField
+    ? lookupChildControl(data, refField.field)
+    : undefined;
   return useComputed(() => {
     const fv = otherField?.value;
     return Array.isArray(fv) ? fv.includes(fvExpr.value) : fv === fvExpr.value;
@@ -220,20 +233,15 @@ export function defaultEvalHooks(
     case ExpressionType.Jsonata:
       return useJsonataExpression(
         (expr as JsonataExpression).expression,
-        context.groupControl,
-        context.root,
+        context,
       );
     case ExpressionType.Data:
-      return useDataExpression(
-        expr as DataExpression,
-        context.fields,
-        context.groupControl,
-      );
+      return useDataExpression(expr as DataExpression, context.fields, context);
     case ExpressionType.DataMatch:
       return useDataMatchExpression(
         expr as DataMatchExpression,
         context.fields,
-        context.groupControl,
+        context,
       );
     default:
       return useControl(undefined);
@@ -291,31 +299,52 @@ export function hideDisplayOnly(
     !displayOptions.emptyText &&
     schemaInterface.isEmptyValue(
       field,
-      context.groupControl.fields[field.field].value,
+      lookupChildControl(context, field.field)?.value,
     )
   );
 }
 
 export function useJsonataExpression(
   jExpr: string,
-  data: Control<any>,
-  root: Control<any>,
+  dataContext: DataContext,
 ): Control<any> {
+  const pathString = jsonPathString(dataContext.path);
   const compiledExpr = useMemo(() => {
     try {
-      return jsonata(jExpr);
+      return jsonata(pathString ? pathString + ".(" + jExpr + ")" : jExpr);
     } catch (e) {
       console.error(e);
       return jsonata("null");
     }
-  }, [jExpr]);
+  }, [jExpr, pathString]);
   const control = useControl();
-  useControlEffect(
-    () => [data.value, root.value],
-    async ([v, rv]) => {
-      control.value = await compiledExpr.evaluate(v, { root: rv });
-    },
-    true,
+  const listenerRef = useRef<() => void>();
+  const [ref] = useRefState(() =>
+    makeChangeTracker(() => {
+      const l = listenerRef.current;
+      if (l) {
+        listenerRef.current = undefined;
+        addAfterChangesCallback(() => {
+          l();
+          listenerRef.current = l;
+        });
+      }
+    }),
   );
+  useEffect(() => {
+    listenerRef.current = apply;
+    apply();
+    async function apply() {
+      const [collect, stop] = ref.current;
+      try {
+        control.value = await compiledExpr.evaluate(
+          trackedStructure(dataContext.data, collect),
+        );
+      } finally {
+        stop();
+      }
+    }
+    return () => ref.current[1](true);
+  }, [compiledExpr]);
   return control;
 }

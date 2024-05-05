@@ -70,11 +70,7 @@ function useJsonataValidator(
   hidden: boolean,
   i: number,
 ) {
-  const errorMsg = useJsonataExpression(
-    expr.expression,
-    context.groupControl,
-    context.root,
-  );
+  const errorMsg = useJsonataExpression(expr.expression, context);
   useControlEffect(
     () => [hidden, errorMsg.value],
     ([hidden, msg]) => control.setError("jsonata" + i, !hidden ? msg : null),

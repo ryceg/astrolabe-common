@@ -19,10 +19,9 @@ import {
 import { MutableRefObject, useRef } from "react";
 import { Control } from "@react-typed-forms/core";
 import clsx from "clsx";
+import { DataContext, JsonPath } from "./controlRender";
 
-export interface ControlDataContext {
-  groupControl: Control<any>;
-  root: Control<any>;
+export interface ControlDataContext extends DataContext {
   fields: SchemaField[];
   schemaInterface: SchemaInterface;
 }
@@ -252,7 +251,7 @@ export function getTypeField(
 ): Control<string> | undefined {
   const typeSchemaField = context.fields.find((x) => x.isTypeField);
   return typeSchemaField
-    ? context.groupControl.fields?.[typeSchemaField.field]
+    ? lookupChildControl(context, typeSchemaField.field)
     : undefined;
 }
 
@@ -308,11 +307,14 @@ export function visitControlData<A>(
     if (!fieldData)
       return !fieldName ? visitControlDataArray(children, ctx, cb) : undefined;
 
-    const control = ctx.groupControl.fields[fieldData.field];
+    const thisPath = [...ctx.path, fieldData.field];
+    const control = ctx.data.lookupControl(thisPath);
+    if (!control) throw "No control for field";
     const result = def ? cb(def, fieldData, control, false) : undefined;
     if (result !== undefined) return result;
     if (fieldData.collection) {
-      for (const c of control.elements ?? []) {
+      let cIndex = 0;
+      for (const c of control!.elements ?? []) {
         const elemResult = def ? cb(def, fieldData, c, true) : undefined;
         if (elemResult !== undefined) return elemResult;
         if (isCompoundField(fieldData)) {
@@ -321,15 +323,24 @@ export function visitControlData<A>(
             {
               ...ctx,
               fields: fieldData.children,
-              groupControl: c,
+              path: [...thisPath, cIndex],
             },
             cb,
           );
           if (cfResult !== undefined) return cfResult;
         }
+        cIndex++;
       }
     }
   }
+}
+
+export function lookupChildControl(
+  data: DataContext,
+  child: JsonPath,
+): Control<any> | undefined {
+  const childPath = [...data.path, child];
+  return data.data.lookupControl(childPath);
 }
 
 export function cleanDataForSchema(
@@ -383,4 +394,17 @@ export function getAllReferencedClasses(c: ControlDefinition): string[] {
   if (!tc) return [];
   if (childClasses) return [tc, ...childClasses];
   return [tc];
+}
+
+export function jsonPathString(jsonPath: JsonPath[]) {
+  let out = "";
+  jsonPath.forEach((v, i) => {
+    if (typeof v === "number") {
+      out += "[" + v + "]";
+    } else {
+      if (i > 0) out += ".";
+      out += v;
+    }
+  });
+  return out;
 }

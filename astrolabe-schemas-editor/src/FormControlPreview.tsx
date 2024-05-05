@@ -84,7 +84,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const schemaField = lookupSchemaField(definition, fields);
   const groupControl = useControl({});
   const dataContext: ControlDataContext = {
-    groupControl,
+    data: groupControl,
+    path: [],
     fields,
     schemaInterface: props.schemaInterface ?? defaultSchemaInterface,
   };
@@ -195,8 +196,8 @@ function EditorDetails({
     type === ControlDefinitionType.Data
       ? field.value
       : type === ControlDefinitionType.Group
-        ? compoundField.value
-        : null;
+      ? compoundField.value
+      : null;
 
   if (!fieldName && !(hasVisibilityScripting || schemaVisibility)) return <></>;
   return (

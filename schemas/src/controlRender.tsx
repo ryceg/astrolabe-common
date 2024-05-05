@@ -10,8 +10,10 @@ import React, {
 import {
   addElement,
   Control,
+  ControlChange,
   newControl,
   removeElement,
+  trackControlChange,
   useComponentTracking,
   useControl,
   useControlEffect,
@@ -192,6 +194,7 @@ export interface ActionRendererProps {
 
 export interface ControlRenderProps {
   control: Control<any>;
+  parentPath?: JsonPath[];
 }
 
 export interface FormContextOptions {
@@ -210,18 +213,23 @@ export interface DataControlProps {
   childCount: number;
   renderChild: ChildRenderer;
   allowedOptions?: Control<any[] | undefined>;
-  elementRenderer?: (elemProps: Control<any>) => ReactNode;
+  elementRenderer?: (elemIndex: number) => ReactNode;
 }
 export type CreateDataProps = (
   controlProps: DataControlProps,
 ) => DataRendererProps;
 
+export type JsonPath = string | number;
+
+export interface DataContext {
+  data: Control<any>;
+  path: JsonPath[];
+}
 export interface ControlRenderOptions extends FormContextOptions {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   useEvalExpressionHook?: UseEvalExpressionHook;
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
-  dataRoot?: Control<any>;
 }
 export function useControlRenderer(
   definition: ControlDefinition,
@@ -258,22 +266,22 @@ export function useControlRenderer(
   const r = useUpdatedRef({ options, definition, fields, schemaField });
 
   const Component = useCallback(
-    ({ control: parentControl }: ControlRenderProps) => {
+    ({ control: parentControl, parentPath = [] }: ControlRenderProps) => {
       const stopTracking = useComponentTracking();
       try {
         const { definition: c, options, fields, schemaField } = r.current;
-        const dataContext: ControlDataContext = {
-          groupControl: parentControl,
+        const parentDataContext: ControlDataContext = {
           fields,
           schemaInterface,
-          root: options.dataRoot ?? parentControl,
+          data: parentControl,
+          path: parentPath,
         };
-        const readonlyControl = useIsReadonly(dataContext);
-        const disabledControl = useIsDisabled(dataContext);
-        const visibleControl = useIsVisible(dataContext);
-        const displayControl = useDynamicDisplay(dataContext);
-        const customStyle = useCustomStyle(dataContext).value;
-        const layoutStyle = useLayoutStyle(dataContext).value;
+        const readonlyControl = useIsReadonly(parentDataContext);
+        const disabledControl = useIsDisabled(parentDataContext);
+        const visibleControl = useIsVisible(parentDataContext);
+        const displayControl = useDynamicDisplay(parentDataContext);
+        const customStyle = useCustomStyle(parentDataContext).value;
+        const layoutStyle = useLayoutStyle(parentDataContext).value;
         const visible = visibleControl.current.value;
         const visibility = useControl<Visibility | undefined>(() =>
           visible != null
@@ -294,29 +302,28 @@ export function useControlRenderer(
           },
         );
 
-        const allowedOptions = useAllowedOptions(dataContext);
-        const defaultValueControl = useDefaultValue(dataContext);
-        const [control, childContext] = getControlData(
+        const allowedOptions = useAllowedOptions(parentDataContext);
+        const defaultValueControl = useDefaultValue(parentDataContext);
+        const [control, controlDataContext] = getControlData(
           schemaField,
-          dataContext,
+          parentDataContext,
         );
         useControlEffect(
           () => [
             visibility.value,
             defaultValueControl.value,
             control,
-            parentControl.isNull,
             isDataControlDefinition(definition) && definition.dontClearHidden,
+            schemaField &&
+              isCompoundField(schemaField) &&
+              !schemaField.collection,
           ],
-          ([vc, dv, cd, pn, dontClear]) => {
-            if (pn) {
-              parentControl.value = {};
-            }
+          ([vc, dv, cd, dontClear, compoundData]) => {
             if (vc && cd && vc.visible === vc.showing) {
               if (!vc.visible) {
                 if (options.clearHidden && !dontClear) cd.value = undefined;
               } else if (cd.value == null) {
-                cd.value = dv;
+                cd.value = dv ?? (compoundData ? {} : undefined);
               }
             }
           },
@@ -327,20 +334,26 @@ export function useControlRenderer(
           readonly: options.readonly || readonlyControl.value,
           disabled: options.disabled || disabledControl.value,
         })).value;
-        useValidation(control!, !!myOptions.hidden, dataContext);
+        useValidation(
+          control ?? newControl(null),
+          !!myOptions.hidden,
+          parentDataContext,
+        );
         const childRenderers: FC<ControlRenderProps>[] =
           c.children?.map((cd) =>
-            useControlRenderer(cd, childContext.fields, renderer, {
+            useControlRenderer(cd, controlDataContext.fields, renderer, {
               ...options,
               ...myOptions,
-              dataRoot: dataContext.root,
             }),
           ) ?? [];
+
         useEffect(() => {
           if (control && typeof myOptions.disabled === "boolean")
             control.disabled = myOptions.disabled;
         }, [control, myOptions.disabled]);
-        if (parentControl.isNull) return <></>;
+
+        if (control == null) return <></>;
+
         const adornments =
           definition.adornments?.map((x) =>
             renderer.renderAdornment({ adornment: x }),
@@ -355,7 +368,7 @@ export function useControlRenderer(
           },
           createDataProps: dataProps,
           formOptions: myOptions,
-          dataContext,
+          dataContext: controlDataContext,
           control: displayControl ?? control,
           schemaField,
           displayControl,
@@ -407,16 +420,21 @@ export function getControlData(
   schemaField: SchemaField | undefined,
   parentContext: ControlDataContext,
 ): [Control<any> | undefined, ControlDataContext] {
-  const childControl: Control<any> | undefined = schemaField
-    ? parentContext.groupControl.fields?.[schemaField.field] ?? newControl({})
-    : undefined;
+  const { data, path } = parentContext;
+  const parentControl = lookupControl(data, path);
+  const childControl =
+    schemaField && parentControl
+      ? lookupControl(parentControl, [schemaField.field])
+      : parentControl;
   return [
     childControl,
-    schemaField && isCompoundField(schemaField)
+    schemaField
       ? {
           ...parentContext,
-          groupControl: childControl!,
-          fields: schemaField.children,
+          path: [...parentContext.path, schemaField.field],
+          fields: isCompoundField(schemaField)
+            ? schemaField.children
+            : parentContext.fields,
         }
       : parentContext,
   ];
@@ -426,13 +444,14 @@ function groupProps(
   renderOptions: GroupRenderOptions = { type: "Standard" },
   childCount: number,
   renderChild: ChildRenderer,
-  control: Control<any>,
+  data: DataContext,
   className: string | null | undefined,
   style: React.CSSProperties | undefined,
 ): GroupRendererProps {
   return {
     childCount,
-    renderChild: (i) => renderChild(i, i, { control }),
+    renderChild: (i) =>
+      renderChild(i, i, { control: data.data, parentPath: data.path }),
     renderOptions,
     className: cc(className),
     style,
@@ -489,7 +508,7 @@ export function defaultArrayProps(
   required: boolean,
   style: CSSProperties | undefined,
   className: string | undefined,
-  renderElement: (elemProps: Control<any>) => ReactNode,
+  renderElement: (elemIndex: number) => ReactNode,
 ): ArrayRendererProps {
   const noun = field.displayName ?? field.field;
   const elems = arrayControl.elements ?? [];
@@ -508,7 +527,7 @@ export function defaultArrayProps(
       actionText: "Remove",
       onClick: () => removeElement(arrayControl, i),
     }),
-    renderElement: (i) => renderElement(elems[i]),
+    renderElement: (i) => renderElement(i),
     className: cc(className),
     style,
   };
@@ -566,7 +585,7 @@ export function renderControlLayout({
           c.groupOptions,
           childCount,
           childRenderer,
-          dataContext.groupControl,
+          dataContext,
           c.styleClass,
           style,
         ),
@@ -601,22 +620,26 @@ export function renderControlLayout({
   }
   return {};
 
-  function renderData(c: DataControlDefinition, elementControl?: Control<any>) {
+  function renderData(c: DataControlDefinition, elemIndex?: number) {
     if (!schemaField) return { children: "No schema field for: " + c.field };
+    if (!childControl) return { children: "No control for: " + c.field };
     const props = dataProps({
       definition: c,
       field: schemaField,
-      dataContext,
-      control: elementControl ?? childControl!,
+      dataContext:
+        elemIndex != null
+          ? { ...dataContext, path: [...dataContext.path, elemIndex] }
+          : dataContext,
+      control:
+        elemIndex != null ? childControl!.elements[elemIndex] : childControl,
       options: dataOptions,
       style,
       childCount,
       allowedOptions,
       renderChild: childRenderer,
       elementRenderer:
-        elementControl == null && schemaField.collection
-          ? (element) =>
-              renderLayoutParts(renderData(c, element), renderer).children
+        elemIndex == null && schemaField.collection
+          ? (ei) => renderLayoutParts(renderData(c, ei), renderer).children
           : undefined,
     });
 
@@ -633,32 +656,6 @@ export function renderControlLayout({
         hide: c.hideTitle,
       },
       errorControl: childControl,
-    };
-  }
-
-  function compoundRenderer(i: number, control: Control<any>): ReactNode {
-    const { className, style, children } = renderer.renderLayout({
-      processLayout: renderer.renderGroup({
-        renderOptions: { type: "Standard", hideTitle: true },
-        childCount,
-        renderChild: (ci) => childRenderer(ci, ci, { control }),
-      }),
-    });
-    return (
-      <div key={control.uniqueId} style={style} className={cc(className)}>
-        {children}
-      </div>
-    );
-  }
-  function scalarRenderer(
-    dataProps: DataRendererProps,
-  ): (i: number, control: Control<any>) => ReactNode {
-    return (i, control) => {
-      return (
-        <Fragment key={control.uniqueId}>
-          {renderer.renderData({ ...dataProps, control })({}).children}
-        </Fragment>
-      );
     };
   }
 }
@@ -739,4 +736,24 @@ export function controlTitle(
   field: SchemaField,
 ) {
   return title ? title : fieldDisplayName(field);
+}
+
+function lookupControl(
+  base: Control<any> | undefined,
+  path: (string | number)[],
+): Control<any> | undefined {
+  let index = 0;
+  while (index < path.length && base) {
+    const childId = path[index];
+    const c = base.current;
+    if (typeof childId === "string") {
+      const next = c.fields?.[childId];
+      if (!next) trackControlChange(base, ControlChange.Structure);
+      base = next;
+    } else {
+      base = c.elements?.[childId];
+    }
+    index++;
+  }
+  return base;
 }
