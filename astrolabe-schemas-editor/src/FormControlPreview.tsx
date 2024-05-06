@@ -89,7 +89,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     fields,
     schemaInterface: props.schemaInterface ?? defaultSchemaInterface,
   };
-  const [, childContext] = getControlData(schemaField, dataContext);
+  const [, , childContext] = getControlData(schemaField, dataContext);
   const displayOptions = getDisplayOnlyOptions(definition);
   const childControl = useComputed(() =>
     displayOptions

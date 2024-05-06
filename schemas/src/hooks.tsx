@@ -13,10 +13,11 @@ import {
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   addAfterChangesCallback,
+  collectChanges,
   Control,
+  makeChangeTracker,
   useComputed,
   useControl,
-  useControlEffect,
   useRefState,
 } from "@react-typed-forms/core";
 
@@ -32,11 +33,7 @@ import {
   useUpdatedRef,
 } from "./util";
 import jsonata from "jsonata";
-import {
-  makeChangeTracker,
-  trackedStructure,
-  useCalculatedControl,
-} from "./internal";
+import { trackedStructure, useCalculatedControl } from "./internal";
 import { DataContext } from "./controlRender";
 
 export type UseEvalExpressionHook = (
@@ -307,6 +304,7 @@ export function hideDisplayOnly(
 export function useJsonataExpression(
   jExpr: string,
   dataContext: DataContext,
+  bindings?: () => Record<string, any>,
 ): Control<any> {
   const pathString = jsonPathString(dataContext.path);
   const compiledExpr = useMemo(() => {
@@ -335,13 +333,17 @@ export function useJsonataExpression(
     listenerRef.current = apply;
     apply();
     async function apply() {
-      const [collect, stop] = ref.current;
+      const [collect, updateSubscriptions] = ref.current;
       try {
+        const bindingData = bindings
+          ? collectChanges(collect, bindings)
+          : undefined;
         control.value = await compiledExpr.evaluate(
           trackedStructure(dataContext.data, collect),
+          bindingData,
         );
       } finally {
-        stop();
+        updateSubscriptions();
       }
     }
     return () => ref.current[1](true);

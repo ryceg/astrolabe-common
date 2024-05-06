@@ -168,6 +168,7 @@ export interface GroupRendererProps {
 }
 
 export interface DataRendererProps {
+  definition: DataControlDefinition;
   renderOptions: RenderOptions;
   field: SchemaField;
   id: string;
@@ -266,14 +267,14 @@ export function useControlRenderer(
   const r = useUpdatedRef({ options, definition, fields, schemaField });
 
   const Component = useCallback(
-    ({ control: parentControl, parentPath = [] }: ControlRenderProps) => {
+    ({ control: rootControl, parentPath = [] }: ControlRenderProps) => {
       const stopTracking = useComponentTracking();
       try {
         const { definition: c, options, fields, schemaField } = r.current;
         const parentDataContext: ControlDataContext = {
           fields,
           schemaInterface,
-          data: parentControl,
+          data: rootControl,
           path: parentPath,
         };
         const readonlyControl = useIsReadonly(parentDataContext);
@@ -304,7 +305,7 @@ export function useControlRenderer(
 
         const allowedOptions = useAllowedOptions(parentDataContext);
         const defaultValueControl = useDefaultValue(parentDataContext);
-        const [control, controlDataContext] = getControlData(
+        const [parentControl, control, controlDataContext] = getControlData(
           schemaField,
           parentDataContext,
         );
@@ -314,17 +315,22 @@ export function useControlRenderer(
             defaultValueControl.value,
             control,
             isDataControlDefinition(definition) && definition.dontClearHidden,
-            schemaField &&
-              isCompoundField(schemaField) &&
-              !schemaField.collection,
+            parentControl?.isNull,
           ],
-          ([vc, dv, cd, dontClear, compoundData]) => {
+          ([vc, dv, cd, dontClear, parentNull]) => {
             if (vc && cd && vc.visible === vc.showing) {
               if (!vc.visible) {
-                if (options.clearHidden && !dontClear) cd.value = undefined;
+                if (options.clearHidden && !dontClear) {
+                  console.log("Clearing ", schemaField?.field);
+                  cd.value = undefined;
+                }
               } else if (cd.value == null) {
-                cd.value = dv ?? (compoundData ? {} : undefined);
+                console.log("Defaulting ", schemaField?.field, dv);
+                cd.value = dv;
               }
+            }
+            if (parentNull && parentControl?.isNull) {
+              parentControl.value = {};
             }
           },
           true,
@@ -351,8 +357,7 @@ export function useControlRenderer(
           if (control && typeof myOptions.disabled === "boolean")
             control.disabled = myOptions.disabled;
         }, [control, myOptions.disabled]);
-
-        if (control == null) return <></>;
+        if (parentControl?.isNull) return <></>;
 
         const adornments =
           definition.adornments?.map((x) =>
@@ -412,26 +417,28 @@ export function lookupSchemaField(
   const fieldName = isGroupControlsDefinition(c)
     ? c.compoundField
     : isDataControlDefinition(c)
-      ? c.field
-      : undefined;
+    ? c.field
+    : undefined;
   return fieldName ? findField(fields, fieldName) : undefined;
 }
 export function getControlData(
   schemaField: SchemaField | undefined,
   parentContext: ControlDataContext,
-): [Control<any> | undefined, ControlDataContext] {
+): [Control<any> | undefined, Control<any> | undefined, ControlDataContext] {
   const { data, path } = parentContext;
-  const parentControl = lookupControl(data, path);
+  const parentControl = data.lookupControl(path);
+  const childPath = schemaField ? [...path, schemaField.field] : path;
   const childControl =
     schemaField && parentControl
-      ? lookupControl(parentControl, [schemaField.field])
-      : parentControl;
+      ? parentControl.fields[schemaField.field]
+      : undefined;
   return [
+    parentControl,
     childControl,
     schemaField
       ? {
           ...parentContext,
-          path: [...parentContext.path, schemaField.field],
+          path: childPath,
           fields: isCompoundField(schemaField)
             ? schemaField.children
             : parentContext.fields,
@@ -474,6 +481,7 @@ export function defaultDataProps({
     (field.options?.length ?? 0) === 0 ? null : field.options;
   const allowed = allowedOptions?.value ?? [];
   return {
+    definition,
     control,
     field,
     id: "c" + control.uniqueId,
