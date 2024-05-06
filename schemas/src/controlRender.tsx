@@ -321,11 +321,9 @@ export function useControlRenderer(
             if (vc && cd && vc.visible === vc.showing) {
               if (!vc.visible) {
                 if (options.clearHidden && !dontClear) {
-                  console.log("Clearing ", schemaField?.field);
                   cd.value = undefined;
                 }
               } else if (cd.value == null) {
-                console.log("Defaulting ", schemaField?.field, dv);
                 cd.value = dv;
               }
             }
@@ -417,8 +415,8 @@ export function lookupSchemaField(
   const fieldName = isGroupControlsDefinition(c)
     ? c.compoundField
     : isDataControlDefinition(c)
-    ? c.field
-    : undefined;
+      ? c.field
+      : undefined;
   return fieldName ? findField(fields, fieldName) : undefined;
 }
 export function getControlData(
