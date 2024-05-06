@@ -351,7 +351,7 @@ importers:
 
   ../../../schemas:
     specifiers:
-      '@react-typed-forms/core': ^3.0.0
+      '@react-typed-forms/core': ^3.1.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.28
       clsx: ^1 || ^2
@@ -364,7 +364,7 @@ importers:
       rimraf: ^3.0.2
       typescript: ^5.2.2
     dependencies:
-      '@react-typed-forms/core': 3.0.0
+      '@react-typed-forms/core': 3.1.0
       clsx: 2.0.0
       jsonata: 2.0.4
       react: 18.2.0
@@ -4013,6 +4013,12 @@ packages:
       react: 18.2.0
     dev: false
 
+  /@react-typed-forms/core/3.1.0:
+    resolution: {integrity: sha512-8cHKQ6PIhtjrNWqiS/zFWuv5EHrxabHBEGkXPKXSqyby4EpUcyr84tt+Yljxaht/lMJjcSGs18vURL2RNOIewg==}
+    dependencies:
+      react: 18.2.0
+    dev: false
+
   /@react-typed-forms/mui/3.0.2_u5zja476buyywzbvglb2fbhaii:
     resolution: {integrity: sha512-P1T+MiPumfhWoeBs4W1nA0JbhrRZoViJyRi4OsKXldqsVgR8mHWl/mfsIh0oxHmx2MTtWBWwMA1tgIhErg3R0Q==}
     peerDependencies:
@@ -4020,7 +4026,7 @@ packages:
       react-dom: 18.x
     dependencies:
       '@mui/material': 5.15.16_u5zja476buyywzbvglb2fbhaii
-      '@react-typed-forms/core': 3.0.0
+      '@react-typed-forms/core': 3.1.0
       react: 18.2.0
     transitivePeerDependencies:
       - '@emotion/react'
