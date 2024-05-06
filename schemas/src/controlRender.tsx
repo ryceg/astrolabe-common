@@ -428,7 +428,7 @@ export function getControlData(
   const childPath = schemaField ? [...path, schemaField.field] : path;
   const childControl =
     schemaField && parentControl
-      ? parentControl.fields[schemaField.field]
+      ? parentControl.fields?.[schemaField.field]
       : undefined;
   return [
     parentControl,
