@@ -9,13 +9,13 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.0.0",
+		"@react-typed-forms/core": "^3.1.0",
 		"@react-typed-forms/schemas": "workspace:*",
-		"@astroapps/client": "^0.1.8",
+		"@astroapps/client": "workspace:*",
 		"@astroapps/client-nextjs": "^0.1.2",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"next": "14.0.1",
+		"next": "14.0.4",
 		"@astroapps/schemas-editor": "workspace:*",
 		"react-dnd": "^16.0.1",
 		"react-dnd-html5-backend": "^16.0.1"

@@ -5,7 +5,7 @@ import React, {
   ReactNode,
   useContext,
 } from "react";
-import { SchemaFieldForm } from "./schemaSchemas";
+import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import {
@@ -108,11 +108,10 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const layout = renderControlLayout({
     definition,
     renderer,
-    childCount: children.length,
-    renderChild: (k, i, c) => (
+    renderChild: (k, def, c) => (
       <FormControlPreview
         key={k}
-        item={unsafeRestoreControl(children[i])}
+        item={unsafeRestoreControl(def) as Control<ControlDefinitionForm>}
         parent={item}
         dropIndex={0}
         fields={unsafeRestoreControl(childContext.fields).as()}

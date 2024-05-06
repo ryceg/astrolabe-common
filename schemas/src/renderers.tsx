@@ -31,6 +31,7 @@ import {
   AdornmentPlacement,
   ControlAdornment,
   ControlAdornmentType,
+  ControlDefinitionType,
   DataRenderType,
   DisplayDataType,
   FieldOption,
@@ -423,7 +424,11 @@ export function createDefaultGroupRenderer(
   }
 
   function render(props: GroupRendererProps) {
-    const { childCount, renderChild, renderOptions } = props;
+    const {
+      renderChild,
+      renderOptions,
+      definition: { children },
+    } = props;
 
     const { style, className: gcn } = isGridRenderer(renderOptions)
       ? gridStyles(renderOptions)
@@ -436,7 +441,7 @@ export function createDefaultGroupRenderer(
         ...cp,
         children: (
           <div className={clsx(props.className, className, gcn)} style={style}>
-            {Array.from({ length: childCount }, (_, x) => renderChild(x))}
+            {children?.map((c, i) => renderChild(i, c))}
           </div>
         ),
       };
@@ -530,13 +535,12 @@ export function createDefaultDataRenderer(
       return renderers.renderGroup({
         style: props.style,
         className: props.className,
+        definition: {
+          type: ControlDefinitionType.Group,
+          children: props.definition.children,
+        },
         renderOptions: { type: "Standard", hideTitle: true },
-        renderChild: (i) =>
-          props.renderChild(i, i, {
-            control: props.dataContext.data,
-            parentPath: props.dataContext.path,
-          }),
-        childCount: props.childCount,
+        renderChild: props.renderChild,
       });
     }
     const renderOptions = props.renderOptions;

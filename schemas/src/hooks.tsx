@@ -307,14 +307,15 @@ export function useJsonataExpression(
   bindings?: () => Record<string, any>,
 ): Control<any> {
   const pathString = jsonPathString(dataContext.path);
+  const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
   const compiledExpr = useMemo(() => {
     try {
-      return jsonata(pathString ? pathString + ".(" + jExpr + ")" : jExpr);
+      return jsonata(fullExpr);
     } catch (e) {
       console.error(e);
       return jsonata("null");
     }
-  }, [jExpr, pathString]);
+  }, [fullExpr]);
   const control = useControl();
   const listenerRef = useRef<() => void>();
   const [ref] = useRefState(() =>

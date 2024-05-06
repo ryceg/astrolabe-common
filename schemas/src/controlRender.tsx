@@ -26,6 +26,7 @@ import {
   DisplayData,
   DynamicPropertyType,
   FieldOption,
+  GroupedControlsDefinition,
   GroupRenderOptions,
   isActionControlsDefinition,
   isDataControlDefinition,
@@ -160,9 +161,9 @@ export interface DisplayRendererProps {
 }
 
 export interface GroupRendererProps {
+  definition: GroupedControlsDefinition;
   renderOptions: GroupRenderOptions;
-  childCount: number;
-  renderChild: (child: number) => ReactNode;
+  renderChild: ChildRenderer;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -180,7 +181,6 @@ export interface DataRendererProps {
   className?: string;
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
-  childCount: number;
   renderChild: ChildRenderer;
   toArrayProps?: () => ArrayRendererProps;
 }
@@ -211,7 +211,6 @@ export interface DataControlProps {
   control: Control<any>;
   options: FormContextOptions;
   style: React.CSSProperties | undefined;
-  childCount: number;
   renderChild: ChildRenderer;
   allowedOptions?: Control<any[] | undefined>;
   elementRenderer?: (elemIndex: number) => ReactNode;
@@ -343,13 +342,7 @@ export function useControlRenderer(
           !!myOptions.hidden,
           parentDataContext,
         );
-        const childRenderers: FC<ControlRenderProps>[] =
-          c.children?.map((cd) =>
-            useControlRenderer(cd, controlDataContext.fields, renderer, {
-              ...options,
-              ...myOptions,
-            }),
-          ) ?? [];
+        const childOptions: ControlRenderOptions = { ...options, ...myOptions };
 
         useEffect(() => {
           if (control && typeof myOptions.disabled === "boolean")
@@ -364,11 +357,21 @@ export function useControlRenderer(
         const labelAndChildren = renderControlLayout({
           definition: c,
           renderer,
-          childCount: childRenderers.length,
-          renderChild: (k, i, props) => {
-            const RenderChild = childRenderers[i];
-            return <RenderChild key={k} {...props} />;
-          },
+          renderChild: (k, def, path) => (
+            <ControlRenderer
+              key={k}
+              control={controlDataContext.data}
+              fields={controlDataContext.fields}
+              definition={def}
+              parentPath={
+                path
+                  ? [...controlDataContext.path, ...path]
+                  : controlDataContext.path
+              }
+              renderer={renderer}
+              options={childOptions}
+            />
+          ),
           createDataProps: dataProps,
           formOptions: myOptions,
           dataContext: controlDataContext,
@@ -445,19 +448,36 @@ export function getControlData(
   ];
 }
 
+export function ControlRenderer({
+  definition,
+  fields,
+  renderer,
+  options,
+  control,
+  parentPath,
+}: {
+  definition: ControlDefinition;
+  fields: SchemaField[];
+  renderer: FormRenderer;
+  options?: ControlRenderOptions;
+  control: Control<any>;
+  parentPath?: JsonPath[];
+}) {
+  const Render = useControlRenderer(definition, fields, renderer, options);
+  return <Render control={control} parentPath={parentPath} />;
+}
+
 function groupProps(
-  renderOptions: GroupRenderOptions = { type: "Standard" },
-  childCount: number,
+  definition: GroupedControlsDefinition,
   renderChild: ChildRenderer,
   data: DataContext,
   className: string | null | undefined,
   style: React.CSSProperties | undefined,
 ): GroupRendererProps {
   return {
-    childCount,
-    renderChild: (i) =>
-      renderChild(i, i, { control: data.data, parentPath: data.path }),
-    renderOptions,
+    definition,
+    renderChild,
+    renderOptions: definition.groupOptions ?? { type: "Standard" },
     className: cc(className),
     style,
   };
@@ -541,14 +561,13 @@ export function defaultArrayProps(
 
 export type ChildRenderer = (
   k: Key,
-  childIndex: number,
-  props: ControlRenderProps,
+  child: ControlDefinition,
+  parentPath?: JsonPath[],
 ) => ReactNode;
 
 export interface RenderControlProps {
   definition: ControlDefinition;
   renderer: FormRenderer;
-  childCount: number;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
   formOptions: FormContextOptions;
@@ -562,7 +581,6 @@ export interface RenderControlProps {
 export function renderControlLayout({
   definition: c,
   renderer,
-  childCount,
   renderChild: childRenderer,
   control: childControl,
   schemaField,
@@ -587,14 +605,7 @@ export function renderControlLayout({
     }
     return {
       processLayout: renderer.renderGroup(
-        groupProps(
-          c.groupOptions,
-          childCount,
-          childRenderer,
-          dataContext,
-          c.styleClass,
-          style,
-        ),
+        groupProps(c, childRenderer, dataContext, c.styleClass, style),
       ),
       label: {
         label: c.title,
@@ -640,9 +651,12 @@ export function renderControlLayout({
         elemIndex != null ? childControl!.elements[elemIndex] : childControl,
       options: dataOptions,
       style,
-      childCount,
       allowedOptions,
-      renderChild: childRenderer,
+      renderChild:
+        elemIndex != null
+          ? (k, d, p) =>
+              childRenderer(k, d, p ? [elemIndex, ...p] : [elemIndex])
+          : childRenderer,
       elementRenderer:
         elemIndex == null && schemaField.collection
           ? (ei) => renderLayoutParts(renderData(c, ei), renderer).children
