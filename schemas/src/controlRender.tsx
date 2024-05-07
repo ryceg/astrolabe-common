@@ -40,6 +40,7 @@ import {
   ControlDataContext,
   elementValueForField,
   fieldDisplayName,
+  findChildDefinition,
   findField,
   isCompoundField,
   useUpdatedRef,
@@ -161,7 +162,7 @@ export interface DisplayRendererProps {
 }
 
 export interface GroupRendererProps {
-  definition: GroupedControlsDefinition;
+  children: ControlDefinition[];
   renderOptions: GroupRenderOptions;
   renderChild: ChildRenderer;
   className?: string;
@@ -169,7 +170,6 @@ export interface GroupRendererProps {
 }
 
 export interface DataRendererProps {
-  definition: DataControlDefinition;
   renderOptions: RenderOptions;
   field: SchemaField;
   id: string;
@@ -181,6 +181,7 @@ export interface DataRendererProps {
   className?: string;
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
+  children: ControlDefinition[];
   renderChild: ChildRenderer;
   toArrayProps?: () => ArrayRendererProps;
 }
@@ -357,12 +358,12 @@ export function useControlRenderer(
         const labelAndChildren = renderControlLayout({
           definition: c,
           renderer,
-          renderChild: (k, def, path) => (
+          renderChild: (k, child, path) => (
             <ControlRenderer
               key={k}
               control={controlDataContext.data}
               fields={controlDataContext.fields}
-              definition={def}
+              definition={findChildDefinition(c, child)}
               parentPath={
                 path
                   ? [...controlDataContext.path, ...path]
@@ -475,7 +476,7 @@ function groupProps(
   style: React.CSSProperties | undefined,
 ): GroupRendererProps {
   return {
-    definition,
+    children: definition.children ?? [],
     renderChild,
     renderOptions: definition.groupOptions ?? { type: "Standard" },
     className: cc(className),
@@ -499,7 +500,7 @@ export function defaultDataProps({
     (field.options?.length ?? 0) === 0 ? null : field.options;
   const allowed = allowedOptions?.value ?? [];
   return {
-    definition,
+    children: definition.children ?? [],
     control,
     field,
     id: "c" + control.uniqueId,
@@ -561,7 +562,7 @@ export function defaultArrayProps(
 
 export type ChildRenderer = (
   k: Key,
-  child: ControlDefinition,
+  child: number | number[],
   parentPath?: JsonPath[],
 ) => ReactNode;
 

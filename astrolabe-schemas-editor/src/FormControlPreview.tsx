@@ -15,6 +15,7 @@ import {
   defaultSchemaInterface,
   defaultValueForField,
   DynamicPropertyType,
+  findChildDefinition,
   FormRenderer,
   getControlData,
   getDisplayOnlyOptions,
@@ -108,10 +109,12 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const layout = renderControlLayout({
     definition,
     renderer,
-    renderChild: (k, def, c) => (
+    renderChild: (k, childPath, c) => (
       <FormControlPreview
         key={k}
-        item={unsafeRestoreControl(def) as Control<ControlDefinitionForm>}
+        item={unsafeRestoreControl(
+          findChildDefinition(definition, childPath),
+        ).as()}
         parent={item}
         dropIndex={0}
         fields={unsafeRestoreControl(childContext.fields).as()}

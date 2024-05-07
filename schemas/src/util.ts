@@ -408,3 +408,15 @@ export function jsonPathString(jsonPath: JsonPath[]) {
   });
   return out;
 }
+
+export function findChildDefinition(
+  parent: ControlDefinition,
+  childPath: number | number[],
+): ControlDefinition {
+  if (Array.isArray(childPath)) {
+    let base = parent;
+    childPath.forEach((x) => (base = base.children![x]));
+    return base;
+  }
+  return parent.children![childPath];
+}

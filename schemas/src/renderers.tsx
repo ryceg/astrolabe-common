@@ -424,11 +424,7 @@ export function createDefaultGroupRenderer(
   }
 
   function render(props: GroupRendererProps) {
-    const {
-      renderChild,
-      renderOptions,
-      definition: { children },
-    } = props;
+    const { renderChild, renderOptions, children } = props;
 
     const { style, className: gcn } = isGridRenderer(renderOptions)
       ? gridStyles(renderOptions)
@@ -441,7 +437,7 @@ export function createDefaultGroupRenderer(
         ...cp,
         children: (
           <div className={clsx(props.className, className, gcn)} style={style}>
-            {children?.map((c, i) => renderChild(i, c))}
+            {children?.map((c, i) => renderChild(i, i))}
           </div>
         ),
       };
@@ -535,10 +531,7 @@ export function createDefaultDataRenderer(
       return renderers.renderGroup({
         style: props.style,
         className: props.className,
-        definition: {
-          type: ControlDefinitionType.Group,
-          children: props.definition.children,
-        },
+        children: props.children,
         renderOptions: { type: "Standard", hideTitle: true },
         renderChild: props.renderChild,
       });
