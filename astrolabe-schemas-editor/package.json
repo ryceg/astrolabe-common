@@ -1,48 +1,48 @@
 {
-	"name": "@astroapps/schemas-editor",
-	"version": "6.0.0",
-	"type": "module",
-	"main": "index.js",
-	"types": "index.d.ts",
-	"author": "Astrolabe Enterprises",
-	"license": "ISC",
-	"bugs": {
-		"url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
-	},
-	"homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
-	"publishConfig": {
-		"access": "public"
-	},
-	"scripts": {
-		"prepack": "npm run build",
-		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
-		"watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
-		"genschemas": "h get http://localhost:5000/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
-	},
-	"dependencies": {
-		"@react-typed-forms/core": "^3.1.0",
-		"react-resizable-panels": "^0.0.55",
-		"@react-typed-forms/schemas": "workspace:^8.0.0",
-		"@astroapps/client": "^0.1.1",
-		"@astroapps/ui-tree": "^1.0.0",
-		"@dnd-kit/core": "^6.0.5",
-		"framer-motion": "^10.16.4",
-		"@mhsdesign/jit-browser-tailwindcss": "^0.4.0",
-		"react": "^18.2.0",
-		"immutability-helper": "^3.1.1",
-		"tslib": "^2.6.2"
-	},
-	"devDependencies": {
-		"@react-typed-forms/transform": "^0.2.0",
-		"@babel/core": "^7.23.7",
-		"@babel/cli": "^7.23.4",
-		"@babel/preset-env": "^7.23.8",
-		"@babel/preset-react": "^7.23.3",
-		"@babel/preset-typescript": "^7.23.3",
-		"@types/react": "^18.2.31",
-		"typescript": "5.2.2",
-		"prettier": "^3.0.3",
-		"http-request-cli": "^0.2.0",
-		"react-dom": "^18.2.0"
-	}
+  "name": "@astroapps/schemas-editor",
+  "version": "6.0.0",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": "Astrolabe Enterprises",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
+    "watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
+    "genschemas": "h get http://localhost:5000/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
+  },
+  "dependencies": {
+    "@react-typed-forms/core": "^3.1.0",
+    "react-resizable-panels": "^0.0.55",
+    "@react-typed-forms/schemas": "workspace:^8.0.0",
+    "@astroapps/client": "^0.1.1",
+    "@astroapps/ui-tree": "^1.0.0",
+    "@dnd-kit/core": "^6.0.5",
+    "framer-motion": "^10.16.4",
+    "@mhsdesign/jit-browser-tailwindcss": "^0.4.0",
+    "react": "^18.2.0",
+    "immutability-helper": "^3.1.1",
+    "tslib": "^2.6.2"
+  },
+  "devDependencies": {
+    "@react-typed-forms/transform": "^0.2.0",
+    "@babel/core": "^7.23.7",
+    "@babel/cli": "^7.23.4",
+    "@babel/preset-env": "^7.23.8",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
+    "@types/react": "^18.2.31",
+    "typescript": "5.2.2",
+    "prettier": "^3.0.3",
+    "http-request-cli": "^0.2.0",
+    "react-dom": "^18.2.0"
+  }
 }

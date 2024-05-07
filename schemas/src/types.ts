@@ -65,6 +65,7 @@ export interface ControlDefinition {
   title?: string | null;
   styleClass?: string | null;
   layoutClass?: string | null;
+  labelClass?: string | null;
   dynamic?: DynamicProperty[] | null;
   adornments?: ControlAdornment[] | null;
   children?: ControlDefinition[] | null;
@@ -90,7 +91,8 @@ export enum DynamicPropertyType {
   Display = "Display",
   Style = "Style",
   LayoutStyle = "LayoutStyle",
-  AllowedOptions = "AllowedOptions"
+  AllowedOptions = "AllowedOptions",
+  Label = "Label",
 }
 
 export interface EntityExpression {

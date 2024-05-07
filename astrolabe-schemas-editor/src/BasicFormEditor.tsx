@@ -34,14 +34,13 @@ import {
   cleanDataForSchema,
   ControlDefinition,
   ControlDefinitionType,
+  ControlRenderer,
   ControlRenderOptions,
   FormRenderer,
   getAllReferencedClasses,
-  groupedControl,
   GroupedControlsDefinition,
   GroupRenderType,
   SchemaField,
-  useControlRenderer,
 } from "@react-typed-forms/schemas";
 import {
   isControlDefinitionNode,
@@ -82,6 +81,7 @@ export interface BasicFormEditorProps<A extends string> {
   editorControls?: ControlDefinition[];
   previewOptions?: ControlRenderOptions;
   tailwindConfig?: TailwindConfig;
+  rootControlClass?: string;
 }
 
 export default function BasicFormEditor<A extends string>({
@@ -96,10 +96,12 @@ export default function BasicFormEditor<A extends string>({
   editorControls,
   previewOptions,
   tailwindConfig,
+  rootControlClass,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
   });
+  const rootControl = useControl<ControlDefinitionForm>();
   const fields = useControl<SchemaFieldForm[]>([]);
   const treeDrag = useControl();
   const treeState = useTreeStateControl();
@@ -214,11 +216,13 @@ export default function BasicFormEditor<A extends string>({
                 <RenderElements
                   control={controls}
                   children={(c, i) => (
-                    <FormControlPreview
-                      item={c}
-                      fields={fields}
-                      dropIndex={i}
-                    />
+                    <div className={rootControlClass}>
+                      <FormControlPreview
+                        item={c}
+                        fields={fields}
+                        dropIndex={i}
+                      />
+                    </div>
                   )}
                 />
               )}
@@ -297,7 +301,7 @@ export default function BasicFormEditor<A extends string>({
         ...v,
         showing: true,
         key: v.key + 1,
-        controls: controls.value,
+        controls: trackedValue(controls),
         fields: fields.value,
       }));
   }
@@ -338,25 +342,17 @@ function FormPreview({
   previewData,
   formRenderer,
   validation,
-  previewOptions,
+  rootControlClass,
 }: {
   previewData: Control<PreviewData>;
   formRenderer: FormRenderer;
   validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
   previewOptions?: ControlRenderOptions;
+  rootControlClass?: string;
 }) {
   const data = previewData.fields.data;
   const { controls, fields } = previewData.value;
-  const formControl: GroupedControlsDefinition = useMemo(
-    () => groupedControl(controls),
-    [controls],
-  );
-  const RenderPreview = useControlRenderer(
-    formControl,
-    fields,
-    formRenderer,
-    previewOptions,
-  );
+
   useControlEffect(
     () => data.value,
     (v) => console.log(v),
@@ -370,7 +366,19 @@ function FormPreview({
           actionText: "Run Validation",
         })}
       </div>
-      <RenderPreview control={data} />
+      <RenderArrayElements
+        array={controls}
+        children={(c) => (
+          <div className={rootControlClass}>
+            <ControlRenderer
+              definition={c}
+              fields={fields}
+              renderer={formRenderer}
+              control={data}
+            />
+          </div>
+        )}
+      />
     </>
   );
 

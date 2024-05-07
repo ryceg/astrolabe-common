@@ -53,6 +53,7 @@ import {
   useEvalDisabledHook,
   useEvalDisplayHook,
   UseEvalExpressionHook,
+  useEvalLabelText,
   useEvalReadonlyHook,
   useEvalStyleHook,
   useEvalVisibilityHook,
@@ -101,7 +102,7 @@ export interface ArrayRendererProps {
   elementCount: number;
   renderElement: (elemIndex: number) => ReactNode;
   elementKey: (elemIndex: number) => Key;
-  arrayControl?: Control<any[] | undefined | null>;
+  arrayControl: Control<any[] | undefined | null>;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -153,6 +154,7 @@ export interface LabelRendererProps {
   label: ReactNode;
   required?: boolean | null;
   forId?: string;
+  className?: string;
 }
 export interface DisplayRendererProps {
   data: DisplayData;
@@ -252,6 +254,7 @@ export function useControlRenderer(
   const useIsReadonly = useEvalReadonlyHook(useExpr, definition);
   const useIsDisabled = useEvalDisabledHook(useExpr, definition);
   const useAllowedOptions = useEvalAllowedOptionsHook(useExpr, definition);
+  const useLabelText = useEvalLabelText(useExpr, definition);
   const useCustomStyle = useEvalStyleHook(
     useExpr,
     DynamicPropertyType.Style,
@@ -283,6 +286,7 @@ export function useControlRenderer(
         const displayControl = useDynamicDisplay(parentDataContext);
         const customStyle = useCustomStyle(parentDataContext).value;
         const layoutStyle = useLayoutStyle(parentDataContext).value;
+        const labelText = useLabelText(parentDataContext);
         const visible = visibleControl.current.value;
         const visibility = useControl<Visibility | undefined>(() =>
           visible != null
@@ -377,6 +381,7 @@ export function useControlRenderer(
           formOptions: myOptions,
           dataContext: controlDataContext,
           control: displayControl ?? control,
+          labelText,
           schemaField,
           displayControl,
           style: customStyle,
@@ -403,6 +408,7 @@ export function useControlRenderer(
       useCustomStyle,
       useLayoutStyle,
       useAllowedOptions,
+      useLabelText,
       useDynamicDisplay,
       useValidation,
       renderer,
@@ -574,6 +580,7 @@ export interface RenderControlProps {
   formOptions: FormContextOptions;
   dataContext: ControlDataContext;
   control?: Control<any>;
+  labelText?: Control<string | null | undefined>;
   schemaField?: SchemaField;
   displayControl?: Control<string | undefined>;
   style?: React.CSSProperties;
@@ -590,6 +597,7 @@ export function renderControlLayout({
   createDataProps: dataProps,
   displayControl,
   style,
+  labelText,
   allowedOptions,
 }: RenderControlProps): ControlLayoutProps {
   if (isDataControlDefinition(c)) {
@@ -609,7 +617,8 @@ export function renderControlLayout({
         groupProps(c, childRenderer, dataContext, c.styleClass, style),
       ),
       label: {
-        label: c.title,
+        label: labelText?.value ?? c.title,
+        className: cc(c.labelClass),
         type: LabelType.Group,
         hide: c.groupOptions?.hideTitle,
       },
@@ -618,7 +627,7 @@ export function renderControlLayout({
   if (isActionControlsDefinition(c)) {
     return {
       children: renderer.renderAction({
-        actionText: c.title ?? c.actionId,
+        actionText: labelText?.value ?? c.title ?? c.actionId,
         actionId: c.actionId,
         onClick: () => {},
         className: cc(c.styleClass),
@@ -664,17 +673,18 @@ export function renderControlLayout({
           : undefined,
     });
 
-    const labelText = !c.hideTitle
-      ? controlTitle(c.title, schemaField)
+    const label = !c.hideTitle
+      ? controlTitle(labelText?.value ?? c.title, schemaField)
       : undefined;
     return {
       processLayout: renderer.renderData(props),
       label: {
         type: LabelType.Control,
-        label: labelText,
+        label,
         forId: props.id,
         required: c.required,
         hide: c.hideTitle,
+        className: cc(c.labelClass),
       },
       errorControl: childControl,
     };

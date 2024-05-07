@@ -1,7 +1,7 @@
 import React from "react";
 import { DefaultRendererOptions } from "./renderers";
 
-export const defaultTailwindTheme: DefaultRendererOptions = {
+export const defaultTailwindTheme = {
   label: {
     groupLabelClass: "font-bold",
     requiredElement: <span className="text-red-500"> *</span>,
@@ -26,4 +26,4 @@ export const defaultTailwindTheme: DefaultRendererOptions = {
   data: {
     displayOnlyClass: "flex flex-row items-center gap-2",
   },
-};
+} satisfies DefaultRendererOptions;

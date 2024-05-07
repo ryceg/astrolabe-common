@@ -389,18 +389,25 @@ export function cleanDataForSchema(
 
 export function getAllReferencedClasses(c: ControlDefinition): string[] {
   const childClasses = c.children?.flatMap(getAllReferencedClasses);
-  const tc = clsx(c.styleClass, c.layoutClass);
+  const tc = clsx(
+    getOverrideClass(c.styleClass),
+    getOverrideClass(c.layoutClass),
+    getOverrideClass(c.labelClass),
+  );
   if (childClasses && !tc) return childClasses;
   if (!tc) return [];
   if (childClasses) return [tc, ...childClasses];
   return [tc];
 }
 
-export function jsonPathString(jsonPath: JsonPath[]) {
+export function jsonPathString(
+  jsonPath: JsonPath[],
+  customIndex?: (n: number) => string,
+) {
   let out = "";
   jsonPath.forEach((v, i) => {
     if (typeof v === "number") {
-      out += "[" + v + "]";
+      out += customIndex?.(v) ?? "[" + v + "]";
     } else {
       if (i > 0) out += ".";
       out += v;
@@ -419,4 +426,20 @@ export function findChildDefinition(
     return base;
   }
   return parent.children![childPath];
+}
+
+export function getOverrideClass(className?: string | null) {
+  if (className && className.startsWith("@ ")) {
+    return className.substring(2);
+  }
+  return className;
+}
+
+export function rendererClass(
+  controlClass?: string | null,
+  globalClass?: string | null,
+) {
+  const oc = getOverrideClass(controlClass);
+  if (oc === controlClass) return clsx(controlClass, globalClass);
+  return oc ? oc : undefined;
 }

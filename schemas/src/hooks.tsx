@@ -306,7 +306,7 @@ export function useJsonataExpression(
   dataContext: DataContext,
   bindings?: () => Record<string, any>,
 ): Control<any> {
-  const pathString = jsonPathString(dataContext.path);
+  const pathString = jsonPathString(dataContext.path, (x) => `#$i[${x}]`);
   const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
   const compiledExpr = useMemo(() => {
     try {
@@ -350,4 +350,24 @@ export function useJsonataExpression(
     return () => ref.current[1](true);
   }, [compiledExpr]);
   return control;
+}
+
+export function useEvalLabelText(
+  useExpr: UseEvalExpressionHook,
+  definition: ControlDefinition,
+): EvalExpressionHook<string | null> {
+  const dynamicValue = useEvalDynamicHook(
+    definition,
+    DynamicPropertyType.Label,
+    useExpr,
+  );
+  return useCallback(
+    (ctx) => {
+      if (dynamicValue) {
+        return dynamicValue(ctx);
+      }
+      return useControl(null);
+    },
+    [dynamicValue],
+  );
 }

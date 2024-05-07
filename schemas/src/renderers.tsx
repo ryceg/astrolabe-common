@@ -48,7 +48,7 @@ import {
   SchemaInterface,
   TextDisplay,
 } from "./types";
-import { hasOptions } from "./util";
+import { getOverrideClass, hasOptions, rendererClass } from "./util";
 
 export interface DefaultRenderers {
   data: DataRendererRegistration;
@@ -265,6 +265,7 @@ export function createFormRenderer(
 interface DefaultLabelRendererOptions {
   className?: string;
   groupLabelClass?: string;
+  controlLabelClass?: string;
   requiredElement?: ReactNode;
 }
 
@@ -287,16 +288,21 @@ export function createDefaultActionRenderer(
 export function createDefaultLabelRenderer(
   options: DefaultLabelRendererOptions = { requiredElement: <span> *</span> },
 ): LabelRendererRegistration {
-  const { className, groupLabelClass, requiredElement } = options;
+  const { className, groupLabelClass, controlLabelClass, requiredElement } =
+    options;
   return {
     render: (props, labelStart, labelEnd) => (
       <>
         {labelStart}
         <label
           htmlFor={props.forId}
-          className={clsx(
-            className,
-            props.type === LabelType.Group && groupLabelClass,
+          className={rendererClass(
+            props.className,
+            clsx(
+              className,
+              props.type === LabelType.Group && groupLabelClass,
+              props.type === LabelType.Control && controlLabelClass,
+            ),
           )}
         >
           {props.label}
@@ -436,7 +442,10 @@ export function createDefaultGroupRenderer(
       return {
         ...cp,
         children: (
-          <div className={clsx(props.className, className, gcn)} style={style}>
+          <div
+            className={rendererClass(props.className, clsx(className, gcn))}
+            style={style}
+          >
             {children?.map((c, i) => renderChild(i, i))}
           </div>
         ),
@@ -472,14 +481,17 @@ export function DefaultDisplay({
         <i
           style={style}
           className={clsx(
-            className,
+            getOverrideClass(className),
             display ? display.value : (data as IconDisplay).iconClass,
           )}
         />
       );
     case DisplayDataType.Text:
       return (
-        <div style={style} className={clsx(className, options.textClassName)}>
+        <div
+          style={style}
+          className={rendererClass(className, options.textClassName)}
+        >
           {display ? display.value : (data as TextDisplay).text}
         </div>
       );
@@ -487,7 +499,7 @@ export function DefaultDisplay({
       return (
         <div
           style={style}
-          className={clsx(className, options.htmlClassName)}
+          className={rendererClass(className, options.htmlClassName)}
           dangerouslySetInnerHTML={{
             __html: display ? display.value ?? "" : (data as HtmlDisplay).html,
           }}
@@ -573,7 +585,7 @@ export function createDefaultDataRenderer(
       />
     ) : (
       <ControlInput
-        className={clsx(props.className, inputClass)}
+        className={rendererClass(props.className, inputClass)}
         style={props.style}
         id={props.id}
         readOnly={props.readonly}
@@ -605,7 +617,7 @@ export function DefaultDisplayOnly({
       ? emptyText
       : schemaInterface.textValue(field, v)) ?? "";
   return (
-    <div style={style} className={className}>
+    <div style={style} className={rendererClass(className)}>
       {text}
     </div>
   );
@@ -693,7 +705,10 @@ function createDefaultLayoutRenderer(
 ) {
   return createLayoutRenderer((props, renderers) => {
     const layout = renderLayoutParts(
-      { ...props, className: clsx(props.className, options.className) },
+      {
+        ...props,
+        className: rendererClass(props.className, options.className),
+      },
       renderers,
     );
     return {
@@ -832,7 +847,7 @@ export function createSelectRenderer(options: SelectRendererOptions = {}) {
   return createDataRenderer(
     (props, asArray) => (
       <SelectDataRenderer
-        className={clsx(props.className, options.className)}
+        className={rendererClass(props.className, options.className)}
         state={props.control}
         id={props.id}
         options={props.options!}
@@ -963,7 +978,6 @@ export function DefaultVisibility({
 
 export function DefaultLayout({
   errorClass,
-  className,
   layout: { controlEnd, controlStart, label, children, errorControl },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;

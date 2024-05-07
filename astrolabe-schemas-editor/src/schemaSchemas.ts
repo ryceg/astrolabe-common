@@ -418,6 +418,10 @@ export const DynamicPropertySchema = buildSchema<DynamicPropertyForm>({
         name: "AllowedOptions",
         value: "AllowedOptions",
       },
+      {
+        name: "Label",
+        value: "Label",
+      },
     ],
   }),
   expr: makeCompoundField({
@@ -858,6 +862,7 @@ export interface ControlDefinitionForm {
   adornments: ControlAdornmentForm[] | null;
   styleClass: string | null;
   layoutClass: string | null;
+  labelClass: string | null;
   children: ControlDefinitionForm[] | null;
   field: string;
   hideTitle: boolean | null;
@@ -920,6 +925,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   layoutClass: makeScalarField({
     type: FieldType.String,
     displayName: "LayoutClass",
+  }),
+  labelClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "LabelClass",
   }),
   children: makeCompoundField({
     treeChildren: true,
