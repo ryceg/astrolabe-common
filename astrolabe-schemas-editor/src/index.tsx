@@ -121,8 +121,10 @@ export function useEditorDataHook(
 
         default:
           const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
-          const otherFieldName = lookupChildControl(dataContext, otherField)
-            ?.value;
+          const otherFieldName = lookupChildControl(
+            dataContext,
+            otherField,
+          )?.value;
           const fieldInSchema = fieldList.find(
             (x) => x.field === otherFieldName,
           );
@@ -289,45 +291,6 @@ function schemaFieldOption(c: SchemaField): FieldOption {
   return { name: c.field, value: c.field };
 }
 
-interface CustomRenderOptions {
-  value: string;
-  name: string;
-  fields: SchemaField[];
-}
-
-export function addCustomRenderOptions(
-  controlFields: SchemaField[],
-  customRenderOptions: CustomRenderOptions[],
-): SchemaField[] {
-  return controlFields.map((x) =>
-    x.field === "renderOptions" && isCompoundField(x) ? addRenderOptions(x) : x,
-  );
-
-  function addRenderOptions(roField: CompoundField): CompoundField {
-    const children = roField.children;
-    return {
-      ...roField,
-      children: [
-        ...children.map((x) =>
-          x.field === "type" ? addRenderOptionType(x) : x,
-        ),
-        ...customRenderOptions.flatMap((x) => x.fields),
-      ],
-    };
-  }
-
-  function addRenderOptionType(typeField: SchemaField): SchemaField {
-    const options = typeField.options ?? [];
-    return {
-      ...typeField,
-      options: [
-        ...options,
-        ...customRenderOptions.map(({ name, value }) => ({ name, value })),
-      ],
-    };
-  }
-}
-
 export function findSchemaFieldListForParents(
   fields: Control<SchemaFieldForm[]>,
   parents: ControlForm[],
@@ -338,8 +301,8 @@ export function findSchemaFieldListForParents(
       controlType === ControlDefinitionType.Group
         ? p.fields.compoundField.current.value
         : controlType === ControlDefinitionType.Data
-        ? p.fields.field.current.value
-        : undefined;
+          ? p.fields.field.current.value
+          : undefined;
     if (compoundField) {
       const nextFields = fields.elements.find(
         (x) => x.fields.field.current.value === compoundField,

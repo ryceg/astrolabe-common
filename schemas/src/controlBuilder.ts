@@ -1,4 +1,5 @@
 import {
+  CompoundField,
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
@@ -18,7 +19,8 @@ import {
 } from "./types";
 import { ActionRendererProps } from "./controlRender";
 import { useMemo } from "react";
-import { addMissingControls } from "./util";
+import { addMissingControls, isCompoundField } from "./util";
+import { mergeField } from "./schemaBuilder";
 
 export function dataControl(
   field: string,
@@ -127,4 +129,47 @@ export function useControlDefinitionForSchema(
     }),
     [sf, definition],
   );
+}
+
+export interface CustomRenderOptions {
+  value: string;
+  name: string;
+  fields: SchemaField[];
+}
+
+export function addCustomDataRenderOptions(
+  controlFields: SchemaField[],
+  customRenderOptions: CustomRenderOptions[],
+): SchemaField[] {
+  return controlFields.map((x) =>
+    x.field === "renderOptions" && isCompoundField(x) ? addRenderOptions(x) : x,
+  );
+
+  function addRenderOptions(roField: CompoundField): CompoundField {
+    const children = roField.children;
+    const withTypes = children.map((x) =>
+      x.field === "type" ? addRenderOptionType(x) : x,
+    );
+    return {
+      ...roField,
+      children: customRenderOptions.reduce(
+        (renderOptionFields, ro) =>
+          ro.fields
+            .map((x) => ({ ...x, onlyForTypes: [ro.value] }))
+            .reduce((af, x) => mergeField(x, af), renderOptionFields),
+        withTypes,
+      ),
+    };
+  }
+
+  function addRenderOptionType(typeField: SchemaField): SchemaField {
+    const options = typeField.options ?? [];
+    return {
+      ...typeField,
+      options: [
+        ...options,
+        ...customRenderOptions.map(({ name, value }) => ({ name, value })),
+      ],
+    };
+  }
 }

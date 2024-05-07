@@ -144,3 +144,28 @@ export function defaultCompoundField(
     children: [],
   };
 }
+
+export function mergeField(
+  field: SchemaField,
+  mergeInto: SchemaField[],
+): SchemaField[] {
+  const existing = mergeInto.find((x) => x.field === field.field);
+  if (existing) {
+    return mergeInto.map((x) =>
+      x !== existing
+        ? x
+        : {
+            ...x,
+            onlyForTypes: mergeTypes(x.onlyForTypes, field.onlyForTypes),
+          },
+    );
+  }
+  return [...mergeInto, field];
+
+  function mergeTypes(f?: string[] | null, s?: string[] | null) {
+    if (!f) return s;
+    if (!s) return f;
+    const extras = s.filter((x) => !f.includes(x));
+    return extras.length ? [...f, ...extras] : f;
+  }
+}
