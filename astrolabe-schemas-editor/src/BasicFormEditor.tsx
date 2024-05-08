@@ -81,6 +81,7 @@ export interface BasicFormEditorProps<A extends string> {
   editorControls?: ControlDefinition[];
   previewOptions?: ControlRenderOptions;
   tailwindConfig?: TailwindConfig;
+  collectClasses?: (c: ControlDefinition) => (string | undefined | null)[];
   rootControlClass?: string;
 }
 
@@ -97,6 +98,7 @@ export default function BasicFormEditor<A extends string>({
   previewOptions,
   tailwindConfig,
   rootControlClass,
+  collectClasses,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
@@ -146,7 +148,9 @@ export default function BasicFormEditor<A extends string>({
 
   const allClasses = useComputed(() => {
     const cv = trackedValue(controls);
-    return cv.flatMap(getAllReferencedClasses).join(" ");
+    return cv
+      .flatMap((x) => getAllReferencedClasses(x, collectClasses))
+      .join(" ");
   });
   const styles = useControl("");
 

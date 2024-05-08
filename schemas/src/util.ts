@@ -387,12 +387,20 @@ export function cleanDataForSchema(
   return out;
 }
 
-export function getAllReferencedClasses(c: ControlDefinition): string[] {
-  const childClasses = c.children?.flatMap(getAllReferencedClasses);
+export function getAllReferencedClasses(
+  c: ControlDefinition,
+  collectExtra?: (c: ControlDefinition) => (string | undefined | null)[],
+): string[] {
+  const childClasses = c.children?.flatMap((x) =>
+    getAllReferencedClasses(x, collectExtra),
+  );
   const tc = clsx(
-    getOverrideClass(c.styleClass),
-    getOverrideClass(c.layoutClass),
-    getOverrideClass(c.labelClass),
+    [
+      c.styleClass,
+      c.layoutClass,
+      c.labelClass,
+      ...(collectExtra?.(c) ?? []),
+    ].map(getOverrideClass),
   );
   if (childClasses && !tc) return childClasses;
   if (!tc) return [];
