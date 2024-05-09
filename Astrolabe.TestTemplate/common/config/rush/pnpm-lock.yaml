@@ -158,6 +158,7 @@ importers:
       react: ^18.2.0
       react-dom: ^18.2.0
       react-resizable-panels: ^0.0.55
+      rimraf: ^5.0.5
       tslib: ^2.6.2
       typescript: 5.2.2
     dependencies:
@@ -184,6 +185,7 @@ importers:
       http-request-cli: 0.2.0
       prettier: 3.0.3
       react-dom: 18.2.0_react@18.2.0
+      rimraf: 5.0.5
       typescript: 5.2.2
 
   ../../../astrolabe-storybook:
