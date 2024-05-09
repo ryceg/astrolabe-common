@@ -34,10 +34,12 @@ import {
   findField,
   getDisplayOnlyOptions,
   getTypeField,
+  HookDep,
   isControlReadonly,
   jsonPathString,
   lookupChildControl,
   makeHook,
+  toDepString,
   useUpdatedRef,
 } from "./util";
 import jsonata from "jsonata";
@@ -120,12 +122,10 @@ export function useEvalAllowedOptionsHook(
     DynamicPropertyType.AllowedOptions,
     useEvalExpressionHook,
   );
-  return makeControlHook(
-    (ctx, s) => {
-      return dynamicAllowed.runHook(ctx, s) ?? useControl([]);
-    },
-    dynamicAllowed.state,
-    dynamicAllowed.deps,
+  return makeDynamicPropertyHook(
+    dynamicAllowed,
+    () => useControl([]),
+    undefined,
   );
 }
 
@@ -245,7 +245,7 @@ export function makeEvalExpressionHook(
   f: (expr: EntityExpression, context: ControlDataContext) => Control<any>,
 ): UseEvalExpressionHook {
   return (expr) => ({
-    deps: [expr?.type],
+    deps: expr?.type,
     state: expr,
     runHook: (ctx: ControlDataContext, state: EntityExpression | undefined) => {
       return state ? f(state, ctx) : undefined;
@@ -355,12 +355,6 @@ export function useEvalLabelText(
   );
 }
 
-const makeControlHook: <A, S = undefined>(
-  runHook: (ctx: ControlDataContext, state: S) => Control<A | undefined>,
-  state: S,
-  ...deps: any[]
-) => EvalExpressionHook<A> = makeHook;
-
 function makeDynamicPropertyHook<A, S = undefined>(
   dynamicValue: DynamicHookGenerator<
     Control<any> | undefined,
@@ -368,13 +362,16 @@ function makeDynamicPropertyHook<A, S = undefined>(
   >,
   makeDefault: (ctx: ControlDataContext, s: S) => Control<A | undefined>,
   state: S,
-  ...deps: any[]
+  deps?: HookDep,
 ): EvalExpressionHook<A> {
-  return makeControlHook(
-    (ctx, s) => {
+  return {
+    deps:
+      deps !== undefined
+        ? dynamicValue.deps
+        : [deps, dynamicValue.deps].map(toDepString).join(),
+    runHook: (ctx, s) => {
       return dynamicValue.runHook(ctx, s[0]) ?? makeDefault(ctx, s[1]);
     },
-    [dynamicValue.state, state],
-    deps.length === 0 ? dynamicValue.deps : [...deps, ...dynamicValue.deps],
-  );
+    state: [dynamicValue.state, state],
+  };
 }

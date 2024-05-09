@@ -150,7 +150,7 @@ export interface SchemaFieldForm {
   validators: SchemaValidatorForm[] | null;
   entityRefType: string;
   parentField: string | null;
-  children: SchemaFieldForm[] | null;
+  children: SchemaFieldForm[];
   treeChildren: boolean | null;
   schemaRef: string | null;
 }
@@ -285,6 +285,7 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
     treeChildren: true,
     collection: true,
     onlyForTypes: ["Compound"],
+    notNullable: true,
     displayName: "Children",
   }),
   treeChildren: makeScalarField({

@@ -477,8 +477,10 @@ function watchControlLookup(
   return base;
 }
 
+export type HookDep = string | number | undefined | null;
+
 export interface DynamicHookGenerator<A, P> {
-  deps: any[];
+  deps: HookDep;
   state: any;
   runHook(ctx: P, state: any): A;
 }
@@ -486,7 +488,7 @@ export interface DynamicHookGenerator<A, P> {
 export function makeHook<A, P, S = undefined>(
   runHook: (ctx: P, state: S) => A,
   state: S,
-  ...deps: any[]
+  deps?: HookDep,
 ): DynamicHookGenerator<A, P> {
   return { deps, state, runHook };
 }
@@ -503,13 +505,22 @@ export function useDynamicHooks<
   [K in keyof Hooks]: DynamicHookValue<Hooks[K]>;
 } {
   const hookEntries = Object.entries(hooks);
-  const deps = hookEntries.flatMap(([, x]) => x.deps);
+  const deps = hookEntries.map(([, x]) => toDepString(x.deps)).join(",");
   const ref = useRef<Record<string, any>>({});
   const s = ref.current;
   hookEntries.forEach((x) => (s[x[0]] = x[1].state));
-  return useCallback((p: P) => {
-    return Object.fromEntries(
-      hookEntries.map(([f, hg]) => [f, hg.runHook(p, ref.current[f])]),
-    ) as any;
-  }, deps);
+  return useCallback(
+    (p: P) => {
+      return Object.fromEntries(
+        hookEntries.map(([f, hg]) => [f, hg.runHook(p, ref.current[f])]),
+      ) as any;
+    },
+    [deps],
+  );
+}
+
+export function toDepString(x: any): string {
+  if (x === undefined) return "_";
+  if (x === null) return "~";
+  return x.toString();
 }

@@ -363,7 +363,7 @@ function FormPreview({
   rootControlClass?: string;
 }) {
   const data = previewData.fields.data;
-  const { controls, fields } = previewData.value;
+  const { controls, fields } = previewData.fields;
 
   useControlEffect(
     () => data.value,
@@ -379,12 +379,12 @@ function FormPreview({
         })}
       </div>
       <RenderArrayElements
-        array={controls}
+        array={controls.value}
         children={(c) => (
           <div className={rootControlClass}>
             <ControlRenderer
               definition={c}
-              fields={fields}
+              fields={fields.value}
               renderer={formRenderer}
               control={data}
             />
@@ -396,6 +396,6 @@ function FormPreview({
 
   async function runValidation() {
     data.touched = true;
-    await validation?.(data, controls);
+    await validation?.(data, controls.value);
   }
 }
