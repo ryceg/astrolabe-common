@@ -46,7 +46,7 @@ public record SimpleSchemaField(string Type, string Field) : SchemaField(Type, F
 
 public record EntityRefField(string Field, string EntityRefType, string? ParentField) : SchemaField(FieldType.EntityRef.ToString(), Field);
 
-public record CompoundField(string Field, IEnumerable<SchemaField> Children, bool? TreeChildren) : SchemaField(FieldType.Compound.ToString(), Field);
+public record CompoundField(string Field, IEnumerable<SchemaField>? Children, bool? TreeChildren, string? SchemaRef = null) : SchemaField(FieldType.Compound.ToString(), Field);
 
 [JsonString]
 public enum FieldType

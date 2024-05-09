@@ -1,9 +1,8 @@
 {
   "name": "@astroapps/schemas-editor",
   "version": "6.2.0",
-  "type": "module",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "author": "Astrolabe Enterprises",
   "license": "ISC",
   "bugs": {
@@ -15,18 +14,19 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
-    "watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps=inline",
+    "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
     "genschemas": "h get http://localhost:5000/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
   },
   "dependencies": {
-    "@react-typed-forms/core": "^3.1.0",
+    "@react-typed-forms/core": "^3.1.2",
     "react-resizable-panels": "^0.0.55",
     "@react-typed-forms/schemas": "workspace:^8.2.0",
     "@astroapps/client": "^0.1.1",
     "@astroapps/ui-tree": "^1.0.0",
     "@dnd-kit/core": "^6.0.5",
     "framer-motion": "^10.16.4",
+    "microbundle": "^0.15.1",
     "@mhsdesign/jit-browser-tailwindcss": "^0.4.0",
     "react": "^18.2.0",
     "immutability-helper": "^3.1.1",

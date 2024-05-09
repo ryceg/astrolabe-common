@@ -8,7 +8,7 @@ import {
 import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
 import { Control, ControlSetup } from "@react-typed-forms/core";
 import { ControlDefinitionType, FieldType } from "@react-typed-forms/schemas";
-import { ControlForm, useFieldLookup } from "./index";
+import { ControlForm, useFieldLookup } from "./util";
 import React, { createContext, ReactNode, useContext } from "react";
 
 export const ControlDefNodeType = "Control";

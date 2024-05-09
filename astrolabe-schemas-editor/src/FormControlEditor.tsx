@@ -1,6 +1,6 @@
 import { Control, newControl, useComputed } from "@react-typed-forms/core";
 import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
-import { ReactElement } from "react";
+import React, { ReactElement } from "react";
 import {
   FormRenderer,
   GroupedControlsDefinition,
@@ -11,7 +11,7 @@ import {
   findAllParentsInControls,
   findSchemaFieldListForParents,
   useEditorDataHook,
-} from "./index";
+} from "./util";
 
 export function FormControlEditor({
   control,

@@ -41,6 +41,7 @@ import {
   HtmlDisplay,
   IconAdornment,
   IconDisplay,
+  isDataGroupRenderer,
   isDisplayOnlyRenderer,
   isFlexRenderer,
   isGridRenderer,
@@ -430,7 +431,7 @@ export function createDefaultGroupRenderer(
   }
 
   function render(props: GroupRendererProps) {
-    const { renderChild, renderOptions, children } = props;
+    const { renderChild, renderOptions, childDefinitions } = props;
 
     const { style, className: gcn } = isGridRenderer(renderOptions)
       ? gridStyles(renderOptions)
@@ -446,7 +447,7 @@ export function createDefaultGroupRenderer(
             className={rendererClass(props.className, clsx(className, gcn))}
             style={style}
           >
-            {children?.map((c, i) => renderChild(i, i))}
+            {childDefinitions?.map((c, i) => renderChild(i, i))}
           </div>
         ),
       };
@@ -539,16 +540,29 @@ export function createDefaultDataRenderer(
         children: renderers.renderArray(props.toArrayProps!()),
       });
     }
+    const renderOptions = props.renderOptions;
     if (fieldType === FieldType.Compound) {
+      const groupOptions = isDataGroupRenderer(renderOptions)
+        ? renderOptions.groupOptions
+        : undefined;
+      const {
+        style,
+        className,
+        childDefinitions,
+        renderChild,
+        dataContext,
+        useChildVisibility,
+      } = props;
       return renderers.renderGroup({
-        style: props.style,
-        className: props.className,
-        children: props.children,
-        renderOptions: { type: "Standard", hideTitle: true },
-        renderChild: props.renderChild,
+        style,
+        className,
+        childDefinitions,
+        renderOptions: groupOptions ?? { type: "Standard", hideTitle: true },
+        renderChild,
+        dataContext,
+        useChildVisibility,
       });
     }
-    const renderOptions = props.renderOptions;
     let renderType = renderOptions.type;
     if (fieldType == FieldType.Any) return <>No control for Any</>;
     if (isDisplayOnlyRenderer(renderOptions))
@@ -814,6 +828,13 @@ export function createDataRenderer(
   options?: Partial<DataRendererRegistration>,
 ): DataRendererRegistration {
   return { type: "data", render, ...options };
+}
+
+export function createGroupRenderer(
+  render: GroupRendererRegistration["render"],
+  options?: Partial<GroupRendererRegistration>,
+): GroupRendererRegistration {
+  return { type: "group", render, ...options };
 }
 
 export function createLabelRenderer(

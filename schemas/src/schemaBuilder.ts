@@ -1,4 +1,11 @@
-import { CompoundField, FieldOption, FieldType, SchemaField } from "./types";
+import {
+  CompoundField,
+  FieldOption,
+  FieldType,
+  SchemaField,
+  SchemaMap,
+} from "./types";
+import { isCompoundField } from "./util";
 
 type AllowedSchema<T> = T extends string
   ? SchemaField & {
@@ -104,7 +111,7 @@ export function compoundField<
 >(
   displayName: string,
   fields: SchemaField[],
-  other: Other,
+  other?: Other,
 ): (name: string) => CompoundField & {
   collection: Other["collection"];
 } {
@@ -168,4 +175,54 @@ export function mergeField(
     const extras = s.filter((x) => !f.includes(x));
     return extras.length ? [...f, ...extras] : f;
   }
+}
+
+export function mergeFields(
+  fields: SchemaField[],
+  name: string,
+  value: any,
+  newFields: SchemaField[],
+): SchemaField[] {
+  const withType = fields.map((x) =>
+    x.isTypeField ? addFieldOption(x, name, value) : x,
+  );
+  return newFields
+    .map((x) => ({ ...x, onlyForTypes: [value] }))
+    .reduce((af, x) => mergeField(x, af), withType);
+}
+
+export function addFieldOption(
+  typeField: SchemaField,
+  name: string,
+  value: any,
+): SchemaField {
+  const options = typeField.options ?? [];
+  return {
+    ...typeField,
+    options: [...options, { name, value }],
+  };
+}
+
+export function resolveSchemas<A extends SchemaMap>(schemaMap: A): A {
+  const out: SchemaMap = {};
+  function resolveSchemaType(type: string) {
+    if (type in out) {
+      return out[type];
+    }
+    const resolvedFields: SchemaField[] = [];
+    out[type] = resolvedFields;
+    schemaMap[type].forEach((x) => {
+      if (isCompoundField(x) && x.schemaRef) {
+        resolvedFields.push({
+          ...x,
+          children: resolveSchemaType(x.schemaRef),
+        } as CompoundField);
+      } else {
+        resolvedFields.push(x);
+      }
+    });
+    return resolvedFields;
+  }
+  Object.keys(schemaMap).forEach(resolveSchemaType);
+  return out as A;
 }

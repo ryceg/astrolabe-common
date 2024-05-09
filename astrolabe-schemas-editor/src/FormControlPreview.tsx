@@ -21,6 +21,7 @@ import {
   getDisplayOnlyOptions,
   isGroupControlsDefinition,
   lookupSchemaField,
+  makeHook,
   renderControlLayout,
   SchemaInterface,
 } from "@react-typed-forms/schemas";
@@ -31,7 +32,7 @@ import {
   ControlForm,
   DragData,
   DropData,
-} from ".";
+} from "./util";
 
 export interface FormControlPreviewProps {
   item: ControlForm;
@@ -81,7 +82,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     disabled: Boolean(noDrop),
     data: controlDropData(parent, dropIndex, dropSuccess),
   });
-  const children = definition.children ?? [];
   const schemaField = lookupSchemaField(definition, fields);
   const groupControl = useControl({});
   const dataContext: ControlDataContext = {
@@ -125,6 +125,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     dataContext,
     control: childControl,
     schemaField,
+    useChildVisibility: () => makeHook(() => useControl(true), undefined),
   });
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,

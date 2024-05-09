@@ -1,5 +1,4 @@
 import {
-  CompoundField,
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
@@ -15,12 +14,13 @@ import {
   HtmlDisplay,
   JsonataExpression,
   SchemaField,
+  SchemaMap,
   TextDisplay,
 } from "./types";
 import { ActionRendererProps } from "./controlRender";
 import { useMemo } from "react";
 import { addMissingControls, isCompoundField } from "./util";
-import { mergeField } from "./schemaBuilder";
+import { mergeFields, resolveSchemas } from "./schemaBuilder";
 
 export function dataControl(
   field: string,
@@ -137,39 +137,30 @@ export interface CustomRenderOptions {
   fields: SchemaField[];
 }
 
-export function addCustomDataRenderOptions(
-  controlFields: SchemaField[],
-  customRenderOptions: CustomRenderOptions[],
-): SchemaField[] {
-  return controlFields.map((x) =>
-    x.field === "renderOptions" && isCompoundField(x) ? addRenderOptions(x) : x,
-  );
+export type ControlDefinitionExtension = {
+  RenderOptions?: CustomRenderOptions | CustomRenderOptions[];
+  GroupRenderOptions?: CustomRenderOptions | CustomRenderOptions[];
+  ControlAdornment?: CustomRenderOptions | CustomRenderOptions[];
+  SchemaValidator?: CustomRenderOptions | CustomRenderOptions[];
+};
 
-  function addRenderOptions(roField: CompoundField): CompoundField {
-    const children = roField.children;
-    const withTypes = children.map((x) =>
-      x.field === "type" ? addRenderOptionType(x) : x,
-    );
-    return {
-      ...roField,
-      children: customRenderOptions.reduce(
-        (renderOptionFields, ro) =>
-          ro.fields
-            .map((x) => ({ ...x, onlyForTypes: [ro.value] }))
-            .reduce((af, x) => mergeField(x, af), renderOptionFields),
-        withTypes,
-      ),
-    };
-  }
+export function applyExtensionToSchema<A extends SchemaMap>(
+  schemaMap: A,
+  extension: ControlDefinitionExtension,
+): A {
+  const outMap = { ...schemaMap };
+  Object.entries(extension).forEach(([field, cro]) => {
+    outMap[field as keyof A] = (Array.isArray(cro) ? cro : [cro]).reduce(
+      (a, cr) => mergeFields(a, cr.name, cr.value, cr.fields),
+      outMap[field],
+    ) as A[string];
+  });
+  return outMap;
+}
 
-  function addRenderOptionType(typeField: SchemaField): SchemaField {
-    const options = typeField.options ?? [];
-    return {
-      ...typeField,
-      options: [
-        ...options,
-        ...customRenderOptions.map(({ name, value }) => ({ name, value })),
-      ],
-    };
-  }
+export function applyExtensionsToSchema<A extends SchemaMap>(
+  schemaMap: A,
+  extensions: ControlDefinitionExtension[],
+) {
+  return resolveSchemas(extensions.reduce(applyExtensionToSchema, schemaMap));
 }

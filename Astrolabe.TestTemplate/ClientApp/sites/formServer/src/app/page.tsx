@@ -1,72 +1,96 @@
 "use client";
 
-import BasicFormEditor from "@astroapps/schemas-editor/BasicFormEditor";
-import { useControl } from "@react-typed-forms/core";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import {
+  applyEditorExtensions,
+  BasicFormEditor,
+} from "@astroapps/schemas-editor";
+import {
+  RenderArrayElements,
+  useControl,
+  useTrackedComponent,
+} from "@react-typed-forms/core";
 import {
   addMissingControls,
   buildSchema,
   compoundField,
   createDefaultRenderers,
   createFormRenderer,
-  dataControl,
+  createGroupRenderer,
+  DataControlDefinition,
+  DataGroupRenderOptions,
   defaultTailwindTheme,
-  DynamicPropertyType,
-  dynamicVisibility,
-  jsonataExpr,
+  groupedControl,
+  GroupRendererProps,
   stringField,
-  stringOptionsField,
-  textDisplayControl,
-  withScalarOptions,
+  useDynamicHooks,
 } from "@react-typed-forms/schemas";
-import { addCustomRenderOptions } from "@astroapps/schemas-editor";
-import { ControlDefinitionSchema } from "@astroapps/schemas-editor/schemaSchemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
 import {
   convertStringParam,
   useSyncParam,
 } from "@astroapps/client/hooks/queryParamSync";
+import { useCallback, useRef } from "react";
 
-const CustomControlSchema = addCustomRenderOptions(ControlDefinitionSchema, [
-  { name: "Fixed array", value: "FixedArray", fields: [] },
-]);
+const CustomControlSchema = applyEditorExtensions({
+  GroupRenderOptions: {
+    name: "Test",
+    value: "Test",
+    fields: [],
+  },
+});
 
-enum MyEnum {
-  Hai = "Hai",
-  Hello = "Hello",
+interface GroupData {
+  show: string;
+  field1: string;
+  field2: string;
 }
 
 interface OurData {
-  greeting: MyEnum;
-  greetings: {
-    pls: { cool: MyEnum }[];
-  };
+  group: GroupData;
 }
 
-const myEnumField = stringOptionsField(
-  "Greeting",
-  { name: "HAI", value: MyEnum.Hai },
-  { name: "Hello", value: MyEnum.Hello },
-);
-
 const fields = buildSchema<OurData>({
-  greeting: myEnumField,
-  greetings: compoundField(
-    "Greetings",
-    buildSchema<{ pls: { cool: MyEnum }[] }>({
-      pls: compoundField(
-        "PLS",
-        buildSchema<{ cool: MyEnum }>({ cool: myEnumField }),
-        { collection: true },
-      ),
+  group: compoundField(
+    "HELP",
+    buildSchema<GroupData>({
+      show: stringField("Type", { isTypeField: true }),
+      field1: stringField("Field 1", { onlyForTypes: ["one"] }),
+      field2: stringField("Field 2", { onlyForTypes: ["one", "two"] }),
     }),
-    {},
   ),
 });
 
+const testRender = createGroupRenderer((p, r) => <TestChildVis {...p} />, {
+  renderType: "Test",
+});
+
+function TestChildVis(p: GroupRendererProps) {
+  const visHooks = useDynamicHooks(
+    Object.fromEntries(
+      p.childDefinitions.map((x, i) => [i, p.useChildVisibility(i)]),
+    ),
+  );
+  const Render = useTrackedComponent(() => {
+    const visses = Object.entries(visHooks(p.dataContext)).map((x) => x[1]);
+    return (
+      <div>
+        <RenderArrayElements array={visses}>
+          {(c, i) => (
+            <>
+              {c.uniqueId}
+              {c.value ? "Visible" : "Hidden"}
+              {p.renderChild(i, i)}
+            </>
+          )}
+        </RenderArrayElements>
+      </div>
+    );
+  }, [visHooks]);
+  return <Render />;
+}
+
 const StdFormRenderer = createFormRenderer(
-  [],
+  [testRender],
   createDefaultRenderers(defaultTailwindTheme),
 );
 
@@ -89,16 +113,11 @@ export default function Editor() {
       editorRenderer={StdFormRenderer}
       loadForm={async (c) => {
         const controls = addMissingControls(fields, []);
-        controls[1].children![0].children!.push(
-          textDisplayControl("", {
-            dynamic: [
-              {
-                type: DynamicPropertyType.Display,
-                expr: jsonataExpr("cool"),
-              },
-            ],
-          }),
-        );
+        const dcd = controls[0] as DataControlDefinition;
+        dcd.renderOptions = {
+          type: "Group",
+          groupOptions: { type: "Test" },
+        } as DataGroupRenderOptions;
         return {
           fields,
           controls,
@@ -107,7 +126,7 @@ export default function Editor() {
       selectedForm={selectedForm}
       formTypes={[["MyForm", "MyForm"]]}
       saveForm={async (controls) => {}}
-      controlDefinitionSchema={CustomControlSchema}
+      controlDefinitionSchemaMap={CustomControlSchema}
     />
   );
 }

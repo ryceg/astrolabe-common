@@ -9,7 +9,7 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.1.0",
+		"@react-typed-forms/core": "^3.1.2",
 		"@react-typed-forms/schemas": "workspace:*",
 		"@astroapps/client": "workspace:*",
 		"@astroapps/client-nextjs": "^0.1.2",

@@ -10,7 +10,13 @@ import {
   SchemaField,
   SchemaInterface,
 } from "./types";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import {
   addAfterChangesCallback,
   collectChanges,
@@ -24,21 +30,28 @@ import {
 import {
   ControlDataContext,
   defaultValueForField,
+  DynamicHookGenerator,
   findField,
   getDisplayOnlyOptions,
   getTypeField,
   isControlReadonly,
   jsonPathString,
   lookupChildControl,
+  makeHook,
   useUpdatedRef,
 } from "./util";
 import jsonata from "jsonata";
 import { trackedStructure, useCalculatedControl } from "./internal";
 import { DataContext } from "./controlRender";
 
+export type EvalExpressionHook<A = any> = DynamicHookGenerator<
+  Control<A | undefined>,
+  ControlDataContext
+>;
+
 export type UseEvalExpressionHook = (
   expr: EntityExpression | undefined,
-) => EvalExpressionHook | undefined;
+) => DynamicHookGenerator<Control<any> | undefined, ControlDataContext>;
 
 export function useEvalVisibilityHook(
   useEvalExpressionHook: UseEvalExpressionHook,
@@ -50,26 +63,17 @@ export function useEvalVisibilityHook(
     DynamicPropertyType.Visible,
     useEvalExpressionHook,
   );
-  const r = useUpdatedRef({ schemaField, definition });
-  return useCallback(
-    (ctx) => {
-      const { schemaField, definition } = r.current;
-      return (
-        dynamicVisibility?.(ctx) ??
-        useComputed(
-          () =>
-            matchesType(ctx, schemaField?.onlyForTypes) &&
-            (!schemaField ||
-              !hideDisplayOnly(
-                ctx,
-                schemaField,
-                definition,
-                ctx.schemaInterface,
-              )),
-        )
-      );
-    },
-    [dynamicVisibility, r],
+  return makeDynamicPropertyHook(
+    dynamicVisibility,
+    (ctx, { schemaField, definition }) =>
+      useComputed(() => {
+        return (
+          matchesType(ctx, schemaField?.onlyForTypes) &&
+          (!schemaField ||
+            !hideDisplayOnly(ctx, schemaField, definition, ctx.schemaInterface))
+        );
+      }),
+    { schemaField, definition },
   );
 }
 
@@ -82,13 +86,11 @@ export function useEvalReadonlyHook(
     DynamicPropertyType.Readonly,
     useEvalExpressionHook,
   );
-  const r = useUpdatedRef(definition);
-  return useCallback(
-    (ctx) => {
-      if (dynamicReadonly) return dynamicReadonly(ctx);
-      return useCalculatedControl(() => isControlReadonly(r.current));
-    },
-    [dynamicReadonly, r],
+  return makeDynamicPropertyHook(
+    dynamicReadonly,
+    (ctx, { definition }) =>
+      useCalculatedControl(() => isControlReadonly(definition)),
+    { definition },
   );
 }
 
@@ -102,12 +104,10 @@ export function useEvalStyleHook(
     property,
     useEvalExpressionHook,
   );
-  return useCallback(
-    (ctx) => {
-      if (dynamicStyle) return dynamicStyle(ctx);
-      return useControl(undefined);
-    },
-    [dynamicStyle],
+  return makeDynamicPropertyHook(
+    dynamicStyle,
+    () => useControl(undefined),
+    undefined,
   );
 }
 
@@ -120,12 +120,12 @@ export function useEvalAllowedOptionsHook(
     DynamicPropertyType.AllowedOptions,
     useEvalExpressionHook,
   );
-  return useCallback(
-    (ctx) => {
-      if (dynamicAllowed) return dynamicAllowed(ctx);
-      return useControl([]);
+  return makeControlHook(
+    (ctx, s) => {
+      return dynamicAllowed.runHook(ctx, s) ?? useControl([]);
     },
-    [dynamicAllowed],
+    dynamicAllowed.state,
+    dynamicAllowed.deps,
   );
 }
 
@@ -138,27 +138,25 @@ export function useEvalDisabledHook(
     DynamicPropertyType.Disabled,
     useEvalExpressionHook,
   );
-  return useCallback(
-    (ctx) => {
-      if (dynamicDisabled) return dynamicDisabled(ctx);
-      return useControl(false);
-    },
-    [dynamicDisabled],
+  return makeDynamicPropertyHook(
+    dynamicDisabled,
+    () => useControl(false),
+    undefined,
   );
 }
 
 export function useEvalDisplayHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
-): (
-  groupContext: ControlDataContext,
-) => Control<string | undefined> | undefined {
-  const dynamicDisplay = useEvalDynamicHook(
+): DynamicHookGenerator<
+  Control<string | undefined> | undefined,
+  ControlDataContext
+> {
+  return useEvalDynamicHook(
     definition,
     DynamicPropertyType.Display,
     useEvalExpressionHook,
   );
-  return useCallback((ctx) => dynamicDisplay?.(ctx), [dynamicDisplay]);
 }
 export function useEvalDefaultValueHook(
   useEvalExpressionHook: UseEvalExpressionHook,
@@ -170,11 +168,10 @@ export function useEvalDefaultValueHook(
     DynamicPropertyType.DefaultValue,
     useEvalExpressionHook,
   );
-  const r = useUpdatedRef({ definition, schemaField });
-  return useCallback(
-    (ctx) => {
-      const { definition, schemaField } = r.current;
-      return dynamicValue?.(ctx) ?? useComputed(calcDefault);
+  return makeDynamicPropertyHook(
+    dynamicValue,
+    (ctx, { definition, schemaField }) => {
+      return useComputed(calcDefault);
       function calcDefault() {
         const [required, dcv] = isDataControlDefinition(definition)
           ? [definition.required, definition.defaultValue]
@@ -187,13 +184,9 @@ export function useEvalDefaultValueHook(
         );
       }
     },
-    [dynamicValue, r],
+    { definition, schemaField },
   );
 }
-
-export type EvalExpressionHook<A = any> = (
-  groupContext: ControlDataContext,
-) => Control<A | undefined>;
 
 function useDataExpression(
   fvExpr: DataExpression,
@@ -250,27 +243,21 @@ export const defaultUseEvalExpressionHook =
 
 export function makeEvalExpressionHook(
   f: (expr: EntityExpression, context: ControlDataContext) => Control<any>,
-): (expr: EntityExpression | undefined) => EvalExpressionHook | undefined {
-  return (expr) => {
-    const r = useUpdatedRef(expr);
-    const cb = useCallback(
-      (ctx: ControlDataContext) => {
-        const expr = r.current!;
-        return f(expr, ctx);
-      },
-      [expr?.type, r],
-    );
-    return expr ? cb : undefined;
-  };
+): UseEvalExpressionHook {
+  return (expr) => ({
+    deps: [expr?.type],
+    state: expr,
+    runHook: (ctx: ControlDataContext, state: EntityExpression | undefined) => {
+      return state ? f(state, ctx) : undefined;
+    },
+  });
 }
 
 export function useEvalDynamicHook(
   definition: ControlDefinition,
   type: DynamicPropertyType,
-  useEvalExpressionHook: (
-    expr: EntityExpression | undefined,
-  ) => EvalExpressionHook | undefined,
-): EvalExpressionHook | undefined {
+  useEvalExpressionHook: UseEvalExpressionHook,
+): DynamicHookGenerator<Control<any> | undefined, ControlDataContext> {
   const expression = definition.dynamic?.find((x) => x.type === type);
   return useEvalExpressionHook(expression?.expr);
 }
@@ -361,13 +348,33 @@ export function useEvalLabelText(
     DynamicPropertyType.Label,
     useExpr,
   );
-  return useCallback(
-    (ctx) => {
-      if (dynamicValue) {
-        return dynamicValue(ctx);
-      }
-      return useControl(null);
+  return makeDynamicPropertyHook(
+    dynamicValue,
+    () => useControl(null),
+    undefined,
+  );
+}
+
+const makeControlHook: <A, S = undefined>(
+  runHook: (ctx: ControlDataContext, state: S) => Control<A | undefined>,
+  state: S,
+  ...deps: any[]
+) => EvalExpressionHook<A> = makeHook;
+
+function makeDynamicPropertyHook<A, S = undefined>(
+  dynamicValue: DynamicHookGenerator<
+    Control<any> | undefined,
+    ControlDataContext
+  >,
+  makeDefault: (ctx: ControlDataContext, s: S) => Control<A | undefined>,
+  state: S,
+  ...deps: any[]
+): EvalExpressionHook<A> {
+  return makeControlHook(
+    (ctx, s) => {
+      return dynamicValue.runHook(ctx, s[0]) ?? makeDefault(ctx, s[1]);
     },
-    [dynamicValue],
+    [dynamicValue.state, state],
+    deps.length === 0 ? dynamicValue.deps : [...deps, ...dynamicValue.deps],
   );
 }

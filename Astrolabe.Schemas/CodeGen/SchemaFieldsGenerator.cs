@@ -10,7 +10,7 @@ using Astrolabe.CodeGen.Typescript;
 
 namespace Astrolabe.Schemas.CodeGen;
 
-public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration>
+public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, GeneratedSchema>
 {
     private readonly SchemaFieldsGeneratorOptions _options;
     private readonly IEnumerable<TsType> _customFieldTypeParams;
@@ -118,6 +118,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         return type.Name + "Schema";
     }
 
+    public static string SchemaRefName(Type type)
+    {
+        return type.Name;
+    }
+
     private TsExpr BuildSchema(string schemaType)
     {
         return new TsTypeParamExpr(
@@ -170,17 +175,17 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
             _ => ""
         };
     }
-
-    protected override IEnumerable<TsDeclaration> ToData(SimpleTypeData typeData)
+    
+    protected override IEnumerable<GeneratedSchema> ToData(SimpleTypeData typeData)
     {
         return typeData switch
         {
             EnumerableTypeData enumerableTypeData => CollectData(enumerableTypeData.Element()),
             ObjectTypeData objectTypeData => ObjectDeclarations(objectTypeData),
-            _ => Array.Empty<TsDeclaration>()
+            _ => Array.Empty<GeneratedSchema>()
         };
 
-        IEnumerable<TsDeclaration> ObjectDeclarations(ObjectTypeData objectTypeData)
+        IEnumerable<GeneratedSchema> ObjectDeclarations(ObjectTypeData objectTypeData)
         {
             var type = objectTypeData.Type;
             var members = objectTypeData
@@ -202,33 +207,31 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
             var baseType = type.GetCustomAttribute<JsonBaseTypeAttribute>();
             var subTypes = type.GetCustomAttributes<JsonSubTypeAttribute>();
 
-            deps = deps.Concat(
-                new TsDeclaration[]
-                {
-                    controlsInterface,
-                    new TsAssignment(
-                        tsConstName,
-                        new TsCallExpression(
-                            BuildSchema(tsAllName),
-                            new List<TsExpr>
-                            {
-                                new TsObjectExpr(
-                                    members.Select(x =>
-                                        FieldForMember(x, objectTypeData, baseType, subTypes)
-                                    )
+            IEnumerable<TsDeclaration> declarations = new TsDeclaration[]
+            {
+                controlsInterface,
+                new TsAssignment(
+                    tsConstName,
+                    new TsCallExpression(
+                        BuildSchema(tsAllName),
+                        new List<TsExpr>
+                        {
+                            new TsObjectExpr(
+                                members.Select(x =>
+                                    FieldForMember(x, objectTypeData, baseType, subTypes)
                                 )
-                            }
-                        )
-                    ),
-                    CreateDefaultFormConst(objectTypeData.Type),
-                }
-            );
+                            )
+                        }
+                    )
+                ),
+                CreateDefaultFormConst(objectTypeData.Type),
+            };
             if (_options.ShouldCreateConvert(objectTypeData.Type))
             {
-                deps = deps.Append(CreateConvertFunction(objectTypeData.Type));
+                declarations = declarations.Append(CreateConvertFunction(objectTypeData.Type));
             }
-
-            return deps;
+            return deps.Append(new GeneratedSchema(declarations, 
+                TsObjectField.NamedField(SchemaRefName(type), new TsRawExpr(tsConstName))));
         }
 
         TsFieldType ControlsMember(TypeMember<SimpleTypeData> member)
@@ -447,10 +450,10 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
             var fields =
                 objectTypeData == parentObject
                     ? new[] { TsObjectField.NamedField("treeChildren", new TsConstExpr(true)) }
-                    : new[]
-                    {
-                        TsObjectField.NamedField("children", ChildSchemaExpr(objectTypeData.Type))
-                    };
+                    : [
+                        TsObjectField.NamedField("children", ChildSchemaExpr(objectTypeData.Type)),
+                        TsObjectField.NamedField("schemaRef", new TsConstExpr(SchemaRefName(objectTypeData.Type)))
+                    ];
             return TsCallExpression.Make(MakeCompoundField, TsObjectExpr.Make(fields));
         }
 
@@ -502,7 +505,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SimpleTypeData, TsDeclaration
         }
     }
 
-    public IEnumerable<TsDeclaration> CreateDeclarations(SimpleTypeData visitType)
+    public IEnumerable<GeneratedSchema> CreateDeclarations(SimpleTypeData visitType)
     {
         return CollectData(visitType);
     }
@@ -540,5 +543,15 @@ public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
     public bool ShouldCreateConvert(Type type)
     {
         return CreateConvert?.Invoke(type) ?? true;
+    }
+}
+
+public record GeneratedSchema(IEnumerable<TsDeclaration> Declarations, TsObjectField SchemaEntry)
+{
+    public static IEnumerable<TsDeclaration> ToDeclarations(ICollection<GeneratedSchema> allSchemas, string schemaMapVar)
+    {
+        var allDeclarations = allSchemas.SelectMany(x => x.Declarations);
+        var schemaMap = new TsAssignment(schemaMapVar, new TsObjectExpr(allSchemas.Select(x => x.SchemaEntry)));
+        return allDeclarations.Append(schemaMap);
     }
 }

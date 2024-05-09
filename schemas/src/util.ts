@@ -16,10 +16,15 @@ import {
   SchemaInterface,
   visitControlDefinition,
 } from "./types";
-import { MutableRefObject, useRef } from "react";
-import { Control } from "@react-typed-forms/core";
+import { MutableRefObject, useCallback, useRef } from "react";
+import {
+  Control,
+  ControlChange,
+  trackControlChange,
+} from "@react-typed-forms/core";
 import clsx from "clsx";
 import { DataContext, JsonPath } from "./controlRender";
+import { EvalExpressionHook } from "./hooks";
 
 export interface ControlDataContext extends DataContext {
   fields: SchemaField[];
@@ -340,7 +345,7 @@ export function lookupChildControl(
   child: JsonPath,
 ): Control<any> | undefined {
   const childPath = [...data.path, child];
-  return data.data.lookupControl(childPath);
+  return watchControlLookup(data.data, childPath);
 }
 
 export function cleanDataForSchema(
@@ -450,4 +455,61 @@ export function rendererClass(
   const oc = getOverrideClass(controlClass);
   if (oc === controlClass) return clsx(controlClass, globalClass);
   return oc ? oc : undefined;
+}
+
+function watchControlLookup(
+  base: Control<any> | undefined,
+  path: (string | number)[],
+): Control<any> | undefined {
+  let index = 0;
+  while (index < path.length && base) {
+    const childId = path[index];
+    const c = base.current;
+    if (typeof childId === "string") {
+      const next = c.fields?.[childId];
+      if (!next) trackControlChange(base, ControlChange.Structure);
+      base = next;
+    } else {
+      base = c.elements?.[childId];
+    }
+    index++;
+  }
+  return base;
+}
+
+export interface DynamicHookGenerator<A, P> {
+  deps: any[];
+  state: any;
+  runHook(ctx: P, state: any): A;
+}
+
+export function makeHook<A, P, S = undefined>(
+  runHook: (ctx: P, state: S) => A,
+  state: S,
+  ...deps: any[]
+): DynamicHookGenerator<A, P> {
+  return { deps, state, runHook };
+}
+
+export type DynamicHookValue<A> =
+  A extends DynamicHookGenerator<infer V, any> ? V : never;
+
+export function useDynamicHooks<
+  P,
+  Hooks extends Record<string, DynamicHookGenerator<any, P>>,
+>(
+  hooks: Hooks,
+): (p: P) => {
+  [K in keyof Hooks]: DynamicHookValue<Hooks[K]>;
+} {
+  const hookEntries = Object.entries(hooks);
+  const deps = hookEntries.flatMap(([, x]) => x.deps);
+  const ref = useRef<Record<string, any>>({});
+  const s = ref.current;
+  hookEntries.forEach((x) => (s[x[0]] = x[1].state));
+  return useCallback((p: P) => {
+    return Object.fromEntries(
+      hookEntries.map(([f, hg]) => [f, hg.runHook(p, ref.current[f])]),
+    ) as any;
+  }, deps);
 }

@@ -15,6 +15,8 @@ export interface SchemaField {
   validators?: SchemaValidator[] | null;
 }
 
+export type SchemaMap = Record<string, SchemaField[]>;
+
 export enum FieldType {
   String = "String",
   Bool = "Bool",
@@ -44,6 +46,7 @@ export interface CompoundField extends SchemaField {
   type: FieldType.Compound;
   children: SchemaField[];
   treeChildren?: boolean;
+  schemaRef?: string;
 }
 
 export type AnyControlDefinition =
@@ -197,6 +200,7 @@ export enum DataRenderType {
   Checkbox = "Checkbox",
   Dropdown = "Dropdown",
   DisplayOnly = "DisplayOnly",
+  Group = "Group",
 }
 
 export interface RadioButtonRenderOptions extends RenderOptions {
@@ -205,6 +209,11 @@ export interface RadioButtonRenderOptions extends RenderOptions {
 
 export interface StandardRenderer extends RenderOptions {
   type: DataRenderType.Standard;
+}
+
+export interface DataGroupRenderOptions extends RenderOptions {
+  type: DataRenderType.Group;
+  groupOptions?: GroupRenderOptions;
 }
 
 export interface HtmlEditorRenderOptions extends RenderOptions {
@@ -420,4 +429,10 @@ export function isDisplayOnlyRenderer(
   options: RenderOptions,
 ): options is DisplayOnlyRenderOptions {
   return options.type === DataRenderType.DisplayOnly;
+}
+
+export function isDataGroupRenderer(
+  options: RenderOptions,
+): options is DataGroupRenderOptions {
+  return options.type === DataRenderType.Group;
 }

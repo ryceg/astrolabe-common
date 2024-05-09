@@ -23,7 +23,7 @@ import {
 import { FormControlEditor } from "./FormControlEditor";
 import {
   ControlDefinitionForm,
-  ControlDefinitionSchema,
+  ControlDefinitionSchemaMap,
   defaultControlDefinitionForm,
   SchemaFieldForm,
   toControlDefinitionForm,
@@ -31,8 +31,10 @@ import {
 } from "./schemaSchemas";
 import {
   addMissingControls,
+  applyExtensionsToSchema,
   cleanDataForSchema,
   ControlDefinition,
+  ControlDefinitionExtension,
   ControlDefinitionType,
   ControlRenderer,
   ControlRenderOptions,
@@ -49,8 +51,8 @@ import {
 } from "./controlTree";
 import { ControlTreeNode, useTreeStateControl } from "@astroapps/ui-tree";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { ReactElement, useMemo } from "react";
-import { controlIsCompoundField, controlIsGroupControl } from "./";
+import React, { ReactElement, useMemo } from "react";
+import { controlIsCompoundField, controlIsGroupControl } from "./util";
 import {
   createTailwindcss,
   TailwindConfig,
@@ -62,6 +64,12 @@ interface PreviewData {
   data: any;
   fields: SchemaField[];
   controls: ControlDefinition[];
+}
+
+export function applyEditorExtensions(
+  ...extensions: ControlDefinitionExtension[]
+): typeof ControlDefinitionSchemaMap {
+  return applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions);
 }
 
 export interface BasicFormEditorProps<A extends string> {
@@ -77,7 +85,7 @@ export interface BasicFormEditorProps<A extends string> {
     data: Control<any>,
     controls: ControlDefinition[],
   ) => Promise<any>;
-  controlDefinitionSchema?: SchemaField[];
+  controlDefinitionSchemaMap?: typeof ControlDefinitionSchemaMap;
   editorControls?: ControlDefinition[];
   previewOptions?: ControlRenderOptions;
   tailwindConfig?: TailwindConfig;
@@ -85,7 +93,7 @@ export interface BasicFormEditorProps<A extends string> {
   rootControlClass?: string;
 }
 
-export default function BasicFormEditor<A extends string>({
+export function BasicFormEditor<A extends string>({
   formRenderer,
   selectedForm,
   loadForm,
@@ -93,7 +101,7 @@ export default function BasicFormEditor<A extends string>({
   formTypes,
   validation,
   saveForm,
-  controlDefinitionSchema = ControlDefinitionSchema,
+  controlDefinitionSchemaMap = ControlDefinitionSchemaMap,
   editorControls,
   previewOptions,
   tailwindConfig,
@@ -103,11 +111,11 @@ export default function BasicFormEditor<A extends string>({
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
   });
-  const rootControl = useControl<ControlDefinitionForm>();
   const fields = useControl<SchemaFieldForm[]>([]);
   const treeDrag = useControl();
   const treeState = useTreeStateControl();
   const selected = treeState.fields.selected;
+  const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const previewData = useControl<PreviewData>({
     showing: false,
     key: 0,
@@ -118,7 +126,7 @@ export default function BasicFormEditor<A extends string>({
   const controlGroup: GroupedControlsDefinition = useMemo(() => {
     return {
       children: addMissingControls(
-        controlDefinitionSchema,
+        ControlDefinitionSchema,
         editorControls ?? [],
       ),
       type: ControlDefinitionType.Group,
@@ -277,7 +285,7 @@ export default function BasicFormEditor<A extends string>({
                         control={c.value}
                         fields={fields}
                         renderer={editorRenderer}
-                        editorFields={controlDefinitionSchema}
+                        editorFields={ControlDefinitionSchema}
                         rootControls={controls}
                         editorControls={controlGroup}
                       />

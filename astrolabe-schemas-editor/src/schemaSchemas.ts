@@ -13,10 +13,10 @@ import {
   DynamicProperty,
   AdornmentPlacement,
   ControlAdornment,
+  GroupRenderOptions,
   IconMapping,
   SyncTextType,
   RenderOptions,
-  GroupRenderOptions,
   DisplayData,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
@@ -150,8 +150,9 @@ export interface SchemaFieldForm {
   validators: SchemaValidatorForm[] | null;
   entityRefType: string;
   parentField: string | null;
-  children: SchemaFieldForm[];
+  children: SchemaFieldForm[] | null;
   treeChildren: boolean | null;
+  schemaRef: string | null;
 }
 
 export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
@@ -258,11 +259,13 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   }),
   options: makeCompoundField({
     children: FieldOptionSchema,
+    schemaRef: "FieldOption",
     collection: true,
     displayName: "Options",
   }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,
+    schemaRef: "SchemaValidator",
     collection: true,
     displayName: "Validators",
   }),
@@ -282,13 +285,17 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
     treeChildren: true,
     collection: true,
     onlyForTypes: ["Compound"],
-    notNullable: true,
     displayName: "Children",
   }),
   treeChildren: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Compound"],
     displayName: "TreeChildren",
+  }),
+  schemaRef: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Compound"],
+    displayName: "SchemaRef",
   }),
 });
 
@@ -426,6 +433,7 @@ export const DynamicPropertySchema = buildSchema<DynamicPropertyForm>({
   }),
   expr: makeCompoundField({
     children: EntityExpressionSchema,
+    schemaRef: "EntityExpression",
     notNullable: true,
     displayName: "Expr",
   }),
@@ -543,184 +551,6 @@ export function toControlAdornmentForm(
   return applyDefaultValues(v, ControlAdornmentSchema);
 }
 
-export interface IconMappingForm {
-  value: string;
-  materialIcon: string | null;
-}
-
-export const IconMappingSchema = buildSchema<IconMappingForm>({
-  value: makeScalarField({
-    type: FieldType.String,
-    notNullable: true,
-    required: true,
-    displayName: "Value",
-  }),
-  materialIcon: makeScalarField({
-    type: FieldType.String,
-    displayName: "MaterialIcon",
-  }),
-});
-
-export const defaultIconMappingForm: IconMappingForm =
-  defaultValueForFields(IconMappingSchema);
-
-export function toIconMappingForm(v: IconMapping): IconMappingForm {
-  return applyDefaultValues(v, IconMappingSchema);
-}
-
-export interface RenderOptionsForm {
-  type: string;
-  emptyText: string | null;
-  sampleText: string | null;
-  noGroups: boolean;
-  noUsers: boolean;
-  format: string | null;
-  fieldToSync: string;
-  syncType: SyncTextType;
-  iconMappings: IconMappingForm[];
-  allowImages: boolean;
-}
-
-export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
-  type: makeScalarField({
-    type: FieldType.String,
-    isTypeField: true,
-    notNullable: true,
-    required: true,
-    defaultValue: "Standard",
-    displayName: "Type",
-    options: [
-      {
-        name: "Default",
-        value: "Standard",
-      },
-      {
-        name: "Radio buttons",
-        value: "Radio",
-      },
-      {
-        name: "HTML Editor",
-        value: "HtmlEditor",
-      },
-      {
-        name: "Icon list",
-        value: "IconList",
-      },
-      {
-        name: "Check list",
-        value: "CheckList",
-      },
-      {
-        name: "User Selection",
-        value: "UserSelection",
-      },
-      {
-        name: "Synchronised Fields",
-        value: "Synchronised",
-      },
-      {
-        name: "Icon Selection",
-        value: "IconSelector",
-      },
-      {
-        name: "Date/Time",
-        value: "DateTime",
-      },
-      {
-        name: "Checkbox",
-        value: "Checkbox",
-      },
-      {
-        name: "Dropdown",
-        value: "Dropdown",
-      },
-      {
-        name: "Display Only",
-        value: "DisplayOnly",
-      },
-    ],
-  }),
-  emptyText: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["DisplayOnly"],
-    displayName: "EmptyText",
-  }),
-  sampleText: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["DisplayOnly"],
-    displayName: "SampleText",
-  }),
-  noGroups: makeScalarField({
-    type: FieldType.Bool,
-    onlyForTypes: ["UserSelection"],
-    notNullable: true,
-    required: true,
-    displayName: "NoGroups",
-  }),
-  noUsers: makeScalarField({
-    type: FieldType.Bool,
-    onlyForTypes: ["UserSelection"],
-    notNullable: true,
-    required: true,
-    displayName: "NoUsers",
-  }),
-  format: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["DateTime"],
-    displayName: "Format",
-  }),
-  fieldToSync: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["Synchronised"],
-    notNullable: true,
-    required: true,
-    displayName: "FieldToSync",
-    tags: ["_SchemaField"],
-  }),
-  syncType: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["Synchronised"],
-    notNullable: true,
-    required: true,
-    displayName: "SyncType",
-    options: [
-      {
-        name: "Camel",
-        value: "Camel",
-      },
-      {
-        name: "Snake",
-        value: "Snake",
-      },
-      {
-        name: "Pascal",
-        value: "Pascal",
-      },
-    ],
-  }),
-  iconMappings: makeCompoundField({
-    children: IconMappingSchema,
-    collection: true,
-    onlyForTypes: ["IconList"],
-    notNullable: true,
-    displayName: "IconMappings",
-  }),
-  allowImages: makeScalarField({
-    type: FieldType.Bool,
-    onlyForTypes: ["HtmlEditor"],
-    notNullable: true,
-    required: true,
-    displayName: "AllowImages",
-  }),
-});
-
-export const defaultRenderOptionsForm: RenderOptionsForm =
-  defaultValueForFields(RenderOptionsSchema);
-
-export function toRenderOptionsForm(v: RenderOptions): RenderOptionsForm {
-  return applyDefaultValues(v, RenderOptionsSchema);
-}
-
 export interface GroupRenderOptionsForm {
   type: string;
   hideTitle: boolean | null;
@@ -793,6 +623,197 @@ export function toGroupRenderOptionsForm(
   v: GroupRenderOptions,
 ): GroupRenderOptionsForm {
   return applyDefaultValues(v, GroupRenderOptionsSchema);
+}
+
+export interface IconMappingForm {
+  value: string;
+  materialIcon: string | null;
+}
+
+export const IconMappingSchema = buildSchema<IconMappingForm>({
+  value: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: "Value",
+  }),
+  materialIcon: makeScalarField({
+    type: FieldType.String,
+    displayName: "MaterialIcon",
+  }),
+});
+
+export const defaultIconMappingForm: IconMappingForm =
+  defaultValueForFields(IconMappingSchema);
+
+export function toIconMappingForm(v: IconMapping): IconMappingForm {
+  return applyDefaultValues(v, IconMappingSchema);
+}
+
+export interface RenderOptionsForm {
+  type: string;
+  groupOptions: GroupRenderOptionsForm;
+  emptyText: string | null;
+  sampleText: string | null;
+  noGroups: boolean;
+  noUsers: boolean;
+  format: string | null;
+  fieldToSync: string;
+  syncType: SyncTextType;
+  iconMappings: IconMappingForm[];
+  allowImages: boolean;
+}
+
+export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
+  type: makeScalarField({
+    type: FieldType.String,
+    isTypeField: true,
+    notNullable: true,
+    required: true,
+    defaultValue: "Standard",
+    displayName: "Type",
+    options: [
+      {
+        name: "Default",
+        value: "Standard",
+      },
+      {
+        name: "Radio buttons",
+        value: "Radio",
+      },
+      {
+        name: "HTML Editor",
+        value: "HtmlEditor",
+      },
+      {
+        name: "Icon list",
+        value: "IconList",
+      },
+      {
+        name: "Check list",
+        value: "CheckList",
+      },
+      {
+        name: "User Selection",
+        value: "UserSelection",
+      },
+      {
+        name: "Synchronised Fields",
+        value: "Synchronised",
+      },
+      {
+        name: "Icon Selection",
+        value: "IconSelector",
+      },
+      {
+        name: "Date/Time",
+        value: "DateTime",
+      },
+      {
+        name: "Checkbox",
+        value: "Checkbox",
+      },
+      {
+        name: "Dropdown",
+        value: "Dropdown",
+      },
+      {
+        name: "Display Only",
+        value: "DisplayOnly",
+      },
+      {
+        name: "Group",
+        value: "Group",
+      },
+    ],
+  }),
+  groupOptions: makeCompoundField({
+    children: GroupRenderOptionsSchema,
+    schemaRef: "GroupRenderOptions",
+    onlyForTypes: ["Group"],
+    notNullable: true,
+    displayName: "GroupOptions",
+  }),
+  emptyText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["DisplayOnly"],
+    displayName: "EmptyText",
+  }),
+  sampleText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["DisplayOnly"],
+    displayName: "SampleText",
+  }),
+  noGroups: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["UserSelection"],
+    notNullable: true,
+    required: true,
+    displayName: "NoGroups",
+  }),
+  noUsers: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["UserSelection"],
+    notNullable: true,
+    required: true,
+    displayName: "NoUsers",
+  }),
+  format: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["DateTime"],
+    displayName: "Format",
+  }),
+  fieldToSync: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Synchronised"],
+    notNullable: true,
+    required: true,
+    displayName: "FieldToSync",
+    tags: ["_SchemaField"],
+  }),
+  syncType: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Synchronised"],
+    notNullable: true,
+    required: true,
+    displayName: "SyncType",
+    options: [
+      {
+        name: "Camel",
+        value: "Camel",
+      },
+      {
+        name: "Snake",
+        value: "Snake",
+      },
+      {
+        name: "Pascal",
+        value: "Pascal",
+      },
+    ],
+  }),
+  iconMappings: makeCompoundField({
+    children: IconMappingSchema,
+    schemaRef: "IconMapping",
+    collection: true,
+    onlyForTypes: ["IconList"],
+    notNullable: true,
+    displayName: "IconMappings",
+  }),
+  allowImages: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["HtmlEditor"],
+    notNullable: true,
+    required: true,
+    displayName: "AllowImages",
+  }),
+});
+
+export const defaultRenderOptionsForm: RenderOptionsForm =
+  defaultValueForFields(RenderOptionsSchema);
+
+export function toRenderOptionsForm(v: RenderOptions): RenderOptionsForm {
+  return applyDefaultValues(v, RenderOptionsSchema);
 }
 
 export interface DisplayDataForm {
@@ -910,11 +931,13 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   }),
   dynamic: makeCompoundField({
     children: DynamicPropertySchema,
+    schemaRef: "DynamicProperty",
     collection: true,
     displayName: "Dynamic",
   }),
   adornments: makeCompoundField({
     children: ControlAdornmentSchema,
+    schemaRef: "ControlAdornment",
     collection: true,
     displayName: "Adornments",
   }),
@@ -957,6 +980,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   }),
   renderOptions: makeCompoundField({
     children: RenderOptionsSchema,
+    schemaRef: "RenderOptions",
     onlyForTypes: ["Data"],
     displayName: "RenderOptions",
   }),
@@ -978,6 +1002,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,
+    schemaRef: "SchemaValidator",
     collection: true,
     onlyForTypes: ["Data"],
     displayName: "Validators",
@@ -990,11 +1015,13 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   }),
   groupOptions: makeCompoundField({
     children: GroupRenderOptionsSchema,
+    schemaRef: "GroupRenderOptions",
     onlyForTypes: ["Group"],
     displayName: "GroupOptions",
   }),
   displayData: makeCompoundField({
     children: DisplayDataSchema,
+    schemaRef: "DisplayData",
     onlyForTypes: ["Display"],
     notNullable: true,
     displayName: "DisplayData",
@@ -1016,3 +1043,17 @@ export function toControlDefinitionForm(
 ): ControlDefinitionForm {
   return applyDefaultValues(v, ControlDefinitionSchema);
 }
+
+export const ControlDefinitionSchemaMap = {
+  FieldOption: FieldOptionSchema,
+  SchemaValidator: SchemaValidatorSchema,
+  SchemaField: SchemaFieldSchema,
+  EntityExpression: EntityExpressionSchema,
+  DynamicProperty: DynamicPropertySchema,
+  ControlAdornment: ControlAdornmentSchema,
+  GroupRenderOptions: GroupRenderOptionsSchema,
+  IconMapping: IconMappingSchema,
+  RenderOptions: RenderOptionsSchema,
+  DisplayData: DisplayDataSchema,
+  ControlDefinition: ControlDefinitionSchema,
+};

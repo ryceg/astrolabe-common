@@ -10,10 +10,8 @@ import React, {
 import {
   addElement,
   Control,
-  ControlChange,
   newControl,
   removeElement,
-  trackControlChange,
   useComponentTracking,
   useControl,
   useControlEffect,
@@ -43,10 +41,12 @@ import {
   findChildDefinition,
   findField,
   isCompoundField,
+  useDynamicHooks,
   useUpdatedRef,
 } from "./util";
 import { dataControl } from "./controlBuilder";
 import {
+  EvalExpressionHook,
   defaultUseEvalExpressionHook,
   useEvalAllowedOptionsHook,
   useEvalDefaultValueHook,
@@ -163,15 +163,20 @@ export interface DisplayRendererProps {
   style?: React.CSSProperties;
 }
 
-export interface GroupRendererProps {
-  children: ControlDefinition[];
-  renderOptions: GroupRenderOptions;
+export interface ParentRendererProps {
+  childDefinitions: ControlDefinition[];
   renderChild: ChildRenderer;
   className?: string;
   style?: React.CSSProperties;
+  dataContext: ControlDataContext;
+  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
 }
 
-export interface DataRendererProps {
+export interface GroupRendererProps extends ParentRendererProps {
+  renderOptions: GroupRenderOptions;
+}
+
+export interface DataRendererProps extends ParentRendererProps {
   renderOptions: RenderOptions;
   field: SchemaField;
   id: string;
@@ -180,11 +185,6 @@ export interface DataRendererProps {
   required: boolean;
   options: FieldOption[] | undefined | null;
   hidden: boolean;
-  className?: string;
-  style?: React.CSSProperties;
-  dataContext: ControlDataContext;
-  children: ControlDefinition[];
-  renderChild: ChildRenderer;
   toArrayProps?: () => ArrayRendererProps;
 }
 
@@ -217,7 +217,9 @@ export interface DataControlProps {
   renderChild: ChildRenderer;
   allowedOptions?: Control<any[] | undefined>;
   elementRenderer?: (elemIndex: number) => ReactNode;
+  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
 }
+
 export type CreateDataProps = (
   controlProps: DataControlProps,
 ) => DataRendererProps;
@@ -245,27 +247,31 @@ export function useControlRenderer(
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
 
   const schemaField = lookupSchemaField(definition, fields);
-  const useDefaultValue = useEvalDefaultValueHook(
-    useExpr,
-    definition,
-    schemaField,
-  );
-  const useIsVisible = useEvalVisibilityHook(useExpr, definition, schemaField);
-  const useIsReadonly = useEvalReadonlyHook(useExpr, definition);
-  const useIsDisabled = useEvalDisabledHook(useExpr, definition);
-  const useAllowedOptions = useEvalAllowedOptionsHook(useExpr, definition);
-  const useLabelText = useEvalLabelText(useExpr, definition);
-  const useCustomStyle = useEvalStyleHook(
-    useExpr,
-    DynamicPropertyType.Style,
-    definition,
-  );
-  const useLayoutStyle = useEvalStyleHook(
-    useExpr,
-    DynamicPropertyType.LayoutStyle,
-    definition,
-  );
-  const useDynamicDisplay = useEvalDisplayHook(useExpr, definition);
+
+  const dynamicHooks = useDynamicHooks({
+    defaultValueControl: useEvalDefaultValueHook(
+      useExpr,
+      definition,
+      schemaField,
+    ),
+    visibleControl: useEvalVisibilityHook(useExpr, definition, schemaField),
+    readonlyControl: useEvalReadonlyHook(useExpr, definition),
+    disabledControl: useEvalDisabledHook(useExpr, definition),
+    allowedOptions: useEvalAllowedOptionsHook(useExpr, definition),
+    labelText: useEvalLabelText(useExpr, definition),
+    customStyle: useEvalStyleHook(
+      useExpr,
+      DynamicPropertyType.Style,
+      definition,
+    ),
+    layoutStyle: useEvalStyleHook(
+      useExpr,
+      DynamicPropertyType.LayoutStyle,
+      definition,
+    ),
+    displayControl: useEvalDisplayHook(useExpr, definition),
+  });
+
   const useValidation = useValidationHook(definition);
   const r = useUpdatedRef({ options, definition, fields, schemaField });
 
@@ -280,13 +286,18 @@ export function useControlRenderer(
           data: rootControl,
           path: parentPath,
         };
-        const readonlyControl = useIsReadonly(parentDataContext);
-        const disabledControl = useIsDisabled(parentDataContext);
-        const visibleControl = useIsVisible(parentDataContext);
-        const displayControl = useDynamicDisplay(parentDataContext);
-        const customStyle = useCustomStyle(parentDataContext).value;
-        const layoutStyle = useLayoutStyle(parentDataContext).value;
-        const labelText = useLabelText(parentDataContext);
+        const {
+          readonlyControl,
+          disabledControl,
+          visibleControl,
+          displayControl,
+          layoutStyle,
+          labelText,
+          customStyle,
+          allowedOptions,
+          defaultValueControl,
+        } = dynamicHooks(parentDataContext);
+
         const visible = visibleControl.current.value;
         const visibility = useControl<Visibility | undefined>(() =>
           visible != null
@@ -307,8 +318,6 @@ export function useControlRenderer(
           },
         );
 
-        const allowedOptions = useAllowedOptions(parentDataContext);
-        const defaultValueControl = useDefaultValue(parentDataContext);
         const [parentControl, control, controlDataContext] = getControlData(
           schemaField,
           parentDataContext,
@@ -384,36 +393,29 @@ export function useControlRenderer(
           labelText,
           schemaField,
           displayControl,
-          style: customStyle,
+          style: customStyle.value,
           allowedOptions,
+          useChildVisibility: (child) => {
+            const childDef = findChildDefinition(c, child);
+            const schemaField = lookupSchemaField(
+              childDef,
+              controlDataContext.fields,
+            );
+            return useEvalVisibilityHook(useExpr, childDef, schemaField);
+          },
         });
         const renderedControl = renderer.renderLayout({
           ...labelAndChildren,
           adornments,
           className: c.layoutClass,
-          style: layoutStyle,
+          style: layoutStyle.value,
         });
         return renderer.renderVisibility({ visibility, ...renderedControl });
       } finally {
         stopTracking();
       }
     },
-    [
-      r,
-      dataProps,
-      useIsVisible,
-      useDefaultValue,
-      useIsReadonly,
-      useIsDisabled,
-      useCustomStyle,
-      useLayoutStyle,
-      useAllowedOptions,
-      useLabelText,
-      useDynamicDisplay,
-      useValidation,
-      renderer,
-      schemaInterface,
-    ],
+    [r, dataProps, useValidation, renderer, schemaInterface, dynamicHooks],
   );
   (Component as any).displayName = "RenderControl";
   return Component;
@@ -477,15 +479,18 @@ export function ControlRenderer({
 function groupProps(
   definition: GroupedControlsDefinition,
   renderChild: ChildRenderer,
-  data: DataContext,
+  dataContext: ControlDataContext,
   className: string | null | undefined,
   style: React.CSSProperties | undefined,
+  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>,
 ): GroupRendererProps {
   return {
-    children: definition.children ?? [],
+    childDefinitions: definition.children ?? [],
     renderChild,
+    dataContext,
     renderOptions: definition.groupOptions ?? { type: "Standard" },
     className: cc(className),
+    useChildVisibility,
     style,
   };
 }
@@ -506,7 +511,7 @@ export function defaultDataProps({
     (field.options?.length ?? 0) === 0 ? null : field.options;
   const allowed = allowedOptions?.value ?? [];
   return {
-    children: definition.children ?? [],
+    childDefinitions: definition.children ?? [],
     control,
     field,
     id: "c" + control.uniqueId,
@@ -585,6 +590,7 @@ export interface RenderControlProps {
   displayControl?: Control<string | undefined>;
   style?: React.CSSProperties;
   allowedOptions?: Control<any[] | undefined>;
+  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
 }
 export function renderControlLayout({
   definition: c,
@@ -599,6 +605,7 @@ export function renderControlLayout({
   style,
   labelText,
   allowedOptions,
+  useChildVisibility,
 }: RenderControlProps): ControlLayoutProps {
   if (isDataControlDefinition(c)) {
     return renderData(c);
@@ -614,7 +621,14 @@ export function renderControlLayout({
     }
     return {
       processLayout: renderer.renderGroup(
-        groupProps(c, childRenderer, dataContext, c.styleClass, style),
+        groupProps(
+          c,
+          childRenderer,
+          dataContext,
+          c.styleClass,
+          style,
+          useChildVisibility,
+        ),
       ),
       label: {
         label: labelText?.value ?? c.title,
@@ -667,6 +681,7 @@ export function renderControlLayout({
           ? (k, d, p) =>
               childRenderer(k, d, p ? [elemIndex, ...p] : [elemIndex])
           : childRenderer,
+      useChildVisibility,
       elementRenderer:
         elemIndex == null && schemaField.collection
           ? (ei) => renderLayoutParts(renderData(c, ei), renderer).children
@@ -767,24 +782,4 @@ export function controlTitle(
   field: SchemaField,
 ) {
   return title ? title : fieldDisplayName(field);
-}
-
-function lookupControl(
-  base: Control<any> | undefined,
-  path: (string | number)[],
-): Control<any> | undefined {
-  let index = 0;
-  while (index < path.length && base) {
-    const childId = path[index];
-    const c = base.current;
-    if (typeof childId === "string") {
-      const next = c.fields?.[childId];
-      if (!next) trackControlChange(base, ControlChange.Structure);
-      base = next;
-    } else {
-      base = c.elements?.[childId];
-    }
-    index++;
-  }
-  return base;
 }

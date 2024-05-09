@@ -31,6 +31,8 @@ public abstract record ControlDefinition([property: SchemaOptions(typeof(Control
     public string? StyleClass { get; set; }
 
     public string? LayoutClass { get; set; }
+    
+    public string? LabelClass { get; set; }
 
     [SchemaTag(SchemaTags.NoControl)] 
     public IEnumerable<ControlDefinition>? Children { get; set; }
@@ -90,6 +92,7 @@ public enum DataRenderType
     [Display(Name = "Checkbox")] Checkbox,
     [Display(Name = "Dropdown")] Dropdown,
     [Display(Name = "Display Only")] DisplayOnly,
+    [Display(Name = "Group")] Group,
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
@@ -99,6 +102,7 @@ public enum DataRenderType
 [JsonSubType("UserSelection", typeof(UserSelectionRenderOptions))]
 [JsonSubType("DateTime", typeof(DateTimeRenderOptions))]
 [JsonSubType("DisplayOnly", typeof(DisplayOnlyRenderOptions))]
+[JsonSubType("Group", typeof(DataGroupRenderOptions))]
 public abstract record RenderOptions([property: DefaultValue("Standard")] [property: SchemaOptions(typeof(DataRenderType))] string Type)
 {
     [JsonExtensionData]
@@ -107,6 +111,8 @@ public abstract record RenderOptions([property: DefaultValue("Standard")] [prope
 
 public record SimpleRenderOptions(string Type) : RenderOptions(Type);
 
+public record DataGroupRenderOptions(GroupRenderOptions GroupOptions) : RenderOptions(DataRenderType.Group.ToString());
+    
 public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
     : RenderOptions(DataRenderType.DisplayOnly.ToString());
 
@@ -164,7 +170,8 @@ public enum DynamicPropertyType
     Display,
     Style,
     LayoutStyle,
-    AllowedOptions
+    AllowedOptions,
+    Label
 }
 
 public record DynamicProperty([property: SchemaOptions(typeof(DynamicPropertyType))] string Type, EntityExpression Expr);

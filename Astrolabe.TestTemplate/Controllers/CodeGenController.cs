@@ -14,9 +14,10 @@ public class CodeGenController : ControllerBase
     [HttpGet("Schemas")]
     public string GetSchemas()
     {
-        var gen = new SchemaFieldsGenerator(new SchemaFieldsGeneratorOptions("../client") {ForEditorLib = true});
-        var declarations = gen.CollectDataForTypes(typeof(SchemaField), typeof(ControlDefinition));
-        var file = TsFile.FromDeclarations(declarations.ToList());
+        var gen = new SchemaFieldsGenerator(new SchemaFieldsGeneratorOptions("../client") { ForEditorLib = true });
+        var allGenSchemas = gen.CollectDataForTypes(typeof(SchemaField), typeof(ControlDefinition)).ToList();
+        var file = TsFile.FromDeclarations(GeneratedSchema.ToDeclarations(allGenSchemas, "ControlDefinitionSchemaMap")
+            .ToList());
         return file.ToSource();
     }
 }
