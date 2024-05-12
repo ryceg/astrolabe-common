@@ -10,10 +10,12 @@ public static class VirtualHostingExtensions
         IWebHostEnvironment env,
         string siteDir,
         string? domainPrefix = null,
-        bool fallback = false
+        bool fallback = false,
+        DomainSpaOptions? options = null
     )
     {
         domainPrefix ??= siteDir + ".";
+        options ??= new DomainSpaOptions();
         var buildDir = Path.Combine(env.ContentRootPath, "ClientApp/sites", siteDir, "out");
         if (!Directory.Exists(buildDir))
         {
@@ -25,7 +27,8 @@ public static class VirtualHostingExtensions
             FileProvider = new HtmlFileProvider(buildDir),
             RequestPath = "",
             ServeUnknownFileTypes = true,
-            DefaultContentType = "text/html;charset=UTF-8"
+            DefaultContentType = "text/html;charset=UTF-8",
+            OnPrepareResponse = (ctx) => ctx.Context.Response.Headers.CacheControl = options.CacheControl
         };
         app.UseWhen(
             ctx => fallback || ctx.Request.Host.Host.StartsWith(domainPrefix),
@@ -87,4 +90,9 @@ public static class VirtualHostingExtensions
             return NullChangeToken.Singleton;
         }
     }
+}
+
+public class DomainSpaOptions
+{
+    public string CacheControl { get; set; } = "private, max-age=30, must-revalidate";
 }
