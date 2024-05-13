@@ -142,6 +142,7 @@ export type ControlDefinitionExtension = {
   GroupRenderOptions?: CustomRenderOptions | CustomRenderOptions[];
   ControlAdornment?: CustomRenderOptions | CustomRenderOptions[];
   SchemaValidator?: CustomRenderOptions | CustomRenderOptions[];
+  DisplayData?: CustomRenderOptions | CustomRenderOptions[];
 };
 
 export function applyExtensionToSchema<A extends SchemaMap>(

@@ -17,8 +17,8 @@
 		"react-dom": "^18.2.0",
 		"next": "14.0.4",
 		"@astroapps/schemas-editor": "workspace:*",
-		"react-dnd": "^16.0.1",
-		"react-dnd-html5-backend": "^16.0.1"
+		"react-dnd": "16.0.1",
+		"react-dnd-html5-backend": "16.0.1"
 	},
 	"devDependencies": {
 		"typescript": "^5.2.2",

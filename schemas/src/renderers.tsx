@@ -837,6 +837,13 @@ export function createGroupRenderer(
   return { type: "group", render, ...options };
 }
 
+export function createDisplayRenderer(
+  render: DisplayRendererRegistration["render"],
+  options?: Partial<DisplayRendererRegistration>,
+): DisplayRendererRegistration {
+  return { type: "display", render, ...options };
+}
+
 export function createLabelRenderer(
   render: LabelRendererRegistration["render"],
   options?: Omit<LabelRendererRegistration, "type">,

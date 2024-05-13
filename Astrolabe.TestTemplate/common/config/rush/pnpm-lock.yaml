@@ -16,7 +16,7 @@ importers:
       '@babel/preset-env': ^7.23.8
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
-      '@react-typed-forms/core': ^3.1.0
+      '@react-typed-forms/core': ^3.1.2
       '@react-typed-forms/transform': ^0.2.0
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
@@ -30,7 +30,7 @@ importers:
       tslib: ^2.6.2
       typescript: 5.2.2
     dependencies:
-      '@react-typed-forms/core': 3.1.0
+      '@react-typed-forms/core': 3.1.2
       clsx: 2.0.0
       react: 18.2.0
       react-dnd: 16.0.1_zjyz4fgrnxzkanarnnocfvifxm
@@ -432,7 +432,7 @@ importers:
       prettier: ^3.0.3
       react: ^18.2.0
       react-dnd: 16.0.1
-      react-dnd-html5-backend: ^16.0.1
+      react-dnd-html5-backend: 16.0.1
       react-dom: ^18.2.0
       tailwindcss: ^3.4.1
       typescript: ^5.2.2

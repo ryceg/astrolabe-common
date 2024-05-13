@@ -14,12 +14,12 @@ import {
   buildSchema,
   compoundField,
   createDefaultRenderers,
+  createDisplayRenderer,
   createFormRenderer,
   createGroupRenderer,
   DataControlDefinition,
   DataGroupRenderOptions,
   defaultTailwindTheme,
-  groupedControl,
   GroupRendererProps,
   stringField,
   useDynamicHooks,
@@ -29,12 +29,18 @@ import {
   convertStringParam,
   useSyncParam,
 } from "@astroapps/client/hooks/queryParamSync";
-import { useCallback, useRef } from "react";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { DndProvider } from "react-dnd";
 
 const CustomControlSchema = applyEditorExtensions({
   GroupRenderOptions: {
     name: "Test",
     value: "Test",
+    fields: [],
+  },
+  DisplayData: {
+    name: "Custom display",
+    value: "Custom",
     fields: [],
   },
 });
@@ -59,6 +65,11 @@ const fields = buildSchema<OurData>({
     }),
   ),
 });
+
+const customDisplay = createDisplayRenderer(
+  (p) => <div>PATH: {p.dataContext.path.join(",")}</div>,
+  { renderType: "Custom" },
+);
 
 const testRender = createGroupRenderer((p, r) => <TestChildVis {...p} />, {
   renderType: "Test",
@@ -90,7 +101,7 @@ function TestChildVis(p: GroupRendererProps) {
 }
 
 const StdFormRenderer = createFormRenderer(
-  [testRender],
+  [testRender, customDisplay],
   createDefaultRenderers(defaultTailwindTheme),
 );
 
@@ -108,25 +119,27 @@ export default function Editor() {
     ),
   );
   return (
-    <BasicFormEditor<string>
-      formRenderer={StdFormRenderer}
-      editorRenderer={StdFormRenderer}
-      loadForm={async (c) => {
-        const controls = addMissingControls(fields, []);
-        const dcd = controls[0] as DataControlDefinition;
-        dcd.renderOptions = {
-          type: "Group",
-          groupOptions: { type: "Test" },
-        } as DataGroupRenderOptions;
-        return {
-          fields,
-          controls,
-        };
-      }}
-      selectedForm={selectedForm}
-      formTypes={[["MyForm", "MyForm"]]}
-      saveForm={async (controls) => {}}
-      controlDefinitionSchemaMap={CustomControlSchema}
-    />
+    <DndProvider backend={HTML5Backend}>
+      <BasicFormEditor<string>
+        formRenderer={StdFormRenderer}
+        editorRenderer={StdFormRenderer}
+        loadForm={async (c) => {
+          const controls = addMissingControls(fields, []);
+          const dcd = controls[0] as DataControlDefinition;
+          dcd.renderOptions = {
+            type: "Group",
+            groupOptions: { type: "Test" },
+          } as DataGroupRenderOptions;
+          return {
+            fields,
+            controls,
+          };
+        }}
+        selectedForm={selectedForm}
+        formTypes={[["MyForm", "MyForm"]]}
+        saveForm={async (controls) => {}}
+        controlDefinitionSchemaMap={CustomControlSchema}
+      />
+    </DndProvider>
   );
 }

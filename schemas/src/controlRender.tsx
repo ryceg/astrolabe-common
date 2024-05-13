@@ -159,6 +159,7 @@ export interface LabelRendererProps {
 export interface DisplayRendererProps {
   data: DisplayData;
   display?: Control<string | undefined>;
+  dataContext: ControlDataContext;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -428,8 +429,8 @@ export function lookupSchemaField(
   const fieldName = isGroupControlsDefinition(c)
     ? c.compoundField
     : isDataControlDefinition(c)
-    ? c.field
-    : undefined;
+      ? c.field
+      : undefined;
   return fieldName ? findField(fields, fieldName) : undefined;
 }
 export function getControlData(
@@ -657,6 +658,7 @@ export function renderControlLayout({
         className: cc(c.styleClass),
         style,
         display: displayControl,
+        dataContext,
       }),
     };
   }
