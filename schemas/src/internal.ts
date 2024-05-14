@@ -41,7 +41,8 @@ export function trackedStructure<A>(
         if (nc == null) return null;
         return trackedStructure(nc, tracker);
       }
-      if (p in cv) return trackedStructure((cc.fields as any)[p], tracker);
+      if (p in (cc.fields as any) || p in cv)
+        return trackedStructure((cc.fields as any)[p], tracker);
       return undefined;
     },
   }) as A;
