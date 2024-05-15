@@ -1,7 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "7.0.1",
-  "source": "lib/index.js",
+  "version": "7.0.2",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": "Astrolabe Enterprises",
