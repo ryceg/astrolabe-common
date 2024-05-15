@@ -223,6 +223,7 @@ export function BasicFormEditor<A extends string>({
                   formRenderer={formRenderer}
                   validation={validation}
                   previewOptions={previewOptions}
+                  rootControlClass={rootControlClass}
                 />
               ) : (
                 <RenderElements
