@@ -81,6 +81,7 @@ public record ActionControlDefinition(string ActionId) : ControlDefinition(Contr
 public enum DataRenderType
 {
     [Display(Name = "Default")] Standard,
+    [Display(Name = "Textfield")] Textfield,
     [Display(Name = "Radio buttons")] Radio,
     [Display(Name = "HTML Editor")] HtmlEditor,
     [Display(Name = "Icon list")] IconList,
@@ -103,6 +104,7 @@ public enum DataRenderType
 [JsonSubType("DateTime", typeof(DateTimeRenderOptions))]
 [JsonSubType("DisplayOnly", typeof(DisplayOnlyRenderOptions))]
 [JsonSubType("Group", typeof(DataGroupRenderOptions))]
+[JsonSubType("Textfield", typeof(TextfieldRenderOptions))]
 public abstract record RenderOptions([property: DefaultValue("Standard")] [property: SchemaOptions(typeof(DataRenderType))] string Type)
 {
     [JsonExtensionData]
@@ -110,6 +112,8 @@ public abstract record RenderOptions([property: DefaultValue("Standard")] [prope
 }
 
 public record SimpleRenderOptions(string Type) : RenderOptions(Type);
+
+public record TextfieldRenderOptions(string? Placeholder) : RenderOptions(DataRenderType.Textfield.ToString());
 
 public record DataGroupRenderOptions(GroupRenderOptions GroupOptions) : RenderOptions(DataRenderType.Group.ToString());
     
@@ -222,17 +226,14 @@ public enum ControlAdornmentType
     Accordion,
     [Display(Name = "Help Text")]
     HelpText,
-    Icon,
-    [Display(Name = "Place holder text")]
-    Placeholder
+    Icon
 }
 
-[JsonBaseType("type", typeof(TextAdornment))]
+[JsonBaseType("type", typeof(HelpTextAdornment))]
 [JsonSubType("Tooltip", typeof(TooltipAdornment))]
 [JsonSubType("Accordion", typeof(AccordionAdornment))]
 [JsonSubType("HelpText", typeof(HelpTextAdornment))]
 [JsonSubType("Icon", typeof(IconAdornment))]
-[JsonSubType("Placeholder", typeof(TextAdornment))]
 public abstract record ControlAdornment([property: SchemaOptions(typeof(ControlAdornmentType))] string Type)
 {
     [JsonExtensionData]
@@ -246,5 +247,3 @@ public record TooltipAdornment(string Tooltip) : ControlAdornment(ControlAdornme
 public record AccordionAdornment(string Title, bool DefaultExpanded) : ControlAdornment(ControlAdornmentType.Accordion.ToString());
 
 public record HelpTextAdornment(string HelpText, AdornmentPlacement? Placement) : ControlAdornment(ControlAdornmentType.HelpText.ToString());
-
-public record TextAdornment(string Type, string Text, AdornmentPlacement? Placement) : ControlAdornment(Type);

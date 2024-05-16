@@ -93,6 +93,7 @@ export interface BasicFormEditorProps<A extends string> {
   collectClasses?: (c: ControlDefinition) => (string | undefined | null)[];
   rootControlClass?: string;
   editorClass?: string;
+  editorPanelClass?: string;
 }
 
 export function BasicFormEditor<A extends string>({
@@ -107,6 +108,7 @@ export function BasicFormEditor<A extends string>({
   editorControls,
   previewOptions,
   tailwindConfig,
+  editorPanelClass,
   editorClass,
   rootControlClass,
   collectClasses,
@@ -220,30 +222,35 @@ export function BasicFormEditor<A extends string>({
           <Panel>
             <RenderControl render={() => <style>{styles.value}</style>} />
             <div
-              className={clsx("overflow-auto w-full h-full p-8", editorClass)}
-            >
-              {previewMode ? (
-                <FormPreview
-                  previewData={previewData}
-                  formRenderer={formRenderer}
-                  validation={validation}
-                  previewOptions={previewOptions}
-                  rootControlClass={rootControlClass}
-                />
-              ) : (
-                <RenderElements
-                  control={controls}
-                  children={(c, i) => (
-                    <div className={rootControlClass}>
-                      <FormControlPreview
-                        item={c}
-                        fields={fields}
-                        dropIndex={i}
-                      />
-                    </div>
-                  )}
-                />
+              className={clsx(
+                editorPanelClass,
+                "overflow-auto w-full h-full p-8",
               )}
+            >
+              <div className={editorClass}>
+                {previewMode ? (
+                  <FormPreview
+                    previewData={previewData}
+                    formRenderer={formRenderer}
+                    validation={validation}
+                    previewOptions={previewOptions}
+                    rootControlClass={rootControlClass}
+                  />
+                ) : (
+                  <RenderElements
+                    control={controls}
+                    children={(c, i) => (
+                      <div className={rootControlClass}>
+                        <FormControlPreview
+                          item={c}
+                          fields={fields}
+                          dropIndex={i}
+                        />
+                      </div>
+                    )}
+                  />
+                )}
+              </div>
             </div>
           </Panel>
           <PanelResizeHandle className="w-2 bg-surface-200" />

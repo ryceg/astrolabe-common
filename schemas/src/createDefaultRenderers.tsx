@@ -320,14 +320,20 @@ export function createDefaultDataRenderer(
         control={props.control}
       />
     ) : (
-      <ControlInput
-        className={rendererClass(props.className, inputClass)}
-        style={props.style}
-        id={props.id}
-        readOnly={props.readonly}
-        control={props.control}
-        convert={createInputConversion(props.field.type)}
-      />
+      (p) => ({
+        ...p,
+
+        children: (
+          <ControlInput
+            className={rendererClass(props.className, inputClass)}
+            style={props.style}
+            id={props.id}
+            readOnly={props.readonly}
+            control={props.control}
+            convert={createInputConversion(props.field.type)}
+          />
+        ),
+      })
     );
   });
 }
