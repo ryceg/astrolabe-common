@@ -1,5 +1,6 @@
 import React from "react";
-import { DefaultRendererOptions } from "./renderers";
+
+import { DefaultRendererOptions } from "./createDefaultRenderers";
 
 export const defaultTailwindTheme = {
   label: {
@@ -17,7 +18,7 @@ export const defaultTailwindTheme = {
     flexClassName: "gap-2",
   },
   action: {
-    className: "bg-primary rounded-lg p-3 text-white",
+    className: "bg-primary-500 rounded-lg p-3 text-white",
   },
   layout: {
     className: "flex flex-col",

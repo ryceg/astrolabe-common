@@ -269,10 +269,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         var enumType = member.GetAttribute<SchemaOptionsAttribute>()?.EnumType
                        ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
-        var (makeField, isScalar) = FieldForType(memberData, parent);
-        var defaultValue = ConvertDefaultValue(
-            member.GetAttribute<DefaultValueAttribute>()?.Value
-        );
+        var (makeField, isScalar) = FieldForType(memberData, parent, member.PropertyMetadata.SelectMany(x => x.Item2).ToList());
+        var defaultValue = ConvertDefaultValue(member.GetAttribute<DefaultValueAttribute>()?.Value);
         var buildFieldCall = SetOptions(
             makeField,
             new Dictionary<string, object?>
@@ -412,35 +410,30 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         };
     }
 
-    private (TsCallExpression, bool) FieldForType(
-        SchemaFieldData simpleType,
-        ObjectData parentObject
-    )
+    private (TsCallExpression, bool) FieldForType(SchemaFieldData simpleType,
+        ObjectData parentObject, ICollection<object> propertyMetadata)
     {
         var fieldType = _options.CustomFieldType?.Invoke(simpleType.Type);
+        fieldType ??= propertyMetadata.OfType<SchemaFieldTypeAttribute>().FirstOrDefault()?.FieldType;
         if (fieldType != null)
         {
+            if (Enum.TryParse(typeof(FieldType), fieldType, true, out var ft))
+            {
+                return (MakeScalar(
+                    new TsRawExpr(
+                        "FieldType." + ft,
+                        FieldTypeImport
+                    )
+                ), true);
+            }
             return (MakeScalar(new TsConstExpr(fieldType)), true);
         }
-
-        var standardMapping = _options.CustomMapping?.Invoke(simpleType.Type);
-        if (standardMapping.HasValue)
-        {
-            var (ft, isScalar) = standardMapping.Value;
-            return (MakeScalar(
-                new TsRawExpr(
-                    "FieldType." + ft,
-                    FieldTypeImport
-                )
-            ), isScalar);
-        }
-
         return simpleType switch
         {
             EnumerableData enumerableTypeData
                 => (
                     SetOption(
-                        FieldForType(enumerableTypeData.Element(), parentObject).Item1,
+                        FieldForType(enumerableTypeData.Element(), parentObject, propertyMetadata).Item1,
                         "collection",
                         true
                     ),
@@ -550,9 +543,7 @@ public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
     public Func<Type, string?>? CustomFieldType { get; set; }
 
     public IEnumerable<string>? CustomFieldTypes { get; set; }
-
-    public Func<Type, (FieldType, bool)?>? CustomMapping { get; set; }
-
+    
     public bool ForEditorLib { get; set; }
 
     public bool DontResolve { get; set; }

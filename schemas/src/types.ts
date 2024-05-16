@@ -40,6 +40,8 @@ export interface EntityRefField extends SchemaField {
 export interface FieldOption {
   name: string;
   value: any;
+  description?: string | null;
+  disabled?: boolean | null;
 }
 
 export interface CompoundField extends SchemaField {

@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Text.Json.Serialization;
 using Astrolabe.Annotation;
 
@@ -28,6 +27,8 @@ public abstract record SchemaField([property: SchemaOptions(typeof(FieldType))] 
     public bool? IsTypeField { get; set; }
     
     public bool? Searchable { get; set; }
+    
+    public string? SingularName { get; set; }
     
     public IEnumerable<FieldOption>? Options { get; set; }
     
@@ -64,9 +65,15 @@ public enum FieldType
     Any
 }
 
-public record SchemaRestrictions(IEnumerable<FieldOption>? Options = null);
-
-public record FieldOption(string Name, object Value);
+public record FieldOption(string Name, object Value)
+{
+    public string? Description { get; set; } 
+    
+    public bool? Disabled { get; set; }
+    
+    [JsonExtensionData]
+    public IDictionary<string, object?>? Extensions { get; set; }
+}
 
 public static class SchemaTags
 {

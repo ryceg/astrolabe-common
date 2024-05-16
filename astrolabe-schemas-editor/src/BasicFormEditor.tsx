@@ -259,6 +259,7 @@ export function BasicFormEditor<A extends string>({
                       previewMode ? "Edit Mode" : "Editable Preview",
                     )}
                     {button(addMissing, "Add missing controls")}
+                    {button(addMissingInGroup, "Add missing (group)")}
                   </div>
                   <ControlTree
                     treeState={treeState}
@@ -305,6 +306,17 @@ export function BasicFormEditor<A extends string>({
     controls.value = addMissingControls(fields.value, controls.value).map(
       toControlDefinitionForm,
     );
+  }
+
+  function addMissingInGroup() {
+    controls.value = [
+      toControlDefinitionForm({
+        type: ControlDefinitionType.Group,
+        children: addMissingControls(fields.value, controls.value).map(
+          toControlDefinitionForm,
+        ),
+      }),
+    ];
   }
 
   function togglePreviewMode() {
