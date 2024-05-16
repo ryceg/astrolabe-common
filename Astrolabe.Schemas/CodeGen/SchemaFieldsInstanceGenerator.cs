@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using Astrolabe.Annotation;
@@ -77,7 +78,7 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
             .ToList();
         var memberData = member.Data();
         var firstProp = member.Properties.First();
-        var fieldName = SchemaFieldsGenerator.GetFieldName(firstProp);
+        var fieldName = GetFieldName(firstProp);
         var schemaField = FieldForType(memberData, parent, fieldName);
         var tags = firstProp.GetCustomAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
         var enumType =
@@ -95,6 +96,15 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         schemaField.Options = options;
         return schemaField;
     }
+    
+    public static string GetFieldName(PropertyInfo propertyInfo)
+    {
+        var nameAttr = propertyInfo.GetCustomAttribute<JsonPropertyNameAttribute>();
+        if (nameAttr != null)
+            return nameAttr.Name;
+        return JsonNamingPolicy.CamelCase.ConvertName(propertyInfo.Name);
+    }
+
 
     private Type? GetEnumType(SimpleTypeData data)
     {
