@@ -191,6 +191,7 @@ export interface RenderOptions {
 
 export enum DataRenderType {
   Standard = "Standard",
+  Textfield = "Textfield",
   Radio = "Radio",
   HtmlEditor = "HtmlEditor",
   IconList = "IconList",
@@ -203,6 +204,11 @@ export enum DataRenderType {
   Dropdown = "Dropdown",
   DisplayOnly = "DisplayOnly",
   Group = "Group",
+}
+
+export interface TextfieldRenderOptions extends RenderOptions {
+  type: DataRenderType.Textfield;
+  placeholder?: string | null;
 }
 
 export interface RadioButtonRenderOptions extends RenderOptions {
@@ -431,6 +437,12 @@ export function isDisplayOnlyRenderer(
   options: RenderOptions,
 ): options is DisplayOnlyRenderOptions {
   return options.type === DataRenderType.DisplayOnly;
+}
+
+export function isTextfieldRenderer(
+  options: RenderOptions,
+): options is TextfieldRenderOptions {
+  return options.type === DataRenderType.Textfield;
 }
 
 export function isDataGroupRenderer(

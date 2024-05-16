@@ -19,7 +19,7 @@ import {
   LabelRendererRegistration,
 } from "./renderers";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { CSSProperties, Fragment, ReactNode } from "react";
+import React, { CSSProperties, Fragment, ReactElement, ReactNode } from "react";
 import { hasOptions, rendererClass } from "./util";
 import clsx from "clsx";
 import {
@@ -43,6 +43,7 @@ import {
   isDisplayOnlyRenderer,
   isFlexRenderer,
   isGridRenderer,
+  isTextfieldRenderer,
 } from "./types";
 import {
   createSelectRenderer,
@@ -312,28 +313,28 @@ export function createDefaultDataRenderer(
         return selectRenderer.render(props, renderers);
       case DataRenderType.Radio:
         return radioRenderer.render(props, renderers);
-    }
-    return renderType === DataRenderType.Checkbox ? (
-      <Fcheckbox
-        style={props.style}
-        className={props.className}
-        control={props.control}
-      />
-    ) : (
-      (p) => ({
-        ...p,
-
-        children: (
-          <ControlInput
-            className={rendererClass(props.className, inputClass)}
+      case DataRenderType.Checkbox:
+        return (
+          <Fcheckbox
             style={props.style}
-            id={props.id}
-            readOnly={props.readonly}
+            className={props.className}
             control={props.control}
-            convert={createInputConversion(props.field.type)}
           />
-        ),
-      })
+        );
+    }
+    const placeholder = isTextfieldRenderer(renderOptions)
+      ? renderOptions.placeholder
+      : undefined;
+    return (
+      <ControlInput
+        className={rendererClass(props.className, inputClass)}
+        style={props.style}
+        id={props.id}
+        readOnly={props.readonly}
+        control={props.control}
+        placeholder={placeholder ?? undefined}
+        convert={createInputConversion(props.field.type)}
+      />
     );
   });
 }
@@ -388,34 +389,46 @@ interface DefaultLabelRendererOptions {
   groupLabelClass?: string;
   controlLabelClass?: string;
   requiredElement?: ReactNode;
+  labelContainer?: (children: ReactElement) => ReactElement;
 }
 
 export function createDefaultLabelRenderer(
-  options: DefaultLabelRendererOptions = { requiredElement: <span> *</span> },
+  options?: DefaultLabelRendererOptions,
 ): LabelRendererRegistration {
-  const { className, groupLabelClass, controlLabelClass, requiredElement } =
-    options;
+  const {
+    className,
+    groupLabelClass,
+    controlLabelClass,
+    requiredElement,
+    labelContainer,
+  } = {
+    requiredElement: <span> *</span>,
+    labelContainer: (c: ReactElement) => c,
+    ...options,
+  };
   return {
-    render: (props, labelStart, labelEnd) => (
-      <>
-        {labelStart}
-        <label
-          htmlFor={props.forId}
-          className={rendererClass(
-            props.className,
-            clsx(
-              className,
-              props.type === LabelType.Group && groupLabelClass,
-              props.type === LabelType.Control && controlLabelClass,
-            ),
-          )}
-        >
-          {props.label}
-          {props.required && requiredElement}
-        </label>
-        {labelEnd}
-      </>
-    ),
+    render: (props, labelStart, labelEnd) => {
+      return labelContainer(
+        <>
+          {labelStart}
+          <label
+            htmlFor={props.forId}
+            className={rendererClass(
+              props.className,
+              clsx(
+                className,
+                props.type === LabelType.Group && groupLabelClass,
+                props.type === LabelType.Control && controlLabelClass,
+              ),
+            )}
+          >
+            {props.label}
+            {props.required && requiredElement}
+          </label>
+          {labelEnd}
+        </>,
+      );
+    },
     type: "label",
   };
 }
