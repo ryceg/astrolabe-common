@@ -475,7 +475,6 @@ export interface ControlAdornmentForm {
   title: string;
   defaultExpanded: boolean;
   helpText: string;
-  text: string;
 }
 
 export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
@@ -502,10 +501,6 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
         name: "Icon",
         value: "Icon",
       },
-      {
-        name: "Place holder text",
-        value: "Placeholder",
-      },
     ],
   }),
   iconClass: makeScalarField({
@@ -517,7 +512,7 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
   }),
   placement: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["Icon", "HelpText", "Placeholder"],
+    onlyForTypes: ["Icon", "HelpText"],
     displayName: "Placement",
     options: [
       {
@@ -565,13 +560,6 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     notNullable: true,
     required: true,
     displayName: "Help Text",
-  }),
-  text: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["Placeholder"],
-    notNullable: true,
-    required: true,
-    displayName: "Text",
   }),
 });
 
@@ -685,6 +673,7 @@ export function toIconMappingForm(v: IconMapping): IconMappingForm {
 
 export interface RenderOptionsForm {
   type: string;
+  placeholder: string | null;
   groupOptions: GroupRenderOptionsForm;
   emptyText: string | null;
   sampleText: string | null;
@@ -709,6 +698,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
       {
         name: "Default",
         value: "Standard",
+      },
+      {
+        name: "Textfield",
+        value: "Textfield",
       },
       {
         name: "Radio buttons",
@@ -759,6 +752,11 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         value: "Group",
       },
     ],
+  }),
+  placeholder: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Textfield"],
+    displayName: "Placeholder",
   }),
   groupOptions: makeCompoundField({
     children: GroupRenderOptionsSchema,
