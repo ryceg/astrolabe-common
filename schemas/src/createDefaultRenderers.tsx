@@ -245,7 +245,7 @@ interface DefaultDataRendererOptions {
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
-  const selectRenderer = createSelectRenderer(options.selectOptions ?? {});
+  const selectRenderer = createSelectRenderer(options.selectOptions);
   const radioRenderer = createRadioRenderer(options.radioOptions);
   const { inputClass, booleanOptions, optionRenderer, displayOnlyClass } = {
     optionRenderer: selectRenderer,

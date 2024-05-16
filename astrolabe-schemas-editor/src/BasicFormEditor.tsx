@@ -57,6 +57,7 @@ import {
   createTailwindcss,
   TailwindConfig,
 } from "@mhsdesign/jit-browser-tailwindcss";
+import clsx from "clsx";
 
 interface PreviewData {
   showing: boolean;
@@ -91,6 +92,7 @@ export interface BasicFormEditorProps<A extends string> {
   tailwindConfig?: TailwindConfig;
   collectClasses?: (c: ControlDefinition) => (string | undefined | null)[];
   rootControlClass?: string;
+  editorClass?: string;
 }
 
 export function BasicFormEditor<A extends string>({
@@ -105,6 +107,7 @@ export function BasicFormEditor<A extends string>({
   editorControls,
   previewOptions,
   tailwindConfig,
+  editorClass,
   rootControlClass,
   collectClasses,
 }: BasicFormEditorProps<A>): ReactElement {
@@ -216,7 +219,9 @@ export function BasicFormEditor<A extends string>({
         <PanelGroup direction="horizontal">
           <Panel>
             <RenderControl render={() => <style>{styles.value}</style>} />
-            <div className="overflow-auto w-full h-full p-8">
+            <div
+              className={clsx("overflow-auto w-full h-full p-8", editorClass)}
+            >
               {previewMode ? (
                 <FormPreview
                   previewData={previewData}

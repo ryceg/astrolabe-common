@@ -222,10 +222,12 @@ public enum ControlAdornmentType
     Accordion,
     [Display(Name = "Help Text")]
     HelpText,
-    Icon
+    Icon,
+    [Display(Name = "Place holder text")]
+    Placeholder
 }
 
-[JsonBaseType("type", typeof(TooltipAdornment))]
+[JsonBaseType("type", typeof(TextAdornment))]
 [JsonSubType("Tooltip", typeof(TooltipAdornment))]
 [JsonSubType("Accordion", typeof(AccordionAdornment))]
 [JsonSubType("HelpText", typeof(HelpTextAdornment))]
@@ -243,3 +245,5 @@ public record TooltipAdornment(string Tooltip) : ControlAdornment(ControlAdornme
 public record AccordionAdornment(string Title, bool DefaultExpanded) : ControlAdornment(ControlAdornmentType.Accordion.ToString());
 
 public record HelpTextAdornment(string HelpText, AdornmentPlacement? Placement) : ControlAdornment(ControlAdornmentType.HelpText.ToString());
+
+public record TextAdornment(string Type, string Text, AdornmentPlacement? Placement) : ControlAdornment(Type);
