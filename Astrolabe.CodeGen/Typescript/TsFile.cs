@@ -241,7 +241,8 @@ public static class TsToSource
             double d => d.ToString(CultureInfo.InvariantCulture),
             null => "null",
             bool b => b ? "true" : "false",
-            IEnumerable v => new TsArrayExpr(((IEnumerable<object>)v).Select(x => new TsConstExpr(x)).ToList())
+            IDictionary d => new TsObjectExpr(d.Keys.Cast<object>().Select(x => new TsObjectField(new TsConstExpr(x), new TsConstExpr(d[x])))).ToSource(),
+            IEnumerable v => new TsArrayExpr(v.Cast<object>().Select(x => new TsConstExpr(x)).ToList())
                 .ToSource(),
             var v => new TsObjectExpr(v.GetType().GetProperties().Select(x =>
                     new TsObjectField(new TsRawExpr(JsonNamingPolicy.CamelCase.ConvertName(x.Name)),

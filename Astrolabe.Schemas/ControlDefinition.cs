@@ -232,6 +232,7 @@ public enum ControlAdornmentType
 [JsonSubType("Accordion", typeof(AccordionAdornment))]
 [JsonSubType("HelpText", typeof(HelpTextAdornment))]
 [JsonSubType("Icon", typeof(IconAdornment))]
+[JsonSubType("Placeholder", typeof(TextAdornment))]
 public abstract record ControlAdornment([property: SchemaOptions(typeof(ControlAdornmentType))] string Type)
 {
     [JsonExtensionData]

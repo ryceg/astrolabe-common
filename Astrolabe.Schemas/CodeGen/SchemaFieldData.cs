@@ -39,7 +39,7 @@ public record SchemaFieldMember(
     
     public IEnumerable<T> GetAttributes<T>()
     {
-        return PropertyMetadata.SelectMany(x => x.Item2).OfType<T>();
+        return PropertyMetadata.SelectMany(x => x.Item2).OfType<T>().Distinct();
     }
 
 }

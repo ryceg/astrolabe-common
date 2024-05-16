@@ -24,6 +24,8 @@ import {
 export interface FieldOptionForm {
   name: string;
   value: any;
+  description: string | null;
+  disabled: boolean | null;
 }
 
 export const FieldOptionSchema = buildSchema<FieldOptionForm>({
@@ -38,6 +40,14 @@ export const FieldOptionSchema = buildSchema<FieldOptionForm>({
     notNullable: true,
     required: true,
     displayName: "Value",
+  }),
+  description: makeScalarField({
+    type: FieldType.String,
+    displayName: "Description",
+  }),
+  disabled: makeScalarField({
+    type: FieldType.Bool,
+    displayName: "Disabled",
   }),
 });
 
@@ -107,12 +117,12 @@ export const SchemaValidatorSchema = buildSchema<SchemaValidatorForm>({
   fixedDate: makeScalarField({
     type: FieldType.Date,
     onlyForTypes: ["Date"],
-    displayName: "FixedDate",
+    displayName: "Fixed Date",
   }),
   daysFromCurrent: makeScalarField({
     type: FieldType.Int,
     onlyForTypes: ["Date"],
-    displayName: "DaysFromCurrent",
+    displayName: "Days From Current",
   }),
   min: makeScalarField({
     type: FieldType.Int,
@@ -146,6 +156,8 @@ export interface SchemaFieldForm {
   defaultValue: any | null;
   isTypeField: boolean | null;
   searchable: boolean | null;
+  singularName: string | null;
+  requiredText: string | null;
   options: FieldOptionForm[] | null;
   validators: SchemaValidatorForm[] | null;
   entityRefType: string;
@@ -217,7 +229,7 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   }),
   displayName: makeScalarField({
     type: FieldType.String,
-    displayName: "DisplayName",
+    displayName: "Display Name",
   }),
   system: makeScalarField({
     type: FieldType.Bool,
@@ -231,7 +243,7 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   onlyForTypes: makeScalarField({
     type: FieldType.String,
     collection: true,
-    displayName: "OnlyForTypes",
+    displayName: "Only For Types",
   }),
   required: makeScalarField({
     type: FieldType.Bool,
@@ -239,7 +251,7 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   }),
   notNullable: makeScalarField({
     type: FieldType.Bool,
-    displayName: "NotNullable",
+    displayName: "Not Nullable",
   }),
   collection: makeScalarField({
     type: FieldType.Bool,
@@ -247,15 +259,23 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   }),
   defaultValue: makeScalarField({
     type: FieldType.Any,
-    displayName: "DefaultValue",
+    displayName: "Default Value",
   }),
   isTypeField: makeScalarField({
     type: FieldType.Bool,
-    displayName: "IsTypeField",
+    displayName: "Is Type Field",
   }),
   searchable: makeScalarField({
     type: FieldType.Bool,
     displayName: "Searchable",
+  }),
+  singularName: makeScalarField({
+    type: FieldType.String,
+    displayName: "Singular Name",
+  }),
+  requiredText: makeScalarField({
+    type: FieldType.String,
+    displayName: "Required Text",
   }),
   options: makeCompoundField({
     children: FieldOptionSchema,
@@ -274,12 +294,12 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
     onlyForTypes: ["EntityRef"],
     notNullable: true,
     required: true,
-    displayName: "EntityRefType",
+    displayName: "Entity Ref Type",
   }),
   parentField: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["EntityRef"],
-    displayName: "ParentField",
+    displayName: "Parent Field",
   }),
   children: makeCompoundField({
     treeChildren: true,
@@ -291,12 +311,12 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   treeChildren: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Compound"],
-    displayName: "TreeChildren",
+    displayName: "Tree Children",
   }),
   schemaRef: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["Compound"],
-    displayName: "SchemaRef",
+    displayName: "Schema Ref",
   }),
 });
 
@@ -369,7 +389,7 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
     onlyForTypes: ["UserMatch"],
     notNullable: true,
     required: true,
-    displayName: "UserMatch",
+    displayName: "User Match",
   }),
 });
 
@@ -455,6 +475,7 @@ export interface ControlAdornmentForm {
   title: string;
   defaultExpanded: boolean;
   helpText: string;
+  text: string;
 }
 
 export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
@@ -481,6 +502,10 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
         name: "Icon",
         value: "Icon",
       },
+      {
+        name: "Place holder text",
+        value: "Placeholder",
+      },
     ],
   }),
   iconClass: makeScalarField({
@@ -488,11 +513,11 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     onlyForTypes: ["Icon"],
     notNullable: true,
     required: true,
-    displayName: "IconClass",
+    displayName: "Icon Class",
   }),
   placement: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["Icon", "HelpText"],
+    onlyForTypes: ["Icon", "HelpText", "Placeholder"],
     displayName: "Placement",
     options: [
       {
@@ -532,14 +557,21 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     onlyForTypes: ["Accordion"],
     notNullable: true,
     required: true,
-    displayName: "DefaultExpanded",
+    displayName: "Default Expanded",
   }),
   helpText: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["HelpText"],
     notNullable: true,
     required: true,
-    displayName: "HelpText",
+    displayName: "Help Text",
+  }),
+  text: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Placeholder"],
+    notNullable: true,
+    required: true,
+    displayName: "Text",
   }),
 });
 
@@ -590,7 +622,7 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
   }),
   hideTitle: makeScalarField({
     type: FieldType.Bool,
-    displayName: "HideTitle",
+    displayName: "Hide Title",
   }),
   direction: makeScalarField({
     type: FieldType.String,
@@ -640,7 +672,7 @@ export const IconMappingSchema = buildSchema<IconMappingForm>({
   }),
   materialIcon: makeScalarField({
     type: FieldType.String,
-    displayName: "MaterialIcon",
+    displayName: "Material Icon",
   }),
 });
 
@@ -733,31 +765,31 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     schemaRef: "GroupRenderOptions",
     onlyForTypes: ["Group"],
     notNullable: true,
-    displayName: "GroupOptions",
+    displayName: "Group Options",
   }),
   emptyText: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["DisplayOnly"],
-    displayName: "EmptyText",
+    displayName: "Empty Text",
   }),
   sampleText: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["DisplayOnly"],
-    displayName: "SampleText",
+    displayName: "Sample Text",
   }),
   noGroups: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["UserSelection"],
     notNullable: true,
     required: true,
-    displayName: "NoGroups",
+    displayName: "No Groups",
   }),
   noUsers: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["UserSelection"],
     notNullable: true,
     required: true,
-    displayName: "NoUsers",
+    displayName: "No Users",
   }),
   format: makeScalarField({
     type: FieldType.String,
@@ -769,7 +801,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["Synchronised"],
     notNullable: true,
     required: true,
-    displayName: "FieldToSync",
+    displayName: "Field To Sync",
     tags: ["_SchemaField"],
   }),
   syncType: makeScalarField({
@@ -777,7 +809,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["Synchronised"],
     notNullable: true,
     required: true,
-    displayName: "SyncType",
+    displayName: "Sync Type",
     options: [
       {
         name: "Camel",
@@ -799,14 +831,14 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     collection: true,
     onlyForTypes: ["IconList"],
     notNullable: true,
-    displayName: "IconMappings",
+    displayName: "Icon Mappings",
   }),
   allowImages: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["HtmlEditor"],
     notNullable: true,
     required: true,
-    displayName: "AllowImages",
+    displayName: "Allow Images",
   }),
 });
 
@@ -851,7 +883,7 @@ export const DisplayDataSchema = buildSchema<DisplayDataForm>({
     onlyForTypes: ["Icon"],
     notNullable: true,
     required: true,
-    displayName: "IconClass",
+    displayName: "Icon Class",
   }),
   text: makeScalarField({
     type: FieldType.String,
@@ -944,15 +976,15 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   }),
   styleClass: makeScalarField({
     type: FieldType.String,
-    displayName: "StyleClass",
+    displayName: "Style Class",
   }),
   layoutClass: makeScalarField({
     type: FieldType.String,
-    displayName: "LayoutClass",
+    displayName: "Layout Class",
   }),
   labelClass: makeScalarField({
     type: FieldType.String,
-    displayName: "LabelClass",
+    displayName: "Label Class",
   }),
   children: makeCompoundField({
     treeChildren: true,
@@ -971,7 +1003,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   hideTitle: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
-    displayName: "HideTitle",
+    displayName: "Hide Title",
   }),
   required: makeScalarField({
     type: FieldType.Bool,
@@ -983,12 +1015,12 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     children: RenderOptionsSchema,
     schemaRef: "RenderOptions",
     onlyForTypes: ["Data"],
-    displayName: "RenderOptions",
+    displayName: "Render Options",
   }),
   defaultValue: makeScalarField({
     type: FieldType.Any,
     onlyForTypes: ["Data"],
-    displayName: "DefaultValue",
+    displayName: "Default Value",
   }),
   readonly: makeScalarField({
     type: FieldType.Bool,
@@ -999,7 +1031,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   dontClearHidden: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
-    displayName: "DontClearHidden",
+    displayName: "Dont Clear Hidden",
   }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,
@@ -1011,28 +1043,28 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   compoundField: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["Group"],
-    displayName: "CompoundField",
+    displayName: "Compound Field",
     tags: ["_NestedSchemaField"],
   }),
   groupOptions: makeCompoundField({
     children: GroupRenderOptionsSchema,
     schemaRef: "GroupRenderOptions",
     onlyForTypes: ["Group"],
-    displayName: "GroupOptions",
+    displayName: "Group Options",
   }),
   displayData: makeCompoundField({
     children: DisplayDataSchema,
     schemaRef: "DisplayData",
     onlyForTypes: ["Display"],
     notNullable: true,
-    displayName: "DisplayData",
+    displayName: "Display Data",
   }),
   actionId: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["Action"],
     notNullable: true,
     required: true,
-    displayName: "ActionId",
+    displayName: "Action Id",
   }),
 });
 

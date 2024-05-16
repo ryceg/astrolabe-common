@@ -35,6 +35,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Annotation\Astrolabe.Annotation.csproj" />
+      <ProjectReference Include="..\Astrolabe.CodeGen\Astrolabe.CodeGen.csproj" />
     </ItemGroup>
 
 </Project>

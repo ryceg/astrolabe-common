@@ -29,7 +29,9 @@ public abstract record SchemaField([property: SchemaOptions(typeof(FieldType))] 
     public bool? Searchable { get; set; }
     
     public string? SingularName { get; set; }
-    
+
+    public string? RequiredText { get; set; }
+
     public IEnumerable<FieldOption>? Options { get; set; }
     
     public IEnumerable<SchemaValidator>? Validators { get; set; }

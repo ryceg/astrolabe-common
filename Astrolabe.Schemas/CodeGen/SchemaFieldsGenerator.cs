@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
@@ -21,7 +23,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
     }
 
     public SchemaFieldsGenerator(SchemaFieldsGeneratorOptions options)
-        : base(options, new MappedTypeVisitor())
+        : this(options, new MappedTypeVisitor())
     {
     }
 
@@ -264,6 +266,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             )
             .ToList();
         var memberData = member.Data();
+        var schemaOptions = member.GetAttribute<SchemaOptionsAttribute>();
         var fieldName = GetFieldName(member);
         var tags = member.GetAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
         var enumType = member.GetAttribute<SchemaOptionsAttribute>()?.EnumType
@@ -271,6 +274,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
         var (makeField, isScalar) = FieldForType(memberData, parent, member.PropertyMetadata.SelectMany(x => x.Item2).ToList());
         var defaultValue = ConvertDefaultValue(member.GetAttribute<DefaultValueAttribute>()?.Value);
+        var displayName = member.GetAttribute<DisplayAttribute>()?.Name ??
+                          (_options.DisplayNameFromProperty ?? DefaultDisplayName).Invoke(member.PropertyName);
         var buildFieldCall = SetOptions(
             makeField,
             new Dictionary<string, object?>
@@ -283,9 +288,13 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                 { "notNullable", memberData.Nullable ? null : true },
                 { "required", memberData.Nullable || !isScalar ? null : true },
                 { "defaultValue", defaultValue },
-                { "displayName", member.GetAttribute<DisplayAttribute>()?.Name ?? member.FieldName },
+                { "singularName", schemaOptions?.SingularName },
+                { "requiredText", schemaOptions?.RequiredText },
+                { "displayName",  displayName },
                 { "tags", tags.Count > 0 ? tags : null },
-                { "options", options != null ? new TsConstExpr(options) : null }
+                { "options", options != null ? 
+                    new TsConstExpr(options.Select(x => 
+                        new Dictionary<string, object> {{"name", x.Name}, {"value", x.Value}} )) : null }
             }
         );
         return TsObjectField.NamedField(fieldName, buildFieldCall);
@@ -299,6 +308,43 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             { Type.IsEnum: true } => data.Type,
             _ => null
         };
+    }
+
+    public static string DefaultDisplayName(string propertyName)
+    {
+        var buf = new StringBuilder(propertyName.Length+4);
+        var uppers = 0;
+        var i = 0;
+        foreach (var c in propertyName.ToCharArray())
+        {
+            if (char.IsUpper(c))
+            {
+                uppers++;
+            }
+            else
+            {
+                if (uppers > 0)
+                {
+                    InsertSpace();
+                    uppers = 0;
+                }
+                buf.Append(c);
+            }
+            i++;
+        }
+
+        if (uppers > 0)
+            buf.Append(propertyName.AsSpan(i - uppers, uppers));
+        return buf.ToString();
+
+        void InsertSpace()
+        {
+            buf.Append(propertyName.AsSpan(i - uppers, uppers - 1));
+            if (buf.Length > 0)
+                buf.Append(' ');
+            buf.Append(propertyName.AsSpan(i - 1, 1));
+        }
+
     }
 
     private static object? ConvertDefaultValue(object? v)
@@ -414,7 +460,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         ObjectData parentObject, ICollection<object> propertyMetadata)
     {
         var fieldType = _options.CustomFieldType?.Invoke(simpleType.Type);
-        fieldType ??= propertyMetadata.OfType<SchemaFieldTypeAttribute>().FirstOrDefault()?.FieldType;
+        fieldType ??= propertyMetadata.OfType<SchemaOptionsAttribute>().FirstOrDefault()?.FieldType;
         if (fieldType != null)
         {
             if (Enum.TryParse(typeof(FieldType), fieldType, true, out var ft))
@@ -539,6 +585,7 @@ public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
         ImportType = x => new TsImport(clientModule, x.Name);
     }
 
+    public Func<string, string>? DisplayNameFromProperty { get; set; }
     public Func<Type, bool>? CreateConvert { get; set; }
     public Func<Type, string?>? CustomFieldType { get; set; }
 
