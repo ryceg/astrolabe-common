@@ -4,28 +4,45 @@ import { useDatePicker } from "react-aria";
 import { useDatePickerState } from "react-stately";
 import { DateField } from "./DateParts/DateField";
 import { Calendar } from "./DateParts/Calendar";
-import { CalendarDate, parseDate } from "@internationalized/date";
+import {
+  CalendarDate,
+  parseAbsolute,
+  parseDate,
+  toCalendarDate,
+  toZoned,
+} from "@internationalized/date";
 import { AriaPopover } from "./DateParts/AriaPopover";
 import { AriaDialog } from "./DateParts/AriaDialog";
 import { AriaButton } from "./DateParts/AriaButton";
 
 import clsx from "clsx";
+
 export function DatePicker({
   control,
   readonly,
+  dateTime,
   className,
 }: {
-  control: Control<string>;
+  control: Control<string | null>;
   className?: string;
   readonly?: boolean;
   id?: string;
+  dateTime?: boolean;
 }) {
   const disabled = control.disabled;
   let state = useDatePickerState({
-    value: control.isNull ? null : parseDate(control.value),
+    value: !control.value
+      ? null
+      : dateTime
+        ? toCalendarDate(parseAbsolute(control.value, "UTC"))
+        : parseDate(control.value),
     onChange: (c) => {
       control.touched = true;
-      control.value = c?.toString();
+      control.value = c
+        ? dateTime
+          ? toZoned(c, "UTC").toAbsoluteString()
+          : c.toString()
+        : null;
     },
   });
   let ref = useRef<HTMLDivElement | null>(null);

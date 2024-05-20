@@ -26,7 +26,6 @@
     "@astroapps/ui-tree": "^1.0.0",
     "@dnd-kit/core": "^6.0.5",
     "framer-motion": "^10.16.4",
-    "microbundle": "^0.15.1",
     "@mhsdesign/jit-browser-tailwindcss": "^0.4.0",
     "react": "^18.2.0",
     "immutability-helper": "^3.1.1",
@@ -44,6 +43,7 @@
     "typescript": "5.2.2",
     "prettier": "^3.0.3",
     "http-request-cli": "^0.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "microbundle": "^0.15.1"
   }
 }

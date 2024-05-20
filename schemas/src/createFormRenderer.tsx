@@ -104,9 +104,9 @@ export function createFormRenderer(
         (x) =>
           (x.collection ?? false) === (field.collection ?? false) &&
           (x.options ?? false) === options &&
-          isOneOf(x.schemaType, field.type) &&
-          isOneOf(x.renderType, renderType) &&
-          (!x.match || x.match(props)),
+          ((x.schemaType && isOneOf(x.schemaType, field.type)) ||
+            (x.renderType && isOneOf(x.renderType, renderType)) ||
+            (x.match && x.match(props))),
       ) ?? defaultRenderers.data;
 
     const result = renderer.render(props, formRenderers);
