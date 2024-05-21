@@ -179,6 +179,7 @@ export interface GroupRendererProps extends ParentRendererProps {
 
 export interface DataRendererProps extends ParentRendererProps {
   renderOptions: RenderOptions;
+  definition: DataControlDefinition;
   field: SchemaField;
   id: string;
   control: Control<any>;
@@ -513,6 +514,7 @@ export function defaultDataProps({
     (field.options?.length ?? 0) === 0 ? null : field.options;
   const allowed = allowedOptions?.value ?? [];
   return {
+    definition,
     childDefinitions: definition.children ?? [],
     control,
     field,
