@@ -20,6 +20,7 @@ import {
   AdornmentPlacement,
   ControlAdornment,
   ControlDefinition,
+  ControlDefinitionType,
   DataControlDefinition,
   DisplayData,
   DynamicPropertyType,
@@ -46,8 +47,8 @@ import {
 } from "./util";
 import { dataControl } from "./controlBuilder";
 import {
-  EvalExpressionHook,
   defaultUseEvalExpressionHook,
+  EvalExpressionHook,
   useEvalAllowedOptionsHook,
   useEvalDefaultValueHook,
   useEvalDisabledHook,
@@ -181,6 +182,7 @@ export interface DataRendererProps extends ParentRendererProps {
   renderOptions: RenderOptions;
   definition: DataControlDefinition;
   field: SchemaField;
+  elementIndex?: number;
   id: string;
   control: Control<any>;
   readonly: boolean;
@@ -201,6 +203,7 @@ export interface ActionRendererProps {
 export interface ControlRenderProps {
   control: Control<any>;
   parentPath?: JsonPath[];
+  elementIndex?: number;
 }
 
 export interface FormContextOptions {
@@ -214,11 +217,11 @@ export interface DataControlProps {
   field: SchemaField;
   dataContext: ControlDataContext;
   control: Control<any>;
-  options: FormContextOptions;
-  style: React.CSSProperties | undefined;
+  formOptions: FormContextOptions;
+  style?: React.CSSProperties | undefined;
   renderChild: ChildRenderer;
+  elementIndex?: number;
   allowedOptions?: Control<any[] | undefined>;
-  elementRenderer?: (elemIndex: number) => ReactNode;
   useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
 }
 
@@ -278,7 +281,11 @@ export function useControlRenderer(
   const r = useUpdatedRef({ options, definition, fields, schemaField });
 
   const Component = useCallback(
-    ({ control: rootControl, parentPath = [] }: ControlRenderProps) => {
+    ({
+      control: rootControl,
+      parentPath = [],
+      elementIndex,
+    }: ControlRenderProps) => {
       const stopTracking = useComponentTracking();
       try {
         const { definition: c, options, fields, schemaField } = r.current;
@@ -374,27 +381,27 @@ export function useControlRenderer(
         const labelAndChildren = renderControlLayout({
           definition: c,
           renderer,
-          renderChild: (k, child, path) => (
-            <ControlRenderer
-              key={k}
-              control={controlDataContext.data}
-              fields={controlDataContext.fields}
-              definition={findChildDefinition(c, child)}
-              parentPath={
-                path
-                  ? [...controlDataContext.path, ...path]
-                  : controlDataContext.path
-              }
-              renderer={renderer}
-              options={childOptions}
-            />
-          ),
+          renderChild: (k, child, options) => {
+            const dataContext = options?.dataContext ?? controlDataContext;
+            return (
+              <ControlRenderer
+                key={k}
+                control={dataContext.data}
+                fields={dataContext.fields}
+                definition={child}
+                parentPath={dataContext.path}
+                renderer={renderer}
+                options={childOptions}
+                elementIndex={options?.elementIndex}
+              />
+            );
+          },
           createDataProps: dataProps,
           formOptions: myOptions,
           dataContext: controlDataContext,
           control: displayControl ?? control,
           labelText,
-          schemaField,
+          field: schemaField,
           displayControl,
           style: customStyle.value,
           allowedOptions,
@@ -474,6 +481,7 @@ export function ControlRenderer({
   options?: ControlRenderOptions;
   control: Control<any>;
   parentPath?: JsonPath[];
+  elementIndex?: number;
 }) {
   const Render = useControlRenderer(definition, fields, renderer, options);
   return <Render control={control} parentPath={parentPath} />;
@@ -502,8 +510,7 @@ export function defaultDataProps({
   definition,
   field,
   control,
-  options,
-  elementRenderer,
+  formOptions,
   style,
   allowedOptions,
   ...props
@@ -523,24 +530,34 @@ export function defaultDataProps({
       fieldOptions && allowed.length > 0
         ? fieldOptions.filter((x) => allowed.includes(x.value))
         : fieldOptions,
-    readonly: !!options.readonly,
+    readonly: !!formOptions.readonly,
     renderOptions: definition.renderOptions ?? { type: "Standard" },
     required,
-    hidden: !!options.hidden,
+    hidden: !!formOptions.hidden,
     className,
     style,
     ...props,
-    toArrayProps: elementRenderer
-      ? () =>
-          defaultArrayProps(
-            control,
-            field,
-            required,
-            style,
-            className,
-            elementRenderer,
-          )
-      : undefined,
+    toArrayProps:
+      field.collection && props.elementIndex == null
+        ? () =>
+            defaultArrayProps(
+              control,
+              field,
+              required,
+              style,
+              className,
+              (elementIndex) =>
+                props.renderChild(
+                  control.elements?.[elementIndex].uniqueId ?? elementIndex,
+                  {
+                    type: ControlDefinitionType.Data,
+                    field: definition.field,
+                    hideTitle: true,
+                  } as DataControlDefinition,
+                  { elementIndex },
+                ),
+            )
+        : undefined,
   };
 }
 
@@ -575,10 +592,15 @@ export function defaultArrayProps(
   };
 }
 
+export interface ChildRendererOptions {
+  elementIndex?: number;
+  dataContext?: ControlDataContext;
+}
+
 export type ChildRenderer = (
   k: Key,
-  child: number | number[],
-  parentPath?: JsonPath[],
+  child: ControlDefinition,
+  options?: ChildRendererOptions,
 ) => ReactNode;
 
 export interface RenderControlProps {
@@ -590,27 +612,32 @@ export interface RenderControlProps {
   dataContext: ControlDataContext;
   control?: Control<any>;
   labelText?: Control<string | null | undefined>;
-  schemaField?: SchemaField;
+  field?: SchemaField;
+  elementIndex?: number;
   displayControl?: Control<string | undefined>;
   style?: React.CSSProperties;
   allowedOptions?: Control<any[] | undefined>;
   useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
 }
-export function renderControlLayout({
-  definition: c,
-  renderer,
-  renderChild: childRenderer,
-  control: childControl,
-  schemaField,
-  dataContext,
-  formOptions: dataOptions,
-  createDataProps: dataProps,
-  displayControl,
-  style,
-  labelText,
-  allowedOptions,
-  useChildVisibility,
-}: RenderControlProps): ControlLayoutProps {
+export function renderControlLayout(
+  props: RenderControlProps,
+): ControlLayoutProps {
+  const {
+    definition: c,
+    renderer,
+    renderChild,
+    control,
+    field,
+    dataContext,
+    formOptions,
+    createDataProps: dataProps,
+    displayControl,
+    elementIndex,
+    style,
+    labelText,
+    allowedOptions,
+    useChildVisibility,
+  } = props;
   if (isDataControlDefinition(c)) {
     return renderData(c);
   }
@@ -627,7 +654,7 @@ export function renderControlLayout({
       processLayout: renderer.renderGroup(
         groupProps(
           c,
-          childRenderer,
+          renderChild,
           dataContext,
           c.styleClass,
           style,
@@ -666,47 +693,31 @@ export function renderControlLayout({
   }
   return {};
 
-  function renderData(c: DataControlDefinition, elemIndex?: number) {
-    if (!schemaField) return { children: "No schema field for: " + c.field };
-    if (!childControl) return { children: "No control for: " + c.field };
-    const props = dataProps({
-      definition: c,
-      field: schemaField,
-      dataContext:
-        elemIndex != null
-          ? { ...dataContext, path: [...dataContext.path, elemIndex] }
-          : dataContext,
-      control:
-        elemIndex != null ? childControl!.elements[elemIndex] : childControl,
-      options: dataOptions,
-      style,
-      allowedOptions,
-      renderChild:
-        elemIndex != null
-          ? (k, d, p) =>
-              childRenderer(k, d, p ? [elemIndex, ...p] : [elemIndex])
-          : childRenderer,
-      useChildVisibility,
-      elementRenderer:
-        elemIndex == null && schemaField.collection
-          ? (ei) => renderLayoutParts(renderData(c, ei), renderer).children
-          : undefined,
-    });
+  function renderData(c: DataControlDefinition) {
+    if (!field) return { children: "No schema field for: " + c.field };
+    if (!control) return { children: "No control for: " + c.field };
+    const rendererProps = dataProps(
+      props as RenderControlProps & {
+        definition: DataControlDefinition;
+        field: SchemaField;
+        control: Control<any>;
+      },
+    );
 
     const label = !c.hideTitle
-      ? controlTitle(labelText?.value ?? c.title, schemaField)
+      ? controlTitle(labelText?.value ?? c.title, field)
       : undefined;
     return {
-      processLayout: renderer.renderData(props),
+      processLayout: renderer.renderData(rendererProps),
       label: {
         type: LabelType.Control,
         label,
-        forId: props.id,
+        forId: rendererProps.id,
         required: c.required,
         hide: c.hideTitle,
         className: cc(c.labelClass),
       },
-      errorControl: childControl,
+      errorControl: control,
     };
   }
 }
