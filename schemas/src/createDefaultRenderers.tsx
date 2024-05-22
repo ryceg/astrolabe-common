@@ -219,7 +219,7 @@ export function createDefaultGroupRenderer(
             className={rendererClass(props.className, clsx(className, gcn))}
             style={style}
           >
-            {childDefinitions?.map((c, i) => renderChild(i, i))}
+            {childDefinitions?.map((c, i) => renderChild(i, c))}
           </div>
         ),
       };

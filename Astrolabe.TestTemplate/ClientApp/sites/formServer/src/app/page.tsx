@@ -52,7 +52,7 @@ interface GroupData {
 }
 
 interface OurData {
-  group: GroupData;
+  group: GroupData[];
 }
 
 const fields = buildSchema<OurData>({
@@ -63,6 +63,7 @@ const fields = buildSchema<OurData>({
       field1: stringField("Field 1", { onlyForTypes: ["one"] }),
       field2: stringField("Field 2", { onlyForTypes: ["one", "two"] }),
     }),
+    { collection: true },
   ),
 });
 
@@ -71,37 +72,37 @@ const customDisplay = createDisplayRenderer(
   { renderType: "Custom" },
 );
 
-const testRender = createGroupRenderer((p, r) => <TestChildVis {...p} />, {
-  renderType: "Test",
-});
+// const testRender = createGroupRenderer((p, r) => <TestChildVis {...p} />, {
+//   renderType: "Test",
+// });
 
-function TestChildVis(p: GroupRendererProps) {
-  const visHooks = useDynamicHooks(
-    Object.fromEntries(
-      p.childDefinitions.map((x, i) => [i, p.useChildVisibility(i)]),
-    ),
-  );
-  const Render = useTrackedComponent(() => {
-    const visses = Object.entries(visHooks(p.dataContext)).map((x) => x[1]);
-    return (
-      <div>
-        <RenderArrayElements array={visses}>
-          {(c, i) => (
-            <>
-              {c.uniqueId}
-              {c.value ? "Visible" : "Hidden"}
-              {p.renderChild(i, i)}
-            </>
-          )}
-        </RenderArrayElements>
-      </div>
-    );
-  }, [visHooks]);
-  return <Render />;
-}
+// function TestChildVis(p: GroupRendererProps) {
+//   const visHooks = useDynamicHooks(
+//     Object.fromEntries(
+//       p.childDefinitions.map((x, i) => [i, p.useChildVisibility(i)]),
+//     ),
+//   );
+//   const Render = useTrackedComponent(() => {
+//     const visses = Object.entries(visHooks(p.dataContext)).map((x) => x[1]);
+//     return (
+//       <div>
+//         <RenderArrayElements array={visses}>
+//           {(c, i) => (
+//             <>
+//               {c.uniqueId}
+//               {c.value ? "Visible" : "Hidden"}
+//               {p.renderChild(i, i)}
+//             </>
+//           )}
+//         </RenderArrayElements>
+//       </div>
+//     );
+//   }, [visHooks]);
+//   return <Render />;
+// }
 
 const StdFormRenderer = createFormRenderer(
-  [testRender, customDisplay],
+  [customDisplay],
   createDefaultRenderers(defaultTailwindTheme),
 );
 
@@ -125,11 +126,11 @@ export default function Editor() {
         editorRenderer={StdFormRenderer}
         loadForm={async (c) => {
           const controls = addMissingControls(fields, []);
-          const dcd = controls[0] as DataControlDefinition;
-          dcd.renderOptions = {
-            type: "Group",
-            groupOptions: { type: "Test" },
-          } as DataGroupRenderOptions;
+          // const dcd = controls[0] as DataControlDefinition;
+          // dcd.renderOptions = {
+          //   type: "Group",
+          //   groupOptions: { type: "Standard" },
+          // } as DataGroupRenderOptions;
           return {
             fields,
             controls,

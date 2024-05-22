@@ -242,8 +242,8 @@ export function BasicFormEditor<A extends string>({
                     children={(c, i) => (
                       <div className={rootControlClass}>
                         <FormControlPreview
-                          item={c}
-                          fields={fields}
+                          definition={trackedValue(c)}
+                          fields={trackedValue(fields)}
                           dropIndex={i}
                         />
                       </div>

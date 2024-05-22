@@ -1,4 +1,9 @@
-import { Control, useComputed, useControl } from "@react-typed-forms/core";
+import {
+  Control,
+  unsafeRestoreControl,
+  useComputed,
+  useControl,
+} from "@react-typed-forms/core";
 import React, {
   createContext,
   HTMLAttributes,
@@ -10,19 +15,23 @@ import { useDroppable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import {
   ControlDataContext,
+  ControlDefinition,
   ControlDefinitionType,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
   DynamicPropertyType,
+  elementValueForField,
   findChildDefinition,
   FormRenderer,
   getControlData,
   getDisplayOnlyOptions,
+  isDataControlDefinition,
   isGroupControlsDefinition,
   lookupSchemaField,
   makeHook,
   renderControlLayout,
+  SchemaField,
   SchemaInterface,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
@@ -35,11 +44,12 @@ import {
 } from "./util";
 
 export interface FormControlPreviewProps {
-  item: ControlForm;
-  parent?: ControlForm;
+  definition: ControlDefinition;
+  parent?: ControlDefinition;
   dropIndex: number;
   noDrop?: boolean;
-  fields: Control<SchemaFieldForm[]>;
+  fields: SchemaField[];
+  elementIndex?: number;
   schemaInterface?: SchemaInterface;
 }
 
@@ -71,16 +81,21 @@ function usePreviewContext() {
 }
 
 export function FormControlPreview(props: FormControlPreviewProps) {
-  const { item, parent, dropIndex, noDrop } = props;
+  const { definition, parent, elementIndex, fields, dropIndex, noDrop } = props;
   const { selected, dropSuccess, renderer } = usePreviewContext();
-  const fields = trackedValue(props.fields);
-  const definition = trackedValue(item);
+  const item = unsafeRestoreControl(definition) as
+    | Control<ControlDefinitionForm>
+    | undefined;
   const isSelected = selected.value === item;
   const scrollRef = useScrollIntoView(isSelected);
   const { setNodeRef, isOver } = useDroppable({
-    id: item.uniqueId,
+    id: item?.uniqueId ?? 0,
     disabled: Boolean(noDrop),
-    data: controlDropData(parent, dropIndex, dropSuccess),
+    data: controlDropData(
+      parent ? unsafeRestoreControl(parent)?.as() : undefined,
+      dropIndex,
+      dropSuccess,
+    ),
   });
   const schemaField = lookupSchemaField(definition, fields);
   const groupControl = useControl({});
@@ -90,16 +105,23 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     fields,
     schemaInterface: props.schemaInterface ?? defaultSchemaInterface,
   };
-  const [, , childContext] = getControlData(schemaField, dataContext);
+  const [, , childContext] = getControlData(
+    schemaField,
+    dataContext,
+    elementIndex,
+  );
   const displayOptions = getDisplayOnlyOptions(definition);
   const childControl = useComputed(() =>
     displayOptions
       ? displayOptions.sampleText ?? "Sample Data"
       : schemaField &&
-        defaultValueForField(
-          schemaField,
-          schemaField.collection || definition.required,
-        ),
+        (elementIndex == null
+          ? defaultValueForField(
+              schemaField,
+              schemaField.collection ||
+                (isDataControlDefinition(definition) && definition.required),
+            )
+          : elementValueForField(schemaField)),
   );
   const adornments =
     definition.adornments?.map((x) =>
@@ -109,28 +131,33 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const layout = renderControlLayout({
     definition,
     renderer,
-    renderChild: (k, childPath, c) => (
-      <FormControlPreview
-        key={k}
-        item={unsafeRestoreControl(
-          findChildDefinition(definition, childPath),
-        ).as()}
-        parent={item}
-        dropIndex={0}
-        fields={unsafeRestoreControl(childContext.fields).as()}
-      />
-    ),
+    parentContext: dataContext,
+    elementIndex,
+    renderChild: (k, def, c) => {
+      return (
+        <FormControlPreview
+          key={k}
+          definition={def}
+          parent={definition}
+          dropIndex={0}
+          elementIndex={c?.elementIndex}
+          fields={c?.dataContext?.fields ?? childContext.fields}
+        />
+      );
+    },
     createDataProps: defaultDataProps,
     formOptions: {},
-    dataContext,
+    dataContext: childContext,
     control: childControl,
-    schemaField,
+    field: schemaField,
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
   });
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"
-  > = isGroupControlsDefinition(definition)
+  > = isGroupControlsDefinition(definition) ||
+  (isDataControlDefinition(definition) &&
+    (definition.children?.length ?? 0) > 0)
     ? { onClick: (e) => (selected.value = item) }
     : {
         onClickCapture: (e) => {
@@ -155,7 +182,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   return (
     <motion.div
       layout={defaultLayoutChange}
-      layoutId={item.uniqueId.toString()}
+      layoutId={item?.uniqueId.toString()}
       style={{
         ...style,
         backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
@@ -169,7 +196,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       }}
     >
       <EditorDetails
-        control={item}
+        control={definition}
+        arrayElement={elementIndex != null}
         schemaVisibility={!!schemaField?.onlyForTypes?.length}
       />
 
@@ -180,27 +208,25 @@ export function FormControlPreview(props: FormControlPreviewProps) {
 function EditorDetails({
   control,
   schemaVisibility,
+  arrayElement,
 }: {
-  control: ControlForm;
+  control: ControlDefinition;
+  arrayElement: boolean;
   schemaVisibility?: boolean;
 }) {
   const { VisibilityIcon } = usePreviewContext();
-  const {
-    type: { value: type },
-    field,
-    compoundField,
-    dynamic,
-  } = control.fields;
-  const hasVisibilityScripting = dynamic.value?.some(
+  const { dynamic } = control;
+  const hasVisibilityScripting = dynamic?.some(
     (x) => x.type === DynamicPropertyType.Visible,
   );
 
-  const fieldName =
-    type === ControlDefinitionType.Data
-      ? field.value
-      : type === ControlDefinitionType.Group
-      ? compoundField.value
-      : null;
+  const fieldName = !arrayElement
+    ? isDataControlDefinition(control)
+      ? control.field
+      : isGroupControlsDefinition(control)
+      ? control.compoundField
+      : null
+    : null;
 
   if (!fieldName && !(hasVisibilityScripting || schemaVisibility)) return <></>;
   return (
@@ -221,28 +247,4 @@ function EditorDetails({
       )}
     </div>
   );
-}
-
-const restoreControlSymbol = Symbol("restoreControl");
-export function trackedValue<A>(c: Control<A>): A {
-  const cv: any = c.current.value;
-  if (cv == null) return cv;
-  if (typeof cv !== "object") return c.value;
-  const arr = Array.isArray(cv);
-  return new Proxy(cv, {
-    get(target: object, p: string | symbol, receiver: any): any {
-      if (p === restoreControlSymbol) return c;
-      if (arr) {
-        if (p === "length" || p === "toJSON") return Reflect.get(cv, p);
-        const nc = (c.elements as any)[p];
-        if (typeof nc === "function") return nc;
-        return trackedValue(nc);
-      }
-      return trackedValue((c.fields as any)[p]);
-    },
-  }) as A;
-}
-
-export function unsafeRestoreControl<A>(v: A): Control<A> {
-  return (v as any)[restoreControlSymbol];
 }

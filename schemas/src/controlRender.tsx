@@ -165,13 +165,17 @@ export interface DisplayRendererProps {
   style?: React.CSSProperties;
 }
 
+export type ChildVisibilityFunc = (
+  child: ControlDefinition,
+  context?: ControlDataContext,
+) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
   childDefinitions: ControlDefinition[];
   renderChild: ChildRenderer;
   className?: string;
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
-  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
+  useChildVisibility: ChildVisibilityFunc;
 }
 
 export interface GroupRendererProps extends ParentRendererProps {
@@ -216,13 +220,14 @@ export interface DataControlProps {
   definition: DataControlDefinition;
   field: SchemaField;
   dataContext: ControlDataContext;
+  parentContext: ControlDataContext;
   control: Control<any>;
   formOptions: FormContextOptions;
   style?: React.CSSProperties | undefined;
   renderChild: ChildRenderer;
   elementIndex?: number;
   allowedOptions?: Control<any[] | undefined>;
-  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
+  useChildVisibility: ChildVisibilityFunc;
 }
 
 export type CreateDataProps = (
@@ -330,6 +335,7 @@ export function useControlRenderer(
         const [parentControl, control, controlDataContext] = getControlData(
           schemaField,
           parentDataContext,
+          elementIndex,
         );
         useControlEffect(
           () => [
@@ -399,17 +405,18 @@ export function useControlRenderer(
           createDataProps: dataProps,
           formOptions: myOptions,
           dataContext: controlDataContext,
+          parentContext: parentDataContext,
           control: displayControl ?? control,
+          elementIndex,
           labelText,
           field: schemaField,
           displayControl,
           style: customStyle.value,
           allowedOptions,
-          useChildVisibility: (child) => {
-            const childDef = findChildDefinition(c, child);
+          useChildVisibility: (childDef, context) => {
             const schemaField = lookupSchemaField(
               childDef,
-              controlDataContext.fields,
+              (context ?? controlDataContext).fields,
             );
             return useEvalVisibilityHook(useExpr, childDef, schemaField);
           },
@@ -444,17 +451,24 @@ export function lookupSchemaField(
 export function getControlData(
   schemaField: SchemaField | undefined,
   parentContext: ControlDataContext,
+  elementIndex: number | undefined,
 ): [Control<any> | undefined, Control<any> | undefined, ControlDataContext] {
   const { data, path } = parentContext;
   const parentControl = data.lookupControl(path);
-  const childPath = schemaField ? [...path, schemaField.field] : path;
+  const childPath = schemaField
+    ? elementIndex != null
+      ? [...path, schemaField.field, elementIndex]
+      : [...path, schemaField.field]
+    : path;
   const childControl =
     schemaField && parentControl
       ? parentControl.fields?.[schemaField.field]
       : undefined;
   return [
     parentControl,
-    childControl,
+    childControl && elementIndex != null
+      ? childControl.elements?.[elementIndex]
+      : childControl,
     schemaField
       ? {
           ...parentContext,
@@ -474,6 +488,7 @@ export function ControlRenderer({
   options,
   control,
   parentPath,
+  elementIndex,
 }: {
   definition: ControlDefinition;
   fields: SchemaField[];
@@ -484,7 +499,13 @@ export function ControlRenderer({
   elementIndex?: number;
 }) {
   const Render = useControlRenderer(definition, fields, renderer, options);
-  return <Render control={control} parentPath={parentPath} />;
+  return (
+    <Render
+      control={control}
+      parentPath={parentPath}
+      elementIndex={elementIndex}
+    />
+  );
 }
 
 function groupProps(
@@ -493,7 +514,7 @@ function groupProps(
   dataContext: ControlDataContext,
   className: string | null | undefined,
   style: React.CSSProperties | undefined,
-  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>,
+  useChildVisibility: ChildVisibilityFunc,
 ): GroupRendererProps {
   return {
     childDefinitions: definition.children ?? [],
@@ -552,9 +573,10 @@ export function defaultDataProps({
                   {
                     type: ControlDefinitionType.Data,
                     field: definition.field,
+                    children: definition.children,
                     hideTitle: true,
                   } as DataControlDefinition,
-                  { elementIndex },
+                  { elementIndex, dataContext: props.parentContext },
                 ),
             )
         : undefined,
@@ -610,6 +632,7 @@ export interface RenderControlProps {
   createDataProps: CreateDataProps;
   formOptions: FormContextOptions;
   dataContext: ControlDataContext;
+  parentContext: ControlDataContext;
   control?: Control<any>;
   labelText?: Control<string | null | undefined>;
   field?: SchemaField;
@@ -617,7 +640,7 @@ export interface RenderControlProps {
   displayControl?: Control<string | undefined>;
   style?: React.CSSProperties;
   allowedOptions?: Control<any[] | undefined>;
-  useChildVisibility: (child: number | number[]) => EvalExpressionHook<boolean>;
+  useChildVisibility: ChildVisibilityFunc;
 }
 export function renderControlLayout(
   props: RenderControlProps,
@@ -629,13 +652,10 @@ export function renderControlLayout(
     control,
     field,
     dataContext,
-    formOptions,
     createDataProps: dataProps,
     displayControl,
-    elementIndex,
     style,
     labelText,
-    allowedOptions,
     useChildVisibility,
   } = props;
   if (isDataControlDefinition(c)) {
