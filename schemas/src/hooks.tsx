@@ -31,6 +31,7 @@ import {
   ControlDataContext,
   defaultValueForField,
   DynamicHookGenerator,
+  elementValueForField,
   findField,
   getDisplayOnlyOptions,
   getTypeField,
@@ -161,7 +162,8 @@ export function useEvalDisplayHook(
 export function useEvalDefaultValueHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
-  schemaField?: SchemaField,
+  schemaField: SchemaField | undefined,
+  element: boolean,
 ): EvalExpressionHook {
   const dynamicValue = useEvalDynamicHook(
     definition,
@@ -179,7 +181,9 @@ export function useEvalDefaultValueHook(
         return (
           dcv ??
           (schemaField
-            ? defaultValueForField(schemaField, required)
+            ? element
+              ? elementValueForField(schemaField)
+              : defaultValueForField(schemaField, required)
             : undefined)
         );
       }

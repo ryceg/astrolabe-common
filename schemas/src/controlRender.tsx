@@ -175,10 +175,12 @@ export interface ParentRendererProps {
   className?: string;
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
+  parentContext: ControlDataContext;
   useChildVisibility: ChildVisibilityFunc;
 }
 
 export interface GroupRendererProps extends ParentRendererProps {
+  definition: ControlDefinition;
   renderOptions: GroupRenderOptions;
 }
 
@@ -207,7 +209,6 @@ export interface ActionRendererProps {
 export interface ControlRenderProps {
   control: Control<any>;
   parentPath?: JsonPath[];
-  elementIndex?: number;
 }
 
 export interface FormContextOptions {
@@ -245,6 +246,7 @@ export interface ControlRenderOptions extends FormContextOptions {
   useEvalExpressionHook?: UseEvalExpressionHook;
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
+  elementIndex?: number;
 }
 export function useControlRenderer(
   definition: ControlDefinition,
@@ -253,6 +255,7 @@ export function useControlRenderer(
   options: ControlRenderOptions = {},
 ): FC<ControlRenderProps> {
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
+  const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
 
@@ -263,6 +266,7 @@ export function useControlRenderer(
       useExpr,
       definition,
       schemaField,
+      elementIndex != null,
     ),
     visibleControl: useEvalVisibilityHook(useExpr, definition, schemaField),
     readonlyControl: useEvalReadonlyHook(useExpr, definition),
@@ -283,17 +287,25 @@ export function useControlRenderer(
   });
 
   const useValidation = useValidationHook(definition);
-  const r = useUpdatedRef({ options, definition, fields, schemaField });
+  const r = useUpdatedRef({
+    options,
+    definition,
+    fields,
+    schemaField,
+    elementIndex,
+  });
 
   const Component = useCallback(
-    ({
-      control: rootControl,
-      parentPath = [],
-      elementIndex,
-    }: ControlRenderProps) => {
+    ({ control: rootControl, parentPath = [] }: ControlRenderProps) => {
       const stopTracking = useComponentTracking();
       try {
-        const { definition: c, options, fields, schemaField } = r.current;
+        const {
+          definition: c,
+          options,
+          fields,
+          schemaField,
+          elementIndex,
+        } = r.current;
         const parentDataContext: ControlDataContext = {
           fields,
           schemaInterface,
@@ -372,7 +384,11 @@ export function useControlRenderer(
           !!myOptions.hidden,
           parentDataContext,
         );
-        const childOptions: ControlRenderOptions = { ...options, ...myOptions };
+        const childOptions: ControlRenderOptions = {
+          ...options,
+          ...myOptions,
+          elementIndex: undefined,
+        };
 
         useEffect(() => {
           if (control && typeof myOptions.disabled === "boolean")
@@ -397,8 +413,11 @@ export function useControlRenderer(
                 definition={child}
                 parentPath={dataContext.path}
                 renderer={renderer}
-                options={childOptions}
-                elementIndex={options?.elementIndex}
+                options={
+                  options
+                    ? { ...childOptions, elementIndex: options?.elementIndex }
+                    : childOptions
+                }
               />
             );
           },
@@ -488,7 +507,6 @@ export function ControlRenderer({
   options,
   control,
   parentPath,
-  elementIndex,
 }: {
   definition: ControlDefinition;
   fields: SchemaField[];
@@ -496,35 +514,9 @@ export function ControlRenderer({
   options?: ControlRenderOptions;
   control: Control<any>;
   parentPath?: JsonPath[];
-  elementIndex?: number;
 }) {
   const Render = useControlRenderer(definition, fields, renderer, options);
-  return (
-    <Render
-      control={control}
-      parentPath={parentPath}
-      elementIndex={elementIndex}
-    />
-  );
-}
-
-function groupProps(
-  definition: GroupedControlsDefinition,
-  renderChild: ChildRenderer,
-  dataContext: ControlDataContext,
-  className: string | null | undefined,
-  style: React.CSSProperties | undefined,
-  useChildVisibility: ChildVisibilityFunc,
-): GroupRendererProps {
-  return {
-    childDefinitions: definition.children ?? [],
-    renderChild,
-    dataContext,
-    renderOptions: definition.groupOptions ?? { type: "Standard" },
-    className: cc(className),
-    useChildVisibility,
-    style,
-  };
+  return <Render control={control} parentPath={parentPath} />;
 }
 
 export function defaultDataProps({
@@ -656,6 +648,7 @@ export function renderControlLayout(
     displayControl,
     style,
     labelText,
+    parentContext,
     useChildVisibility,
   } = props;
   if (isDataControlDefinition(c)) {
@@ -671,16 +664,17 @@ export function renderControlLayout(
       );
     }
     return {
-      processLayout: renderer.renderGroup(
-        groupProps(
-          c,
-          renderChild,
-          dataContext,
-          c.styleClass,
-          style,
-          useChildVisibility,
-        ),
-      ),
+      processLayout: renderer.renderGroup({
+        childDefinitions: c.children ?? [],
+        definition: c,
+        parentContext,
+        renderChild,
+        dataContext,
+        renderOptions: c.groupOptions ?? { type: "Standard" },
+        className: cc(c.styleClass),
+        useChildVisibility,
+        style,
+      }),
       label: {
         label: labelText?.value ?? c.title,
         className: cc(c.labelClass),

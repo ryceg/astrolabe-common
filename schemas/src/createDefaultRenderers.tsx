@@ -263,26 +263,10 @@ export function createDefaultDataRenderer(
     }
     const renderOptions = props.renderOptions;
     if (fieldType === FieldType.Compound) {
-      const groupOptions = isDataGroupRenderer(renderOptions)
+      const groupOptions = (isDataGroupRenderer(renderOptions)
         ? renderOptions.groupOptions
-        : undefined;
-      const {
-        style,
-        className,
-        childDefinitions,
-        renderChild,
-        dataContext,
-        useChildVisibility,
-      } = props;
-      return renderers.renderGroup({
-        style,
-        className,
-        childDefinitions,
-        renderOptions: groupOptions ?? { type: "Standard", hideTitle: true },
-        renderChild,
-        dataContext,
-        useChildVisibility,
-      });
+        : undefined) ?? { type: "Standard", hideTitle: true };
+      return renderers.renderGroup({ ...props, renderOptions: groupOptions });
     }
     let renderType = renderOptions.type;
     if (fieldType == FieldType.Any) return <>No control for Any</>;

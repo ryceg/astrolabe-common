@@ -102,7 +102,8 @@ export function createFormRenderer(
     const renderer =
       dataRegistrations.find(
         (x) =>
-          (x.collection ?? false) === (field.collection ?? false) &&
+          (x.collection ?? false) ===
+            (props.elementIndex == null && (field.collection ?? false)) &&
           (x.options ?? false) === options &&
           ((x.schemaType && isOneOf(x.schemaType, field.type)) ||
             (x.renderType && isOneOf(x.renderType, renderType)) ||

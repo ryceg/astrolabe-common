@@ -10,19 +10,17 @@ import React, {
   ReactNode,
   useContext,
 } from "react";
-import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
+import { ControlDefinitionForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import {
   ControlDataContext,
   ControlDefinition,
-  ControlDefinitionType,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
   DynamicPropertyType,
   elementValueForField,
-  findChildDefinition,
   FormRenderer,
   getControlData,
   getDisplayOnlyOptions,
@@ -35,13 +33,7 @@ import {
   SchemaInterface,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
-import {
-  ControlDragState,
-  controlDropData,
-  ControlForm,
-  DragData,
-  DropData,
-} from "./util";
+import { ControlDragState, controlDropData, DragData, DropData } from "./util";
 
 export interface FormControlPreviewProps {
   definition: ControlDefinition;
@@ -116,11 +108,12 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       ? displayOptions.sampleText ?? "Sample Data"
       : schemaField &&
         (elementIndex == null
-          ? defaultValueForField(
-              schemaField,
-              schemaField.collection ||
-                (isDataControlDefinition(definition) && definition.required),
-            )
+          ? schemaField.collection
+            ? [undefined]
+            : defaultValueForField(
+                schemaField,
+                isDataControlDefinition(definition) && definition.required,
+              )
           : elementValueForField(schemaField)),
   );
   const adornments =
@@ -224,8 +217,8 @@ function EditorDetails({
     ? isDataControlDefinition(control)
       ? control.field
       : isGroupControlsDefinition(control)
-      ? control.compoundField
-      : null
+        ? control.compoundField
+        : null
     : null;
 
   if (!fieldName && !(hasVisibilityScripting || schemaVisibility)) return <></>;
