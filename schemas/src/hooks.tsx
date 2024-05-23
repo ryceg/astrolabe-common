@@ -29,6 +29,7 @@ import {
 
 import {
   ControlDataContext,
+  DataContext,
   defaultValueForField,
   DynamicHookGenerator,
   elementValueForField,
@@ -45,7 +46,6 @@ import {
 } from "./util";
 import jsonata from "jsonata";
 import { trackedStructure, useCalculatedControl } from "./internal";
-import { DataContext } from "./controlRender";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,
