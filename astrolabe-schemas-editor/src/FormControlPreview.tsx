@@ -13,7 +13,6 @@ import React, {
 } from "react";
 import { ControlDefinitionForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
-import { motion } from "framer-motion";
 import {
   ControlDataContext,
   ControlDefinition,
@@ -44,6 +43,7 @@ export interface FormControlPreviewProps {
   fields: SchemaField[];
   elementIndex?: number;
   schemaInterface?: SchemaInterface;
+  keyPrefix?: string;
 }
 
 export interface FormControlPreviewContext {
@@ -74,12 +74,20 @@ function usePreviewContext() {
 }
 
 export function FormControlPreview(props: FormControlPreviewProps) {
-  const { definition, parent, elementIndex, fields, dropIndex, noDrop } = props;
+  const {
+    definition,
+    parent,
+    elementIndex,
+    fields,
+    dropIndex,
+    noDrop,
+    keyPrefix,
+  } = props;
   const { selected, dropSuccess, renderer } = usePreviewContext();
   const item = unsafeRestoreControl(definition) as
     | Control<ControlDefinitionForm>
     | undefined;
-  const isSelected = selected.value === item;
+  const isSelected = !!item && selected.value === item;
   const scrollRef = useScrollIntoView(isSelected);
   const { setNodeRef, isOver } = useDroppable({
     id: item?.uniqueId ?? 0,
@@ -133,6 +141,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           dropIndex={0}
           elementIndex={c?.elementIndex}
           fields={c?.dataContext?.fields ?? dataContext.fields}
+          keyPrefix={keyPrefix}
         />
       );
     },
@@ -171,9 +180,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     className: definition.layoutClass,
   });
   return (
-    <motion.div
-      layout={defaultLayoutChange}
-      layoutId={item?.uniqueId.toString()}
+    <div
       style={{
         ...style,
         backgroundColor: isSelected ? "rgba(25, 118, 210, 0.08)" : undefined,
@@ -182,7 +189,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       {...mouseCapture}
       className={className!}
       ref={(e) => {
-        scrollRef.current = e;
+        scrollRef(e);
         setNodeRef(e);
       }}
     >
@@ -193,7 +200,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       />
 
       {child}
-    </motion.div>
+    </div>
   );
 }
 function EditorDetails({

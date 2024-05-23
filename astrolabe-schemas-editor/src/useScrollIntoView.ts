@@ -1,17 +1,28 @@
 import { useEffect, useRef } from "react";
-import { useInView } from "framer-motion";
+import { useInViewEffect } from "react-hook-inview";
+import { useControl, useControlEffect } from "@react-typed-forms/core";
 
 export function useScrollIntoView<E extends HTMLElement = HTMLDivElement>(
   shouldBeInView: boolean,
 ) {
-  const itemRef = useRef<E | null>(null);
-  const inView = useInView(itemRef);
-  const inViewRef = useRef(inView);
-  inViewRef.current = inView;
-  useEffect(() => {
-    if (shouldBeInView && !inViewRef.current) {
-      itemRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [shouldBeInView]);
-  return itemRef;
+  const inViewControl = useControl(true);
+  const itemRef = useRef<HTMLElement | null>();
+  const setElement = useInViewEffect(
+    ([entry], observer) => (inViewControl.value = entry.isIntersecting),
+  );
+  useControlEffect(
+    () => [inViewControl.value, shouldBeInView],
+    ([iv, sbiv]) => {
+      if (!iv && sbiv && itemRef.current) {
+        itemRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    },
+  );
+  return (e: HTMLElement | null) => {
+    setElement(e);
+    itemRef.current = e;
+  };
 }

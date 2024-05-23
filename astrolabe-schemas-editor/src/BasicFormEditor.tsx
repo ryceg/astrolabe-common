@@ -207,6 +207,7 @@ export function BasicFormEditor<A extends string>({
   }
 
   const previewMode = previewData.fields.showing.value;
+  const formType = selectedForm.value;
   return (
     <PreviewContextProvider
       value={{
@@ -238,10 +239,12 @@ export function BasicFormEditor<A extends string>({
                   />
                 ) : (
                   <RenderElements
+                    key={formType}
                     control={controls}
                     children={(c, i) => (
                       <div className={rootControlClass}>
                         <FormControlPreview
+                          keyPrefix={formType}
                           definition={trackedValue(c)}
                           fields={trackedValue(fields)}
                           dropIndex={i}
