@@ -61,17 +61,23 @@ export function useValidationHook(
             useControlEffect(
               () => {
                 trackControlChange(control, ControlChange.Validate);
-                return field
-                  ? schemaInterface.controlLength(field, control)
-                  : 0;
+                return [
+                  field ? schemaInterface.controlLength(field, control) : 0,
+                  hidden,
+                ] as const;
               },
-              (len) => {
+              ([len, hidden]) => {
+                if (hidden) {
+                  control.setError("length", undefined);
+                  return;
+                }
                 if (lv.min != null && len < lv.min) {
                   if (field?.collection) {
-                    control.setValue((v) => [
-                      ...v,
-                      ...Array.from({ length: lv.min! - len }),
-                    ]);
+                    control.setValue((v) =>
+                      Array.isArray(v)
+                        ? v.concat(Array.from({ length: lv.min! - v.length }))
+                        : Array.from({ length: lv.min! }),
+                    );
                   } else {
                     control.setError(
                       "length",
