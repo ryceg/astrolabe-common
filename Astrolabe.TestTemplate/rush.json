@@ -436,7 +436,8 @@
     },
     {
       "packageName": "@astroapps/schemas-datepicker",
-      "projectFolder": "../schemas-datepicker"
+      "projectFolder": "../schemas-datepicker",
+      "shouldPublish": true
     },
     {
       "packageName": "@astroapps/ui-tree",
