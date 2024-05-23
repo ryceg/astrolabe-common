@@ -1,7 +1,7 @@
 import {
   Control,
+  newControl,
   unsafeRestoreControl,
-  useComputed,
   useControl,
 } from "@react-typed-forms/core";
 import React, {
@@ -9,6 +9,7 @@ import React, {
   HTMLAttributes,
   ReactNode,
   useContext,
+  useMemo,
 } from "react";
 import { ControlDefinitionForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
@@ -89,33 +90,30 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       dropSuccess,
     ),
   });
-  const schemaField = lookupSchemaField(definition, fields);
+  const field = lookupSchemaField(definition, fields);
   const groupControl = useControl({});
-  const dataContext: ControlDataContext = {
+  const parentContext: ControlDataContext = {
     data: groupControl,
     path: [],
     fields,
     schemaInterface: props.schemaInterface ?? defaultSchemaInterface,
   };
-  const [, , childContext] = getControlData(
-    schemaField,
-    dataContext,
-    elementIndex,
-  );
+  const [, , dataContext] = getControlData(field, parentContext, elementIndex);
+  const isRequired = isDataControlDefinition(definition) && definition.required;
   const displayOptions = getDisplayOnlyOptions(definition);
-  const childControl = useComputed(() =>
-    displayOptions
-      ? displayOptions.sampleText ?? "Sample Data"
-      : schemaField &&
-        (elementIndex == null
-          ? schemaField.collection
-            ? [undefined]
-            : defaultValueForField(
-                schemaField,
-                isDataControlDefinition(definition) && definition.required,
-              )
-          : elementValueForField(schemaField)),
+  const sampleData = useMemo(
+    () =>
+      displayOptions
+        ? displayOptions.sampleText ?? "Sample Data"
+        : field &&
+          (elementIndex == null
+            ? field.collection
+              ? [undefined]
+              : defaultValueForField(field, isRequired)
+            : elementValueForField(field)),
+    [displayOptions?.sampleText, field, isRequired, elementIndex],
   );
+  const control = useMemo(() => newControl(sampleData), [sampleData]);
   const adornments =
     definition.adornments?.map((x) =>
       renderer.renderAdornment({ adornment: x }),
@@ -124,25 +122,25 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const layout = renderControlLayout({
     definition,
     renderer,
-    parentContext: dataContext,
+    parentContext,
     elementIndex,
     renderChild: (k, def, c) => {
       return (
         <FormControlPreview
-          key={k}
+          key={unsafeRestoreControl(def)?.uniqueId ?? k}
           definition={def}
           parent={definition}
           dropIndex={0}
           elementIndex={c?.elementIndex}
-          fields={c?.dataContext?.fields ?? childContext.fields}
+          fields={c?.dataContext?.fields ?? dataContext.fields}
         />
       );
     },
     createDataProps: defaultDataProps,
     formOptions: {},
-    dataContext: childContext,
-    control: childControl,
-    field: schemaField,
+    dataContext,
+    control,
+    field,
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
   });
   const mouseCapture: Pick<
@@ -191,7 +189,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       <EditorDetails
         control={definition}
         arrayElement={elementIndex != null}
-        schemaVisibility={!!schemaField?.onlyForTypes?.length}
+        schemaVisibility={!!field?.onlyForTypes?.length}
       />
 
       {child}
