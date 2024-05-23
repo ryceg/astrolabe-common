@@ -56,6 +56,10 @@ import {
   createRadioRenderer,
   RadioRendererOptions,
 } from "./components/RadioRenderer";
+import {
+  createDefaultArrayRenderer,
+  DefaultArrayRendererOptions,
+} from "./components/DefaultArrayRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -89,69 +93,6 @@ export function createDefaultActionRenderer(
   }
 
   return { render, type: "action" };
-}
-
-interface DefaultArrayRendererOptions {
-  className?: string;
-  removableClass?: string;
-  childClass?: string;
-  removableChildClass?: string;
-  removeActionClass?: string;
-  addActionClass?: string;
-}
-
-export function createDefaultArrayRenderer(
-  options?: DefaultArrayRendererOptions,
-): ArrayRendererRegistration {
-  const {
-    className,
-    removableClass,
-    childClass,
-    removableChildClass,
-    removeActionClass,
-    addActionClass,
-  } = options ?? {};
-
-  function render(
-    {
-      elementCount,
-      renderElement,
-      addAction,
-      removeAction,
-      elementKey,
-      required,
-    }: ArrayRendererProps,
-    { renderAction }: FormRenderer,
-  ) {
-    const showRemove = !required || elementCount > 1;
-    return (
-      <div>
-        <div className={clsx(className, removeAction && removableClass)}>
-          {Array.from({ length: elementCount }, (_, x) =>
-            removeAction ? (
-              <Fragment key={elementKey(x)}>
-                <div className={clsx(childClass, removableChildClass)}>
-                  {renderElement(x)}
-                </div>
-                <div className={removeActionClass}>
-                  {showRemove && renderAction(removeAction(x))}
-                </div>
-              </Fragment>
-            ) : (
-              <div key={elementKey(x)} className={childClass}>
-                {renderElement(x)}
-              </div>
-            ),
-          )}
-        </div>
-        {addAction && (
-          <div className={addActionClass}>{renderAction(addAction)}</div>
-        )}
-      </div>
-    );
-  }
-
-  return { render, type: "array" };
 }
 
 interface DefaultGroupRendererOptions {

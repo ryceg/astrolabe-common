@@ -5,6 +5,9 @@ import {
   DateValidator,
   isDataControlDefinition,
   JsonataValidator,
+  LengthValidator,
+  SchemaField,
+  SchemaInterface,
   ValidatorType,
 } from "./types";
 import {
@@ -16,22 +19,29 @@ import {
 import { useCallback } from "react";
 import { ControlDataContext, useUpdatedRef } from "./util";
 import { useJsonataExpression } from "./hooks";
+import { trackControlChange } from "@react-typed-forms/core";
+import { ControlChange } from "@react-typed-forms/core";
 
 export function useValidationHook(
   definition: ControlDefinition,
+  field: SchemaField | undefined,
 ): (
   control: Control<any>,
   hidden: boolean,
   groupContext: ControlDataContext,
+  schemaInterface: SchemaInterface,
 ) => void {
   const validatorTypes = isDataControlDefinition(definition)
     ? definition.validators?.map((x) => x.type) ?? []
     : null;
-  const r = useUpdatedRef(definition as DataControlDefinition);
+  const r = useUpdatedRef({
+    definition: definition as DataControlDefinition,
+    field,
+  });
   return useCallback(
-    (control, hidden, groupContext) => {
+    (control, hidden, groupContext, schemaInterface) => {
       if (!validatorTypes) return;
-      const dd = r.current;
+      const { definition: dd, field } = r.current;
 
       useValueChangeEffect(control, () => control.setError("default", ""));
       useValidator(
@@ -46,6 +56,38 @@ export function useValidationHook(
       );
       (dd.validators ?? []).forEach((x, i) => {
         switch (x.type) {
+          case ValidatorType.Length:
+            const lv = x as LengthValidator;
+            useControlEffect(
+              () => {
+                trackControlChange(control, ControlChange.Validate);
+                return field
+                  ? schemaInterface.controlLength(field, control)
+                  : 0;
+              },
+              (len) => {
+                if (lv.min != null && len < lv.min) {
+                  if (field?.collection) {
+                    control.setValue((v) => [
+                      ...v,
+                      ...Array.from({ length: lv.min! - len }),
+                    ]);
+                  } else {
+                    control.setError(
+                      "length",
+                      "Length must be at least " + lv.min,
+                    );
+                  }
+                } else if (lv.max != null && len > lv.max) {
+                  control.setError(
+                    "length",
+                    "Length must be less than " + lv.max,
+                  );
+                }
+              },
+              true,
+            );
+            break;
           case ValidatorType.Jsonata:
             return useJsonataValidator(
               control,

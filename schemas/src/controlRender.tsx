@@ -25,23 +25,25 @@ import {
   DisplayData,
   DynamicPropertyType,
   FieldOption,
-  GroupedControlsDefinition,
   GroupRenderOptions,
   isActionControlsDefinition,
   isDataControlDefinition,
   isDisplayControlsDefinition,
   isGroupControlsDefinition,
+  LengthValidator,
   RenderOptions,
   SchemaField,
   SchemaInterface,
+  ValidatorType,
 } from "./types";
 import {
+  applyLengthRestrictions,
   ControlDataContext,
   elementValueForField,
   fieldDisplayName,
-  findChildDefinition,
   findField,
   isCompoundField,
+  JsonPath,
   useDynamicHooks,
   useUpdatedRef,
 } from "./util";
@@ -100,12 +102,12 @@ export interface ArrayRendererProps {
   addAction?: ActionRendererProps;
   required: boolean;
   removeAction?: (elemIndex: number) => ActionRendererProps;
-  elementCount: number;
   renderElement: (elemIndex: number) => ReactNode;
-  elementKey: (elemIndex: number) => Key;
   arrayControl: Control<any[] | undefined | null>;
   className?: string;
   style?: React.CSSProperties;
+  min?: number | null;
+  max?: number | null;
 }
 export interface Visibility {
   visible: boolean;
@@ -235,12 +237,6 @@ export type CreateDataProps = (
   controlProps: DataControlProps,
 ) => DataRendererProps;
 
-export type JsonPath = string | number;
-
-export interface DataContext {
-  data: Control<any>;
-  path: JsonPath[];
-}
 export interface ControlRenderOptions extends FormContextOptions {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   useEvalExpressionHook?: UseEvalExpressionHook;
@@ -286,7 +282,7 @@ export function useControlRenderer(
     displayControl: useEvalDisplayHook(useExpr, definition),
   });
 
-  const useValidation = useValidationHook(definition);
+  const useValidation = useValidationHook(definition, schemaField);
   const r = useUpdatedRef({
     options,
     definition,
@@ -383,6 +379,7 @@ export function useControlRenderer(
           control ?? newControl(null),
           !!myOptions.hidden,
           parentDataContext,
+          schemaInterface,
         );
         const childOptions: ControlRenderOptions = {
           ...options,
@@ -528,6 +525,9 @@ export function defaultDataProps({
   allowedOptions,
   ...props
 }: DataControlProps): DataRendererProps {
+  const lengthVal = definition.validators?.find(
+    (x) => x.type === ValidatorType.Length,
+  ) as LengthValidator | undefined;
   const className = cc(definition.styleClass);
   const required = !!definition.required;
   const fieldOptions =
@@ -570,6 +570,8 @@ export function defaultDataProps({
                   } as DataControlDefinition,
                   { elementIndex, dataContext: props.parentContext },
                 ),
+              lengthVal?.min,
+              lengthVal?.max,
             )
         : undefined,
   };
@@ -582,19 +584,18 @@ export function defaultArrayProps(
   style: CSSProperties | undefined,
   className: string | undefined,
   renderElement: (elemIndex: number) => ReactNode,
+  min: number | undefined | null,
+  max: number | undefined | null,
 ): ArrayRendererProps {
   const noun = field.displayName ?? field.field;
-  const elems = arrayControl.elements ?? [];
   return {
     arrayControl,
-    elementCount: elems.length,
     required,
     addAction: {
       actionId: "add",
       actionText: "Add " + noun,
       onClick: () => addElement(arrayControl, elementValueForField(field)),
     },
-    elementKey: (i) => elems[i].uniqueId,
     removeAction: (i: number) => ({
       actionId: "",
       actionText: "Remove",
@@ -603,6 +604,8 @@ export function defaultArrayProps(
     renderElement: (i) => renderElement(i),
     className: cc(className),
     style,
+    min,
+    max,
   };
 }
 
@@ -812,4 +815,36 @@ export function controlTitle(
   field: SchemaField,
 ) {
   return title ? title : fieldDisplayName(field);
+}
+
+export function applyArrayLengthRestrictions(
+  {
+    arrayControl,
+    min,
+    max,
+    addAction: aa,
+    removeAction: ra,
+    required,
+  }: Pick<
+    ArrayRendererProps,
+    "addAction" | "removeAction" | "arrayControl" | "min" | "max" | "required"
+  >,
+  disable?: boolean,
+): Pick<ArrayRendererProps, "addAction" | "removeAction"> & {
+  addDisabled: boolean;
+  removeDisabled: boolean;
+} {
+  const [removeAllowed, addAllowed] = applyLengthRestrictions(
+    arrayControl.elements?.length ?? 0,
+    min == null && required ? 1 : min,
+    max,
+    true,
+    true,
+  );
+  return {
+    addAction: disable || addAllowed ? aa : undefined,
+    removeAction: disable || removeAllowed ? ra : undefined,
+    removeDisabled: !removeAllowed,
+    addDisabled: !addAllowed,
+  };
 }

@@ -21,7 +21,13 @@ import {
   trackControlChange,
 } from "@react-typed-forms/core";
 import clsx from "clsx";
-import { DataContext, JsonPath } from "./controlRender";
+
+export type JsonPath = string | number;
+
+export interface DataContext {
+  data: Control<any>;
+  path: JsonPath[];
+}
 
 export interface ControlDataContext extends DataContext {
   fields: SchemaField[];
@@ -527,4 +533,17 @@ export function appendElementIndex(
   elementIndex: number,
 ): ControlDataContext {
   return { ...dataContext, path: [...dataContext.path, elementIndex] };
+}
+
+export function applyLengthRestrictions<Min, Max>(
+  length: number,
+  min: number | null | undefined,
+  max: number | null | undefined,
+  minValue: Min,
+  maxValue: Max,
+): [Min | undefined, Max | undefined] {
+  return [
+    min == null || length > min ? minValue : undefined,
+    max == null || length < max ? maxValue : undefined,
+  ];
 }

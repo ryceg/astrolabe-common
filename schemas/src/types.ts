@@ -1,3 +1,5 @@
+import { Control } from "@react-typed-forms/core";
+
 export interface SchemaField {
   type: string;
   field: string;
@@ -64,6 +66,8 @@ export interface SchemaInterface {
     value: any,
     element?: boolean,
   ): string | undefined;
+  controlLength(field: SchemaField, control: Control<any>): number;
+  valueLength(field: SchemaField, value: any): number;
 }
 export interface ControlDefinition {
   type: string;
@@ -350,6 +354,7 @@ export interface ActionControlDefinition extends ControlDefinition {
 export enum ValidatorType {
   Jsonata = "Jsonata",
   Date = "Date",
+  Length = "Length",
 }
 export interface SchemaValidator {
   type: string;
@@ -358,6 +363,12 @@ export interface SchemaValidator {
 export interface JsonataValidator extends SchemaValidator {
   type: ValidatorType.Jsonata;
   expression: string;
+}
+
+export interface LengthValidator extends SchemaValidator {
+  type: ValidatorType.Length;
+  min?: number | null;
+  max?: number | null;
 }
 
 export enum DateComparison {
