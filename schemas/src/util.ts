@@ -34,10 +34,14 @@ export interface ControlDataContext extends DataContext {
   schemaInterface: SchemaInterface;
 }
 export function applyDefaultValues(
-  v: { [k: string]: any } | undefined,
+  v: Record<string, any> | undefined,
   fields: SchemaField[],
+  doneSet?: Set<Record<string, any>>,
 ): any {
   if (!v) return defaultValueForFields(fields);
+  if (doneSet && doneSet.has(v)) return v;
+  doneSet ??= new Set();
+  doneSet.add(v);
   const applyValue = fields.filter(
     (x) => isCompoundField(x) || !(x.field in v),
   );
@@ -46,7 +50,7 @@ export function applyDefaultValues(
   applyValue.forEach((x) => {
     out[x.field] =
       x.field in v
-        ? applyDefaultForField(v[x.field], x, fields)
+        ? applyDefaultForField(v[x.field], x, fields, false, doneSet)
         : defaultValueForField(x);
   });
   return out;
@@ -57,15 +61,20 @@ export function applyDefaultForField(
   field: SchemaField,
   parent: SchemaField[],
   notElement?: boolean,
+  doneSet?: Set<Record<string, any>>,
 ): any {
   if (field.collection && !notElement) {
     return ((v as any[]) ?? []).map((x) =>
-      applyDefaultForField(x, field, parent, true),
+      applyDefaultForField(x, field, parent, true, doneSet),
     );
   }
   if (isCompoundField(field)) {
     if (!v && !field.required) return v;
-    return applyDefaultValues(v, field.treeChildren ? parent : field.children);
+    return applyDefaultValues(
+      v,
+      field.treeChildren ? parent : field.children,
+      doneSet,
+    );
   }
   return defaultValueForField(field);
 }
