@@ -26,5 +26,9 @@ export const defaultTailwindTheme = {
   },
   data: {
     displayOnlyClass: "flex flex-row items-center gap-2",
+    checkOptions: {
+      className: "flex items-center gap-4",
+      entryClass: "flex gap-1 items-center",
+    },
   },
 } satisfies DefaultRendererOptions;

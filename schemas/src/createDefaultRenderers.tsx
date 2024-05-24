@@ -9,7 +9,6 @@ import {
 import {
   ActionRendererRegistration,
   AdornmentRendererRegistration,
-  ArrayRendererRegistration,
   createDataRenderer,
   createLayoutRenderer,
   DataRendererRegistration,
@@ -25,9 +24,7 @@ import clsx from "clsx";
 import {
   ActionRendererProps,
   appendMarkupAt,
-  ArrayRendererProps,
   ControlLayoutProps,
-  FormRenderer,
   GroupRendererProps,
   LabelType,
   renderLayoutParts,
@@ -53,13 +50,14 @@ import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
 import { Fcheckbox } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
-  createRadioRenderer,
-  RadioRendererOptions,
-} from "./components/RadioRenderer";
-import {
   createDefaultArrayRenderer,
   DefaultArrayRendererOptions,
 } from "./components/DefaultArrayRenderer";
+import {
+  CheckRendererOptions,
+  createCheckListRenderer,
+  createRadioRenderer,
+} from "./components/CheckRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -179,7 +177,9 @@ interface DefaultDataRendererOptions {
   inputClass?: string;
   displayOnlyClass?: string;
   selectOptions?: SelectRendererOptions;
-  radioOptions?: RadioRendererOptions;
+  checkOptions?: CheckRendererOptions;
+  radioOptions?: CheckRendererOptions;
+  checkListOptions?: CheckRendererOptions;
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
 }
@@ -188,28 +188,34 @@ export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
   const selectRenderer = createSelectRenderer(options.selectOptions);
-  const radioRenderer = createRadioRenderer(options.radioOptions);
+  const radioRenderer = createRadioRenderer(
+    options.radioOptions ?? options.checkOptions,
+  );
+  const checkListRenderer = createCheckListRenderer(
+    options.checkListOptions ?? options.checkOptions,
+  );
   const { inputClass, booleanOptions, optionRenderer, displayOnlyClass } = {
     optionRenderer: selectRenderer,
     booleanOptions: DefaultBoolOptions,
     ...options,
   };
+
   return createDataRenderer((props, renderers) => {
     const fieldType = props.field.type;
-    if (props.toArrayProps) {
+    const renderOptions = props.renderOptions;
+    let renderType = renderOptions.type;
+    if (props.toArrayProps && renderType !== DataRenderType.CheckList) {
       return (p) => ({
         ...p,
         children: renderers.renderArray(props.toArrayProps!()),
       });
     }
-    const renderOptions = props.renderOptions;
     if (fieldType === FieldType.Compound) {
       const groupOptions = (isDataGroupRenderer(renderOptions)
         ? renderOptions.groupOptions
         : undefined) ?? { type: "Standard", hideTitle: true };
       return renderers.renderGroup({ ...props, renderOptions: groupOptions });
     }
-    let renderType = renderOptions.type;
     if (fieldType == FieldType.Any) return <>No control for Any</>;
     if (isDisplayOnlyRenderer(renderOptions))
       return (p) => ({
@@ -234,6 +240,8 @@ export function createDefaultDataRenderer(
       return optionRenderer.render(props, renderers);
     }
     switch (renderType) {
+      case DataRenderType.CheckList:
+        return checkListRenderer.render(props, renderers);
       case DataRenderType.Dropdown:
         return selectRenderer.render(props, renderers);
       case DataRenderType.Radio:

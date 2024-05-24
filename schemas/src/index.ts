@@ -13,7 +13,7 @@ export * from "./createFormRenderer";
 export * from "./components/DefaultDisplay";
 export * from "./components/ControlInput";
 export * from "./components/SelectDataRenderer";
-export * from "./components/RadioRenderer";
+export * from "./components/CheckRenderer";
 export * from "./components/DefaultLayout";
 export * from "./components/DefaultDisplayOnly";
 export * from "./components/DefaultVisibility";

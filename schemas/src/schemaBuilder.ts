@@ -84,25 +84,25 @@ export function makeCompoundField<S extends Partial<CompoundField>>(
   return (n) => ({ ...defaultCompoundField(n, n, false), ...options });
 }
 
-export function intField(
+export function intField<S extends Partial<SchemaField>>(
   displayName: string,
-  options?: Partial<Omit<SchemaField, "type">>,
+  options?: S,
 ) {
   return makeScalarField({
     type: FieldType.Int as const,
     displayName,
-    ...options,
+    ...(options as S),
   });
 }
 
-export function boolField(
+export function boolField<S extends Partial<SchemaField>>(
   displayName: string,
-  options?: Partial<Omit<SchemaField, "type">>,
+  options?: S,
 ) {
   return makeScalarField({
     type: FieldType.Bool as const,
     displayName,
-    ...options,
+    ...(options as S),
   });
 }
 

@@ -4,8 +4,9 @@ import * as ti from "./tail.include";
 const config: Config = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
-    "node_modules/@react-typed-forms/**/*.js",
-    "node_modules/@astroapps/**/*.js",
+    "node_modules/@react-typed-forms/schemas/lib/*.js",
+    "node_modules/@astroapps/schemas-editor/lib/*.js",
+    "./**/node_modules/@astroapps/tree-ui/lib/*.js",
     "node_modules/@astrolabe/ui/**/*.tsx",
   ],
   presets: [ti],
