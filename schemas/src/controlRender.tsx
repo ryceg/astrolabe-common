@@ -10,6 +10,7 @@ import React, {
 import {
   addElement,
   Control,
+  Fcheckbox,
   newControl,
   removeElement,
   useComponentTracking,
@@ -727,7 +728,8 @@ export function renderControlLayout(
     return {
       processLayout: renderer.renderData(rendererProps),
       label: {
-        type: LabelType.Control,
+        type:
+          (c.children?.length ?? 0) > 0 ? LabelType.Group : LabelType.Control,
         label,
         forId: rendererProps.id,
         required: c.required,

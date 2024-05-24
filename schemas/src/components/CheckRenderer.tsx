@@ -1,6 +1,7 @@
 import { DataRenderType, FieldOption } from "../types";
 import {
   Control,
+  Fcheckbox,
   RenderArrayElements,
   useComputed,
 } from "@react-typed-forms/core";
@@ -53,6 +54,7 @@ export function createCheckListRenderer(options: CheckRendererOptions = {}) {
       />
     ),
     {
+      collection: true,
       renderType: DataRenderType.CheckList,
     },
   );
@@ -122,4 +124,27 @@ export function setIncluded<A>(array: A[], elem: A, included: boolean): A[] {
     return [...array, elem];
   }
   return array.filter((e) => e !== elem);
+}
+
+export function createCheckboxRenderer(options: CheckRendererOptions = {}) {
+  return createDataRenderer(
+    (props, renderer) => (p) => ({
+      ...p,
+      label: undefined,
+      children: (
+        <div className={rendererClass(props.className, options.className)}>
+          <div className={options.entryClass}>
+            <Fcheckbox
+              id={props.id}
+              control={props.control}
+              style={props.style}
+              className={options.checkClass}
+            />
+            {p.label && renderer.renderLabel(p.label, undefined, undefined)}
+          </div>
+        </div>
+      ),
+    }),
+    { renderType: DataRenderType.Checkbox },
+  );
 }

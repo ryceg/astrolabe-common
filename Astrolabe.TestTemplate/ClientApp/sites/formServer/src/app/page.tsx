@@ -7,6 +7,7 @@ import {
 import { useControl } from "@react-typed-forms/core";
 import {
   addMissingControls,
+  boolField,
   buildSchema,
   createDefaultRenderers,
   createDisplayRenderer,
@@ -35,6 +36,7 @@ enum TestOption {
 interface OurData {
   options: TestOption[];
   single: TestOption;
+  check: boolean;
 }
 
 const options: FieldOption[] = [
@@ -46,6 +48,7 @@ const options: FieldOption[] = [
 const fields = buildSchema<OurData>({
   options: intField("Multi", { collection: true, options }),
   single: intField("Single", { options }),
+  check: boolField("Check pls"),
 });
 
 const customDisplay = createDisplayRenderer(

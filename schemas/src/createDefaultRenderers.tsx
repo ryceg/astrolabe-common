@@ -55,6 +55,7 @@ import {
 } from "./components/DefaultArrayRenderer";
 import {
   CheckRendererOptions,
+  createCheckboxRenderer,
   createCheckListRenderer,
   createRadioRenderer,
 } from "./components/CheckRenderer";
@@ -177,6 +178,7 @@ interface DefaultDataRendererOptions {
   inputClass?: string;
   displayOnlyClass?: string;
   selectOptions?: SelectRendererOptions;
+  checkboxOptions?: CheckRendererOptions;
   checkOptions?: CheckRendererOptions;
   radioOptions?: CheckRendererOptions;
   checkListOptions?: CheckRendererOptions;
@@ -187,6 +189,9 @@ interface DefaultDataRendererOptions {
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
+  const checkboxRenderer = createCheckboxRenderer(
+    options.checkOptions ?? options.checkboxOptions,
+  );
   const selectRenderer = createSelectRenderer(options.selectOptions);
   const radioRenderer = createRadioRenderer(
     options.radioOptions ?? options.checkOptions,
@@ -247,13 +252,7 @@ export function createDefaultDataRenderer(
       case DataRenderType.Radio:
         return radioRenderer.render(props, renderers);
       case DataRenderType.Checkbox:
-        return (
-          <Fcheckbox
-            style={props.style}
-            className={props.className}
-            control={props.control}
-          />
-        );
+        return checkboxRenderer.render(props, renderers);
     }
     const placeholder = isTextfieldRenderer(renderOptions)
       ? renderOptions.placeholder
@@ -343,7 +342,6 @@ export function createDefaultLabelRenderer(
     render: (props, labelStart, labelEnd) => {
       return labelContainer(
         <>
-          {labelStart}
           <label
             htmlFor={props.forId}
             className={rendererClass(
@@ -355,6 +353,7 @@ export function createDefaultLabelRenderer(
               ),
             )}
           >
+            {labelStart}
             {props.label}
             {props.required && requiredElement}
           </label>

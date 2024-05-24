@@ -30,5 +30,6 @@ export const defaultTailwindTheme = {
       className: "flex items-center gap-4",
       entryClass: "flex gap-1 items-center",
     },
+    selectOptions: { emptyText: "<select>" },
   },
 } satisfies DefaultRendererOptions;

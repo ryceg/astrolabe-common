@@ -12,7 +12,7 @@
 		"@react-typed-forms/core": "^3.1.2",
 		"@react-typed-forms/schemas": "workspace:*",
 		"@astroapps/client": "workspace:*",
-		"@astroapps/client-nextjs": "^0.1.2",
+		"@astroapps/client-nextjs": "workspace:^0.1.2",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
 		"next": "14.0.4",
