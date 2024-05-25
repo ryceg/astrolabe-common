@@ -10,6 +10,7 @@ import {
   GroupedControlsDefinition,
   isDataControlDefinition,
   isDisplayOnlyRenderer,
+  isGroupControlsDefinition,
   SchemaField,
   SchemaInterface,
   visitControlDefinition,
@@ -209,6 +210,97 @@ function findReferencedControlInArray(
     if (ref) return ref;
   }
   return undefined;
+}
+
+export function findControlsForCompound(
+  compound: CompoundField,
+  definition: ControlDefinition,
+): ControlDefinition[] {
+  if (
+    isDataControlDefinition(definition) &&
+    compound.field === definition.field
+  ) {
+    return [definition];
+  }
+  if (isGroupControlsDefinition(definition)) {
+    if (definition.compoundField === compound.field) return [definition];
+    return (
+      definition.children?.flatMap((d) =>
+        findControlsForCompound(compound, d),
+      ) ?? []
+    );
+  }
+  return [];
+}
+
+export interface ControlGroupLookup {
+  groups: ControlDefinition[];
+  children: Record<string, ControlGroupLookup>;
+}
+export function findCompoundGroups(
+  fields: SchemaField[],
+  controls: ControlDefinition[],
+): Record<string, ControlGroupLookup> {
+  return Object.fromEntries(
+    fields.filter(isCompoundField).map((cf) => {
+      const groups = controls.flatMap((x) => findControlsForCompound(cf, x));
+      return [
+        cf.field,
+        {
+          groups: groups.concat(groups.flatMap(findRootGroups)),
+          children: findCompoundGroups(
+            cf.children,
+            groups.flatMap((x) => x.children ?? []),
+          ),
+        },
+      ];
+    }),
+  );
+}
+
+export function existsInGroups(
+  field: SchemaField,
+  lookup: ControlGroupLookup,
+): [SchemaField, ControlGroupLookup][] {
+  const itself = lookup.groups.find(
+    (c) =>
+      c.children?.find(
+        (x) =>
+          (isDataControlDefinition(x) && x.field === field.field) ||
+          (isGroupControlsDefinition(x) && x.compoundField === field.field),
+      ),
+  );
+  if (!itself) return [[field, lookup]];
+  if (isCompoundField(field)) {
+    const childLookup = lookup.children[field.field];
+    if (!childLookup) return [[field, lookup]];
+    return field.children.flatMap((c) => existsInGroups(c, childLookup));
+  }
+  return [];
+}
+
+export function findRootGroups(
+  control: ControlDefinition,
+): ControlDefinition[] {
+  if (isGroupControlsDefinition(control) && !control.compoundField) {
+    return [control, ...(control.children?.flatMap(findRootGroups) ?? [])];
+  }
+  return [];
+}
+
+export function addMissing2(
+  fields: SchemaField[],
+  controls: ControlDefinition[],
+) {
+  const rootMapping = findCompoundGroups(fields, controls);
+  const rootGroups = findRootGroups({
+    type: ControlDefinitionType.Group,
+    children: controls,
+  });
+  const rootLookup = { children: rootMapping, groups: rootGroups };
+  return fields
+    .filter((x) => !fieldHasTag(x, "_NoControl"))
+    .flatMap((x) => existsInGroups(x, rootLookup));
 }
 
 export function addMissingControls(
@@ -505,8 +597,9 @@ export function makeHook<A, P, S = undefined>(
   return { deps, state, runHook };
 }
 
-export type DynamicHookValue<A> =
-  A extends DynamicHookGenerator<infer V, any> ? V : never;
+export type DynamicHookValue<A> = A extends DynamicHookGenerator<infer V, any>
+  ? V
+  : never;
 
 export function useDynamicHooks<
   P,
