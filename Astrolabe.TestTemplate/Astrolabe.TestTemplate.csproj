@@ -15,6 +15,31 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+      <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="common\temp\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="common\temp\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="common\temp\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="common\temp\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="common\temp\current-variant.json" />
+      <_ContentIncludedByDefault Remove="common\temp\package.json" />
+      <_ContentIncludedByDefault Remove="common\temp\pnpm-local\package-lock.json" />
+      <_ContentIncludedByDefault Remove="common\temp\pnpm-local\package.json" />
+      <_ContentIncludedByDefault Remove="common\temp\pnpmfileSettings.json" />
     </ItemGroup>
     
 </Project>

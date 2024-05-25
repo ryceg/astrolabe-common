@@ -1,29 +1,23 @@
 "use client";
 
+import {applyEditorExtensions, BasicFormEditor, ControlDefinitionSchema,} from "@astroapps/schemas-editor";
+import {useControl} from "@react-typed-forms/core";
 import {
-  applyEditorExtensions,
-  BasicFormEditor,
-} from "@astroapps/schemas-editor";
-import { useControl } from "@react-typed-forms/core";
-import {
-  addMissingControls,
   boolField,
   buildSchema,
   createDefaultRenderers,
   createDisplayRenderer,
   createFormRenderer,
-  createRadioRenderer,
   defaultTailwindTheme,
   FieldOption,
   intField,
 } from "@react-typed-forms/schemas";
-import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
-import {
-  convertStringParam,
-  useSyncParam,
-} from "@astroapps/client/hooks/queryParamSync";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { DndProvider } from "react-dnd";
+import {useQueryControl} from "@astroapps/client/hooks/useQueryControl";
+import {convertStringParam, useSyncParam,} from "@astroapps/client/hooks/queryParamSync";
+import {HTML5Backend} from "react-dnd-html5-backend";
+import {DndProvider} from "react-dnd";
+import {Client} from "../client";
+import controlsJson from "../ControlDefinition.json"
 
 const CustomControlSchema = applyEditorExtensions({});
 
@@ -82,21 +76,16 @@ export default function Editor() {
         formRenderer={StdFormRenderer}
         editorRenderer={StdFormRenderer}
         loadForm={async (c) => {
-          const controls = addMissingControls(fields, []);
-          // const dcd = controls[0] as DataControlDefinition;
-          // dcd.renderOptions = {
-          //   type: "Group",
-          //   groupOptions: { type: "Standard" },
-          // } as DataGroupRenderOptions;
           return {
-            fields,
-            controls,
+            fields: ControlDefinitionSchema,
+            controls: controlsJson,
           };
         }}
         selectedForm={selectedForm}
         formTypes={[["MyForm", "MyForm"]]}
-        saveForm={async (controls) => {}}
+        saveForm={async (controls) => await new Client().controlDefinition(controls)}
         controlDefinitionSchemaMap={CustomControlSchema}
+        editorControls={controlsJson}
       />
     </DndProvider>
   );

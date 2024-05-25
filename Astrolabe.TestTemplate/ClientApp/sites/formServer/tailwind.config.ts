@@ -6,7 +6,7 @@ const config: Config = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "node_modules/@react-typed-forms/schemas/lib/*.js",
     "node_modules/@astroapps/schemas-editor/lib/*.js",
-    "./**/node_modules/@astroapps/tree-ui/lib/*.js",
+    "./**/node_modules/@astroapps/ui-tree/*.js",
     "node_modules/@astrolabe/ui/**/*.tsx",
   ],
   presets: [ti],

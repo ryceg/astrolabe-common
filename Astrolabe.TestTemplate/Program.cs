@@ -4,10 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers().AddJsonOptions(x =>
-{
-    x.JsonSerializerOptions.AddStandardOptions();
-});
+builder.Services.AddControllers().AddJsonOptions(x => { x.JsonSerializerOptions.AddStandardOptions(); });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -20,14 +17,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-if (!app.Environment.IsDevelopment())
+else
 {
     app.UseHttpsRedirection();
 }
 
+app.UseRouting();
 app.UseAuthorization();
+app.UseEndpoints(e => e.MapControllers());
+app.UseSpa(b => b.UseProxyToSpaDevelopmentServer("http://localhost:8000"));
 
-app.MapControllers();
 
 app.Run();

@@ -1,9 +1,8 @@
-using Astrolabe.CodeGen;
+using System.Text.Json;
 using Astrolabe.CodeGen.Typescript;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
 using Microsoft.AspNetCore.Mvc;
-using Namotion.Reflection;
 
 namespace Astrolabe.TestTemplate.Controllers;
 
@@ -20,4 +19,13 @@ public class CodeGenController : ControllerBase
             .ToList());
         return file.ToSource();
     }
+    
+    [HttpPut("ControlDefinition")]
+    public async Task EditControlDefinition(JsonElement formData, [FromServices] IWebHostEnvironment environment) 
+    {
+        var path = Path.Join(environment.ContentRootPath, $"ClientApp/sites/formServer/src/ControlDefinition.json");
+        await System.IO.File.WriteAllTextAsync(path,
+            JsonSerializer.Serialize(formData, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
 }
