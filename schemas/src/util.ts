@@ -247,7 +247,9 @@ export function findCompoundGroups(
       return [
         cf.field,
         {
-          groups: groups.concat(groups.flatMap(findRootGroups)),
+          groups: groups.concat(
+            findNonDataGroups(groups.flatMap((x) => x.children ?? [])),
+          ),
           children: findCompoundGroups(
             cf.children,
             groups.flatMap((x) => x.children ?? []),
@@ -279,28 +281,33 @@ export function existsInGroups(
   return [];
 }
 
-export function findRootGroups(
-  control: ControlDefinition,
+export function findNonDataGroups(
+  controls: ControlDefinition[],
 ): ControlDefinition[] {
-  if (isGroupControlsDefinition(control) && !control.compoundField) {
-    return [control, ...(control.children?.flatMap(findRootGroups) ?? [])];
-  }
-  return [];
+  return controls.flatMap((control) =>
+    isGroupControlsDefinition(control) && !control.compoundField
+      ? [control, ...findNonDataGroups(control.children ?? [])]
+      : [],
+  );
 }
-
 export function addMissing2(
   fields: SchemaField[],
   controls: ControlDefinition[],
 ) {
   const rootMapping = findCompoundGroups(fields, controls);
-  const rootGroups = findRootGroups({
-    type: ControlDefinitionType.Group,
-    children: controls,
-  });
+  const rootGroups = findNonDataGroups([
+    {
+      type: ControlDefinitionType.Group,
+      children: controls,
+    },
+  ]);
   const rootLookup = { children: rootMapping, groups: rootGroups };
   return fields
     .filter((x) => !fieldHasTag(x, "_NoControl"))
-    .flatMap((x) => existsInGroups(x, rootLookup));
+    .flatMap((x) => existsInGroups(x, rootLookup))
+    .forEach(([f, lookup]) => {
+      lookup.groups[0].children!.push(defaultControlForField(f));
+    });
 }
 
 export function addMissingControls(

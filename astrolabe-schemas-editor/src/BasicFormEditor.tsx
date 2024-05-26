@@ -63,7 +63,7 @@ import {
   addMissing2,
   findCompoundGroups,
   findControlsForCompound,
-} from "@react-typed-forms/schemas/lib";
+} from "@react-typed-forms/schemas";
 
 interface PreviewData {
   showing: boolean;
