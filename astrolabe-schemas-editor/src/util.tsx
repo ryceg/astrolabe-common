@@ -99,7 +99,7 @@ export function useEditorDataHook(
   const createCB: CreateDataProps = useCallback((props) => {
     const fieldList = r.current;
     const defaultProps = defaultDataProps(props);
-    const { field: sf, dataContext } = props;
+    const { field: sf, dataContext, parentContext } = props;
     const otherField = sf.tags?.find(isSchemaOptionTag);
 
     if (otherField) {
@@ -121,8 +121,10 @@ export function useEditorDataHook(
 
         default:
           const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
-          const otherFieldName = lookupChildControl(dataContext, otherField)
-            ?.value;
+          const otherFieldName = lookupChildControl(
+            parentContext,
+            otherField,
+          )?.value;
           const fieldInSchema = fieldList.find(
             (x) => x.field === otherFieldName,
           );
@@ -299,8 +301,8 @@ export function findSchemaFieldListForParents(
       controlType === ControlDefinitionType.Group
         ? p.fields.compoundField.current.value
         : controlType === ControlDefinitionType.Data
-        ? p.fields.field.current.value
-        : undefined;
+          ? p.fields.field.current.value
+          : undefined;
     if (compoundField) {
       const nextFields = fields.elements.find(
         (x) => x.fields.field.current.value === compoundField,

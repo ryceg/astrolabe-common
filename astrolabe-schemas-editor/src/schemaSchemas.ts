@@ -1019,6 +1019,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.Any,
     onlyForTypes: ["Data"],
     displayName: "Default Value",
+    tags: ["_ValuesOf:field"],
   }),
   readonly: makeScalarField({
     type: FieldType.Bool,
