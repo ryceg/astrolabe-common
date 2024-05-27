@@ -462,6 +462,10 @@
       "packageName": "@react-typed-forms/schemas-mui",
       "projectFolder": "../schemas-mui",
       "shouldPublish": true
-    }
+    },
+//    {
+//      "packageName": "@react-typed-forms/core",
+//      "projectFolder": "../react-typed-forms/packages/core"
+//    }
   ]
 }

@@ -16,7 +16,7 @@ importers:
       '@babel/preset-env': ^7.23.8
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
-      '@react-typed-forms/core': ^3.1.2
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
@@ -30,7 +30,7 @@ importers:
       tslib: ^2.6.2
       typescript: 5.2.2
     dependencies:
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       clsx: 2.1.1
       react: 18.3.1
       react-dnd: 16.0.1_iqr4jp2n7avpn4ecc3q5n5d4mi
@@ -111,7 +111,7 @@ importers:
       '@babel/preset-env': ^7.23.8
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
-      '@react-typed-forms/core': ^3.1.2
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.37
@@ -120,7 +120,7 @@ importers:
       react-quill: ^2.0.0
       typescript: 5.2.2
     dependencies:
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       '@react-typed-forms/schemas': link:../schemas
       react: 18.3.1
       react-quill: 2.0.0_react@18.3.1
@@ -137,8 +137,8 @@ importers:
 
   ../../../astrolabe-schemas-editor:
     specifiers:
-      '@astroapps/client': workspace:^0.1.1
-      '@astroapps/ui-tree': workspace:^1.0.0
+      '@astroapps/client': ^0.1.8
+      '@astroapps/ui-tree': ^1.0.0
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -146,7 +146,7 @@ importers:
       '@babel/preset-typescript': ^7.23.3
       '@dnd-kit/core': ^6.0.5
       '@mhsdesign/jit-browser-tailwindcss': ^0.4.0
-      '@react-typed-forms/core': ^3.1.2
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.31
@@ -162,11 +162,11 @@ importers:
       rimraf: ^5.0.5
       typescript: 5.2.2
     dependencies:
-      '@astroapps/client': link:../astrolabe-client
-      '@astroapps/ui-tree': link:../astrolabe-ui-tree
+      '@astroapps/client': 0.1.8_@types+react@18.3.3
+      '@astroapps/ui-tree': 1.0.0_77hu6zao2nteilhzuvmmjuwohe
       '@dnd-kit/core': 6.1.0_nnrd3gsncyragczmpvfhocinkq
       '@mhsdesign/jit-browser-tailwindcss': 0.4.1
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       '@react-typed-forms/schemas': link:../schemas
       clsx: 2.1.1
       immutability-helper: 3.1.1
@@ -193,7 +193,7 @@ importers:
       '@astroapps/client': workspace:^0.1.2
       '@astroapps/ui-tree': ^0.1.1
       '@astrolabe/ui': workspace:*
-      '@react-typed-forms/core': ^3.0.0
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
       '@storybook/addon-a11y': ^7.6.10
       '@storybook/addon-essentials': ^7.6.10
@@ -227,7 +227,7 @@ importers:
       '@astroapps/client': link:../astrolabe-client
       '@astroapps/ui-tree': 0.1.1_k423f4lbujxexbtw7co4rucyje
       '@astrolabe/ui': link:../astrolabe-ui
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       '@react-typed-forms/schemas': link:../schemas
       '@storybook/addon-a11y': 7.6.19
       '@storybook/addon-essentials': 7.6.19_ma437sazqanxqsgjws34kond6i
@@ -263,7 +263,7 @@ importers:
       '@radix-ui/react-tabs': 1.0.4
       '@radix-ui/react-toast': 1.1.5
       '@radix-ui/react-tooltip': 1.0.7
-      '@react-typed-forms/core': ^3.0.0
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
@@ -292,7 +292,7 @@ importers:
       '@radix-ui/react-tabs': 1.0.4_psuonouaqi5wuc37nxyknoubym
       '@radix-ui/react-toast': 1.1.5_psuonouaqi5wuc37nxyknoubym
       '@radix-ui/react-tooltip': 1.0.7_psuonouaqi5wuc37nxyknoubym
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       '@react-typed-forms/schemas': link:../schemas
       class-variance-authority: 0.7.0
       clsx: 2.1.1
@@ -323,7 +323,7 @@ importers:
       '@dnd-kit/core': ^6.0.8
       '@dnd-kit/sortable': ^7.0.2
       '@dnd-kit/utilities': ^3.2.1
-      '@react-typed-forms/core': ^3.0.0-dev.118
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.31
       clsx: ^2.0.0
@@ -337,7 +337,7 @@ importers:
       '@dnd-kit/core': 6.1.0_react@18.3.1
       '@dnd-kit/sortable': 7.0.2_lapgn5tcydgksdf34zqcxexmfu
       '@dnd-kit/utilities': 3.2.2_react@18.3.1
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       clsx: 2.1.1
       immutability-helper: 3.1.1
       react: 18.3.1
@@ -355,7 +355,7 @@ importers:
 
   ../../../schemas:
     specifiers:
-      '@react-typed-forms/core': ^3.1.3
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.28
       clsx: ^1 || ^2
@@ -368,7 +368,7 @@ importers:
       rimraf: ^3.0.2
       typescript: ^5.2.2
     dependencies:
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       clsx: 2.1.1
       jsonata: 2.0.5
       react: 18.3.1
@@ -390,7 +390,7 @@ importers:
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
       '@internationalized/date': ^3.5.3
-      '@react-typed-forms/core': ^3.1.2
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.37
@@ -405,7 +405,7 @@ importers:
       typescript: 5.2.2
     dependencies:
       '@internationalized/date': 3.5.4
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       '@react-typed-forms/schemas': link:../schemas
       clsx: 2.1.1
       react: 18.3.1
@@ -429,7 +429,7 @@ importers:
     specifiers:
       '@mui/icons-material': ^5
       '@mui/material': ^5.14.13
-      '@react-typed-forms/core': ^3.0.0
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/mui': ^3.0.2
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
@@ -442,7 +442,7 @@ importers:
       rimraf: ^3.0.2
       typescript: 5.2.2
     dependencies:
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       '@react-typed-forms/mui': 3.0.2_3vdbhqr2ncalcx7opnshezpx3q
       '@react-typed-forms/schemas': link:../schemas
       date-fns: 2.30.0
@@ -463,7 +463,7 @@ importers:
       '@astroapps/client': workspace:*
       '@astroapps/client-nextjs': workspace:^0.1.2
       '@astroapps/schemas-editor': workspace:*
-      '@react-typed-forms/core': ^3.1.2
+      '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
       '@tailwindcss/forms': ^0.5.7
       '@types/node': ^20.8.4
@@ -484,7 +484,7 @@ importers:
       '@astroapps/client': link:../../../../astrolabe-client
       '@astroapps/client-nextjs': link:../../../../astrolabe-client-nextjs
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       '@react-typed-forms/schemas': link:../../../../schemas
       next: 14.0.4_nnrd3gsncyragczmpvfhocinkq
       react: 18.3.1
@@ -520,10 +520,25 @@ packages:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
+  /@astroapps/client/0.1.8_@types+react@18.3.3:
+    resolution: {integrity: sha512-IDZfAlPRlPXHCXZRMHCBNB92+fhcJC4oG4TEHZrYmmEBUudRkiV7iP/ruG8XUiAb/8/hEnroXQMdKp+0Nk2YLA==}
+    dependencies:
+      '@react-typed-forms/core': 3.2.0
+      clsx: 2.1.1
+      react: 18.3.1
+      react-dnd: 16.0.1_3vdbhqr2ncalcx7opnshezpx3q
+      tailwind-merge: 1.14.0
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - '@types/hoist-non-react-statics'
+      - '@types/node'
+      - '@types/react'
+    dev: false
+
   /@astroapps/client/0.1.8_mgzaxqyymv5uzux53o6az7hglq:
     resolution: {integrity: sha512-IDZfAlPRlPXHCXZRMHCBNB92+fhcJC4oG4TEHZrYmmEBUudRkiV7iP/ruG8XUiAb/8/hEnroXQMdKp+0Nk2YLA==}
     dependencies:
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       clsx: 2.1.1
       react: 18.3.1
       react-dnd: 16.0.1_iqr4jp2n7avpn4ecc3q5n5d4mi
@@ -542,7 +557,7 @@ packages:
       '@dnd-kit/core': 6.1.0_nnrd3gsncyragczmpvfhocinkq
       '@dnd-kit/sortable': 7.0.2_lapgn5tcydgksdf34zqcxexmfu
       '@dnd-kit/utilities': 3.2.2_react@18.3.1
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       clsx: 2.1.1
       immutability-helper: 3.1.1
       react: 18.3.1
@@ -553,6 +568,25 @@ packages:
       - '@types/react'
       - react-dom
     dev: true
+
+  /@astroapps/ui-tree/1.0.0_77hu6zao2nteilhzuvmmjuwohe:
+    resolution: {integrity: sha512-cZECvIT10VUa+4Dv02l5cBOwQbkmRZm4CP8ALn8M2ThRWNBRAK0CZop2NCDKmE/wozu+jKhUhQH5GlQARV5H8w==}
+    dependencies:
+      '@astroapps/client': 0.1.8_@types+react@18.3.3
+      '@dnd-kit/core': 6.1.0_nnrd3gsncyragczmpvfhocinkq
+      '@dnd-kit/sortable': 7.0.2_lapgn5tcydgksdf34zqcxexmfu
+      '@dnd-kit/utilities': 3.2.2_react@18.3.1
+      '@react-typed-forms/core': 3.2.0
+      clsx: 2.1.1
+      immutability-helper: 3.1.1
+      react: 18.3.1
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - '@types/hoist-non-react-statics'
+      - '@types/node'
+      - '@types/react'
+      - react-dom
+    dev: false
 
   /@aw-web-design/x-default-browser/1.4.126:
     resolution: {integrity: sha512-Xk1sIhyNC/esHGGVjL/niHLowM0csl/kFO5uawBy4IrWwy0o1G8LGt3jP6nmWGz+USxeeqbihAmp/oVZju6wug==}
@@ -4941,8 +4975,8 @@ packages:
       react: 18.3.1
     dev: false
 
-  /@react-typed-forms/core/3.1.3:
-    resolution: {integrity: sha512-klMvpYyZoxZ3vCZMAuGfc6hdTILo25bfIh+tVxK6o7Szh4XJNJbq9jOgSUct7ytttaqYoBC+49SnuFCqBFylfg==}
+  /@react-typed-forms/core/3.2.0:
+    resolution: {integrity: sha512-AMX41zn34XveT6uFvOAkKBZZwylOEBcNjqcjV1R5PWBYS34ZqBBTmeYnwD10FReB9+9FEo5ZcZ0qBWX77PJanw==}
     dependencies:
       react: 18.3.1
 
@@ -4953,7 +4987,7 @@ packages:
       react-dom: 18.x
     dependencies:
       '@mui/material': 5.15.18_3vdbhqr2ncalcx7opnshezpx3q
-      '@react-typed-forms/core': 3.1.3
+      '@react-typed-forms/core': 3.2.0
       react: 18.3.1
     transitivePeerDependencies:
       - '@emotion/react'
@@ -13722,6 +13756,30 @@ packages:
       dnd-core: 16.0.1
     dev: false
 
+  /react-dnd/16.0.1_3vdbhqr2ncalcx7opnshezpx3q:
+    resolution: {integrity: sha512-QeoM/i73HHu2XF9aKksIUuamHPDvRglEwdHL4jsp784BgUuWcg6mzfxT0QDdQz8Wj0qyRKx2eMg8iZtWvU4E2Q==}
+    peerDependencies:
+      '@types/hoist-non-react-statics': '>= 3.3.1'
+      '@types/node': '>= 12'
+      '@types/react': '>= 16'
+      react: '>= 16.14'
+    peerDependenciesMeta:
+      '@types/hoist-non-react-statics':
+        optional: true
+      '@types/node':
+        optional: true
+      '@types/react':
+        optional: true
+    dependencies:
+      '@react-dnd/invariant': 4.0.2
+      '@react-dnd/shallowequal': 4.0.2
+      '@types/react': 18.3.3
+      dnd-core: 16.0.1
+      fast-deep-equal: 3.1.3
+      hoist-non-react-statics: 3.3.2
+      react: 18.3.1
+    dev: false
+
   /react-dnd/16.0.1_iqr4jp2n7avpn4ecc3q5n5d4mi:
     resolution: {integrity: sha512-QeoM/i73HHu2XF9aKksIUuamHPDvRglEwdHL4jsp784BgUuWcg6mzfxT0QDdQz8Wj0qyRKx2eMg8iZtWvU4E2Q==}
     peerDependencies:
@@ -14244,6 +14302,7 @@ packages:
 
   /rimraf/2.6.3:
     resolution: {integrity: sha512-mwqeW5XsA2qAejG46gYdENaxXjx9onRNCfn7L0duuP4hCuTIi/QO7PDK07KJfp1d+izWPrzEJDcSqBa0OZQriA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
@@ -14251,6 +14310,7 @@ packages:
 
   /rimraf/2.7.1:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
@@ -14258,6 +14318,7 @@ packages:
 
   /rimraf/3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3

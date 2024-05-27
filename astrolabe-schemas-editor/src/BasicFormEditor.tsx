@@ -59,11 +59,6 @@ import {
 } from "@mhsdesign/jit-browser-tailwindcss";
 import clsx from "clsx";
 import defaultEditorControls from "./ControlDefinition.json";
-import {
-  addMissing2,
-  findCompoundGroups,
-  findControlsForCompound,
-} from "@react-typed-forms/schemas";
 
 interface PreviewData {
   showing: boolean;
@@ -134,7 +129,6 @@ export function BasicFormEditor<A extends string>({
     controls: [],
     fields: [],
   });
-  console.log(addMissing2(ControlDefinitionSchema, defaultEditorControls));
   const controlGroup: GroupedControlsDefinition = useMemo(() => {
     return {
       children: addMissingControls(
