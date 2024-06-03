@@ -26,6 +26,7 @@ import {
   VisibilityRendererRegistration,
 } from "./renderers";
 import { createDefaultRenderers } from "./createDefaultRenderers";
+import { DataRenderType } from "./types";
 
 export function createFormRenderer(
   customRenderers: RendererRegistration[] = [],
@@ -105,7 +106,9 @@ export function createFormRenderer(
           (x.collection ?? false) ===
             (props.elementIndex == null && (field.collection ?? false)) &&
           (x.options ?? false) === options &&
-          ((x.schemaType && isOneOf(x.schemaType, field.type)) ||
+          ((x.schemaType &&
+            renderType == DataRenderType.Standard &&
+            isOneOf(x.schemaType, field.type)) ||
             (x.renderType && isOneOf(x.renderType, renderType)) ||
             (x.match && x.match(props))),
       ) ?? defaultRenderers.data;

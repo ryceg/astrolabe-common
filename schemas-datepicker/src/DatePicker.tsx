@@ -30,12 +30,19 @@ export function DatePicker({
   dateTime?: boolean;
 }) {
   const disabled = control.disabled;
-  let state = useDatePickerState({
-    value: !control.value
+  let dateValue: CalendarDate | null = null;
+  try {
+    dateValue = !control.value
       ? null
       : dateTime
         ? toCalendarDate(parseAbsolute(control.value, "UTC"))
-        : parseDate(control.value),
+        : parseDate(control.value);
+  } catch (e) {
+    console.log(e);
+  }
+
+  let state = useDatePickerState({
+    value: dateValue,
     onChange: (c) => {
       control.touched = true;
       control.value = c
