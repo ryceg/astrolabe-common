@@ -52,6 +52,7 @@ import { dataControl } from "./controlBuilder";
 import {
   defaultUseEvalExpressionHook,
   EvalExpressionHook,
+  useEvalActionHook,
   useEvalAllowedOptionsHook,
   useEvalDefaultValueHook,
   useEvalDisabledHook,
@@ -204,6 +205,7 @@ export interface DataRendererProps extends ParentRendererProps {
 export interface ActionRendererProps {
   actionId: string;
   actionText: string;
+  actionData?: any;
   onClick: () => void;
   className?: string;
   style?: React.CSSProperties;
@@ -240,6 +242,7 @@ export type CreateDataProps = (
 
 export interface ControlRenderOptions extends FormContextOptions {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
+  actionOnClick?: (actionId: string, actionData: any) => () => void;
   useEvalExpressionHook?: UseEvalExpressionHook;
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
@@ -270,6 +273,7 @@ export function useControlRenderer(
     disabledControl: useEvalDisabledHook(useExpr, definition),
     allowedOptions: useEvalAllowedOptionsHook(useExpr, definition),
     labelText: useEvalLabelText(useExpr, definition),
+    actionData: useEvalActionHook(useExpr, definition),
     customStyle: useEvalStyleHook(
       useExpr,
       DynamicPropertyType.Style,
@@ -319,6 +323,7 @@ export function useControlRenderer(
           customStyle,
           allowedOptions,
           defaultValueControl,
+          actionData,
         } = dynamicHooks(parentDataContext);
 
         const visible = visibleControl.current.value;
@@ -430,6 +435,8 @@ export function useControlRenderer(
           displayControl,
           style: customStyle.value,
           allowedOptions,
+          actionDataControl: actionData,
+          actionOnClick: options.actionOnClick,
           useChildVisibility: (childDef, context) => {
             const schemaField = lookupSchemaField(
               childDef,
@@ -636,7 +643,9 @@ export interface RenderControlProps {
   displayControl?: Control<string | undefined>;
   style?: React.CSSProperties;
   allowedOptions?: Control<any[] | undefined>;
+  actionDataControl?: Control<any | undefined | null>;
   useChildVisibility: ChildVisibilityFunc;
+  actionOnClick?: (actionId: string, actionData: any) => () => void;
 }
 export function renderControlLayout(
   props: RenderControlProps,
@@ -688,11 +697,13 @@ export function renderControlLayout(
     };
   }
   if (isActionControlsDefinition(c)) {
+    const actionData = props.actionDataControl?.value ?? c.actionData;
     return {
       children: renderer.renderAction({
         actionText: labelText?.value ?? c.title ?? c.actionId,
         actionId: c.actionId,
-        onClick: () => {},
+        actionData,
+        onClick: props.actionOnClick?.(c.actionId, actionData) ?? (() => {}),
         className: cc(c.styleClass),
         style,
       }),

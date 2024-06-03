@@ -102,6 +102,7 @@ export enum DynamicPropertyType {
   LayoutStyle = "LayoutStyle",
   AllowedOptions = "AllowedOptions",
   Label = "Label",
+  ActionData = "ActionData",
 }
 
 export interface EntityExpression {
@@ -349,6 +350,7 @@ export interface HtmlDisplay extends DisplayData {
 export interface ActionControlDefinition extends ControlDefinition {
   type: ControlDefinitionType.Action;
   actionId: string;
+  actionData: string;
 }
 
 export enum ValidatorType {

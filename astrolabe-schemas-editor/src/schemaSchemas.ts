@@ -450,6 +450,10 @@ export const DynamicPropertySchema = buildSchema<DynamicPropertyForm>({
         name: "Label",
         value: "Label",
       },
+      {
+        name: "ActionData",
+        value: "ActionData",
+      },
     ],
   }),
   expr: makeCompoundField({
@@ -928,6 +932,7 @@ export interface ControlDefinitionForm {
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
   actionId: string;
+  actionData: string | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -1064,6 +1069,11 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     notNullable: true,
     required: true,
     displayName: "Action Id",
+  }),
+  actionData: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Action"],
+    displayName: "Action Data",
   }),
 });
 

@@ -35,6 +35,15 @@
       },
       {
         "type": "Data",
+        "title": "Action Data",
+        "field": "actionData",
+        "renderOptions": {
+          "type": "Standard"
+        },
+        "readonly": false
+      },
+      {
+        "type": "Data",
         "title": "Field",
         "field": "field",
         "required": true,

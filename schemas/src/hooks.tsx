@@ -10,13 +10,7 @@ import {
   SchemaField,
   SchemaInterface,
 } from "./types";
-import React, {
-  MutableRefObject,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   addAfterChangesCallback,
   collectChanges,
@@ -40,9 +34,7 @@ import {
   isControlReadonly,
   jsonPathString,
   lookupChildControl,
-  makeHook,
   toDepString,
-  useUpdatedRef,
 } from "./util";
 import jsonata from "jsonata";
 import { trackedStructure, useCalculatedControl } from "./internal";
@@ -341,6 +333,22 @@ export function useJsonataExpression(
     return () => ref.current[1](true);
   }, [compiledExpr]);
   return control;
+}
+
+export function useEvalActionHook(
+  useExpr: UseEvalExpressionHook,
+  definition: ControlDefinition,
+): EvalExpressionHook<string | null> {
+  const dynamicValue = useEvalDynamicHook(
+    definition,
+    DynamicPropertyType.ActionData,
+    useExpr,
+  );
+  return makeDynamicPropertyHook(
+    dynamicValue,
+    () => useControl(null),
+    undefined,
+  );
 }
 
 export function useEvalLabelText(

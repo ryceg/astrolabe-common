@@ -1,49 +1,34 @@
 "use client";
 
-import {applyEditorExtensions, BasicFormEditor, ControlDefinitionSchema,} from "@astroapps/schemas-editor";
-import {useControl} from "@react-typed-forms/core";
+import {
+  applyEditorExtensions,
+  BasicFormEditor,
+  ControlDefinitionSchema,
+} from "@astroapps/schemas-editor";
+import { useControl } from "@react-typed-forms/core";
 import {
   boolField,
   buildSchema,
+  compoundField,
   createDefaultRenderers,
   createDisplayRenderer,
   createFormRenderer,
   defaultTailwindTheme,
   FieldOption,
   intField,
+  stringField,
 } from "@react-typed-forms/schemas";
-import {useQueryControl} from "@astroapps/client/hooks/useQueryControl";
-import {convertStringParam, useSyncParam,} from "@astroapps/client/hooks/queryParamSync";
-import {HTML5Backend} from "react-dnd-html5-backend";
-import {DndProvider} from "react-dnd";
-import {Client} from "../client";
-import controlsJson from "../ControlDefinition.json"
+import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
+import {
+  convertStringParam,
+  useSyncParam,
+} from "@astroapps/client/hooks/queryParamSync";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { DndProvider } from "react-dnd";
+import { Client } from "../client";
+import controlsJson from "../ControlDefinition.json";
 
 const CustomControlSchema = applyEditorExtensions({});
-
-enum TestOption {
-  Yes,
-  No,
-  Maybe,
-}
-
-interface OurData {
-  options: TestOption[];
-  single: TestOption;
-  check: boolean;
-}
-
-const options: FieldOption[] = [
-  { name: "Yes", value: TestOption.Yes },
-  { name: "No", value: TestOption.No },
-  { name: "Maybe", value: TestOption.Maybe },
-];
-
-const fields = buildSchema<OurData>({
-  options: intField("Multi", { collection: true, options }),
-  single: intField("Single", { options }),
-  check: boolField("Check pls"),
-});
 
 const customDisplay = createDisplayRenderer(
   (p) => <div>PATH: {p.dataContext.path.join(",")}</div>,
@@ -57,9 +42,22 @@ const StdFormRenderer = createFormRenderer(
   }),
 );
 
+interface TestSchema {
+  things: {
+    thingId: string;
+  };
+}
+
+const TestSchema = buildSchema<TestSchema>({
+  things: compoundField(
+    "Things",
+    buildSchema<{ thingId: string }>({ thingId: stringField("Thing Id") }),
+  ),
+});
+
 export default function Editor() {
   const qc = useQueryControl();
-  const selectedForm = useControl("");
+  const selectedForm = useControl("Test");
   useSyncParam(
     qc,
     selectedForm,
@@ -67,7 +65,7 @@ export default function Editor() {
     convertStringParam(
       (x) => x,
       (x) => x,
-      "",
+      "Test",
     ),
   );
   return (
@@ -76,14 +74,26 @@ export default function Editor() {
         formRenderer={StdFormRenderer}
         editorRenderer={StdFormRenderer}
         loadForm={async (c) => {
-          return {
-            fields: ControlDefinitionSchema,
-            controls: controlsJson,
-          };
+          return c === "EditorControls"
+            ? {
+                fields: ControlDefinitionSchema,
+                controls: controlsJson,
+              }
+            : { fields: TestSchema, controls: [] };
         }}
         selectedForm={selectedForm}
-        formTypes={[["MyForm", "MyForm"]]}
-        saveForm={async (controls) => await new Client().controlDefinition(controls)}
+        formTypes={[
+          ["EditorControls", "EditorControls"],
+          ["Test", "Test"],
+        ]}
+        saveForm={async (controls) => {
+          if (selectedForm.value === "EditorControls") {
+            await new Client().controlDefinition(controls);
+          }
+        }}
+        previewOptions={{
+          actionOnClick: (aid, data) => () => console.log("Clicked", aid, data),
+        }}
         controlDefinitionSchemaMap={CustomControlSchema}
         editorControls={controlsJson}
       />

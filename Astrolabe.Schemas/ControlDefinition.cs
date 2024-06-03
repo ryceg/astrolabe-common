@@ -76,7 +76,7 @@ public record GroupedControlsDefinition() : ControlDefinition(ControlDefinitionT
 public record DisplayControlDefinition(DisplayData DisplayData) : ControlDefinition(ControlDefinitionType.Display
     .ToString());
 
-public record ActionControlDefinition(string ActionId) : ControlDefinition(ControlDefinitionType.Action.ToString());
+public record ActionControlDefinition(string ActionId, string? ActionData) : ControlDefinition(ControlDefinitionType.Action.ToString());
 
 [JsonString]
 public enum DataRenderType
@@ -176,7 +176,8 @@ public enum DynamicPropertyType
     Style,
     LayoutStyle,
     AllowedOptions,
-    Label
+    Label,
+    ActionData
 }
 
 public record DynamicProperty([property: SchemaOptions(typeof(DynamicPropertyType))] string Type, EntityExpression Expr);

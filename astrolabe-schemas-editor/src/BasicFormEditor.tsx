@@ -384,6 +384,7 @@ function FormPreview({
   formRenderer,
   validation,
   rootControlClass,
+  previewOptions,
 }: {
   previewData: Control<PreviewData>;
   formRenderer: FormRenderer;
@@ -416,6 +417,7 @@ function FormPreview({
               fields={fields.value}
               renderer={formRenderer}
               control={data}
+              options={previewOptions}
             />
           </div>
         )}
