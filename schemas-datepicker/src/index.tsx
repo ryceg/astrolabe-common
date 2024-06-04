@@ -24,7 +24,7 @@ export function createDatePickerRenderer(
       />
     ),
     {
-      schemaType: FieldType.Date,
+      schemaType: [FieldType.Date, FieldType.DateTime],
       renderType: DataRenderType.DateTime,
     },
   );
