@@ -7,16 +7,14 @@ import {
 } from "@astroapps/schemas-editor";
 import { useControl } from "@react-typed-forms/core";
 import {
-  boolField,
   buildSchema,
   compoundField,
   createDefaultRenderers,
   createDisplayRenderer,
   createFormRenderer,
   defaultTailwindTheme,
-  FieldOption,
-  intField,
-  stringField,
+  FieldType,
+  makeScalarField,
 } from "@react-typed-forms/schemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
 import {
@@ -27,6 +25,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
 import { Client } from "../client";
 import controlsJson from "../ControlDefinition.json";
+import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 
 const CustomControlSchema = applyEditorExtensions({});
 
@@ -36,7 +35,7 @@ const customDisplay = createDisplayRenderer(
 );
 
 const StdFormRenderer = createFormRenderer(
-  [customDisplay],
+  [customDisplay, createDatePickerRenderer()],
   createDefaultRenderers({
     ...defaultTailwindTheme,
   }),
@@ -51,7 +50,9 @@ interface TestSchema {
 const TestSchema = buildSchema<TestSchema>({
   things: compoundField(
     "Things",
-    buildSchema<{ thingId: string }>({ thingId: stringField("Thing Id") }),
+    buildSchema<{ thingId: string }>({
+      thingId: makeScalarField({ type: FieldType.DateTime }),
+    }),
   ),
 });
 
