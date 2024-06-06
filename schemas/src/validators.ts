@@ -12,6 +12,8 @@ import {
 } from "./types";
 import {
   Control,
+  ControlChange,
+  trackControlChange,
   useControlEffect,
   useValidator,
   useValueChangeEffect,
@@ -19,8 +21,6 @@ import {
 import { useCallback } from "react";
 import { ControlDataContext, useUpdatedRef } from "./util";
 import { useJsonataExpression } from "./hooks";
-import { trackControlChange } from "@react-typed-forms/core";
-import { ControlChange } from "@react-typed-forms/core";
 
 export function useValidationHook(
   definition: ControlDefinition,
@@ -49,10 +49,13 @@ export function useValidationHook(
         (v) =>
           !hidden &&
           dd.required &&
-          (v == null || v === "" || (Array.isArray(v) && v.length === 0))
+          field &&
+          schemaInterface.isEmptyValue(field, v)
             ? "Please enter a value"
             : null,
         "required",
+        undefined,
+        [hidden, dd.required, !!field],
       );
       (dd.validators ?? []).forEach((x, i) => {
         switch (x.type) {
