@@ -13,6 +13,7 @@ import {
   Fcheckbox,
   newControl,
   removeElement,
+  useCalculatedControl,
   useComponentTracking,
   useControl,
   useControlEffect,
@@ -64,7 +65,7 @@ import {
   useEvalVisibilityHook,
 } from "./hooks";
 import { useValidationHook } from "./validators";
-import { cc, useCalculatedControl } from "./internal";
+import { cc } from "./internal";
 import { defaultSchemaInterface } from "./schemaInterface";
 
 export interface FormRenderer {

@@ -113,9 +113,12 @@ export function useEditorDataHook(
     ): [FieldOption[] | undefined, SchemaField] {
       switch (ot) {
         case SchemaOptionTag.SchemaField:
-          return [fieldList.map(schemaFieldOption), sf];
+          return [fieldList.flatMap((x) => schemaFieldOptions(x)), sf];
         case SchemaOptionTag.NestedSchemaField:
-          return [fieldList.filter(isCompoundField).map(schemaFieldOption), sf];
+          return [
+            fieldList.filter(isCompoundField).map((x) => schemaFieldOption(x)),
+            sf,
+          ];
         // case SchemaOptionTag.TableList:
         //   return [context?.tableList?.value ?? [], sf];
 
@@ -287,8 +290,21 @@ export function useEditorDataHook(
 //   );
 // }
 
-function schemaFieldOption(c: SchemaField): FieldOption {
-  return { name: c.field, value: c.field };
+function schemaFieldOption(c: SchemaField, prefix?: string): FieldOption {
+  const value = (prefix ?? "") + c.field;
+  return { name: `${c.displayName ?? c.field} (${value})`, value };
+}
+
+function schemaFieldOptions(c: SchemaField, prefix?: string): FieldOption[] {
+  const self = schemaFieldOption(c, prefix);
+  if (isCompoundField(c) && !c.collection) {
+    const newPrefix = (prefix ?? "") + c.field + "/";
+    return [
+      self,
+      ...c.children.flatMap((x) => schemaFieldOptions(x, newPrefix)),
+    ];
+  }
+  return [self];
 }
 
 export function findSchemaFieldListForParents(

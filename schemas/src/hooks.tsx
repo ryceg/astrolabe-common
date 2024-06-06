@@ -16,6 +16,8 @@ import {
   collectChanges,
   Control,
   makeChangeTracker,
+  trackedValue,
+  useCalculatedControl,
   useComputed,
   useControl,
   useRefState,
@@ -37,7 +39,6 @@ import {
   toDepString,
 } from "./util";
 import jsonata from "jsonata";
-import { trackedStructure, useCalculatedControl } from "./internal";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,
@@ -46,6 +47,7 @@ export type EvalExpressionHook<A = any> = DynamicHookGenerator<
 
 export type UseEvalExpressionHook = (
   expr: EntityExpression | undefined,
+  coerce: (v: any) => any,
 ) => DynamicHookGenerator<Control<any> | undefined, ControlDataContext>;
 
 export function useEvalVisibilityHook(
@@ -53,7 +55,7 @@ export function useEvalVisibilityHook(
   definition: ControlDefinition,
   schemaField?: SchemaField,
 ): EvalExpressionHook<boolean> {
-  const dynamicVisibility = useEvalDynamicHook(
+  const dynamicVisibility = useEvalDynamicBoolHook(
     definition,
     DynamicPropertyType.Visible,
     useEvalExpressionHook,
@@ -76,7 +78,7 @@ export function useEvalReadonlyHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
 ): EvalExpressionHook<boolean> {
-  const dynamicReadonly = useEvalDynamicHook(
+  const dynamicReadonly = useEvalDynamicBoolHook(
     definition,
     DynamicPropertyType.Readonly,
     useEvalExpressionHook,
@@ -126,7 +128,7 @@ export function useEvalDisabledHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
 ): EvalExpressionHook<boolean> {
-  const dynamicDisabled = useEvalDynamicHook(
+  const dynamicDisabled = useEvalDynamicBoolHook(
     definition,
     DynamicPropertyType.Disabled,
     useEvalExpressionHook,
@@ -188,46 +190,59 @@ function useDataExpression(
   fvExpr: DataExpression,
   fields: SchemaField[],
   data: DataContext,
+  coerce: (v: any) => any = (x) => x,
 ) {
   const refField = findField(fields, fvExpr.field);
   const otherField = refField
     ? lookupChildControl(data, refField.field)
     : undefined;
-  return useCalculatedControl(() => otherField?.value);
+  return useCalculatedControl(() => coerce(otherField?.value));
 }
 
 function useDataMatchExpression(
   fvExpr: DataMatchExpression,
   fields: SchemaField[],
   data: DataContext,
+  coerce: (v: any) => any = (x) => x,
 ) {
   const refField = findField(fields, fvExpr.field);
   const otherField = refField
     ? lookupChildControl(data, refField.field)
     : undefined;
-  return useComputed(() => {
+  return useCalculatedControl(() => {
     const fv = otherField?.value;
-    return Array.isArray(fv) ? fv.includes(fvExpr.value) : fv === fvExpr.value;
+    return coerce(
+      Array.isArray(fv) ? fv.includes(fvExpr.value) : fv === fvExpr.value,
+    );
   });
 }
 
 export function defaultEvalHooks(
   expr: EntityExpression,
   context: ControlDataContext,
+  coerce: (v: any) => any,
 ) {
   switch (expr.type) {
     case ExpressionType.Jsonata:
       return useJsonataExpression(
         (expr as JsonataExpression).expression,
         context,
+        undefined,
+        coerce,
       );
     case ExpressionType.Data:
-      return useDataExpression(expr as DataExpression, context.fields, context);
+      return useDataExpression(
+        expr as DataExpression,
+        context.fields,
+        context,
+        coerce,
+      );
     case ExpressionType.DataMatch:
       return useDataMatchExpression(
         expr as DataMatchExpression,
         context.fields,
         context,
+        coerce,
       );
     default:
       return useControl(undefined);
@@ -238,24 +253,39 @@ export const defaultUseEvalExpressionHook =
   makeEvalExpressionHook(defaultEvalHooks);
 
 export function makeEvalExpressionHook(
-  f: (expr: EntityExpression, context: ControlDataContext) => Control<any>,
+  f: (
+    expr: EntityExpression,
+    context: ControlDataContext,
+    coerce: (v: any) => any,
+  ) => Control<any>,
 ): UseEvalExpressionHook {
-  return (expr) => ({
+  return (expr, coerce) => ({
     deps: expr?.type,
     state: expr,
     runHook: (ctx: ControlDataContext, state: EntityExpression | undefined) => {
-      return state ? f(state, ctx) : undefined;
+      return state ? f(state, ctx, coerce) : undefined;
     },
   });
+}
+
+export function useEvalDynamicBoolHook(
+  definition: ControlDefinition,
+  type: DynamicPropertyType,
+  useEvalExpressionHook: UseEvalExpressionHook,
+): DynamicHookGenerator<Control<any> | undefined, ControlDataContext> {
+  return useEvalDynamicHook(definition, type, useEvalExpressionHook, (x) =>
+    Boolean(x),
+  );
 }
 
 export function useEvalDynamicHook(
   definition: ControlDefinition,
   type: DynamicPropertyType,
   useEvalExpressionHook: UseEvalExpressionHook,
+  coerce: (v: any) => any = (x) => x,
 ): DynamicHookGenerator<Control<any> | undefined, ControlDataContext> {
   const expression = definition.dynamic?.find((x) => x.type === type);
-  return useEvalExpressionHook(expression?.expr);
+  return useEvalExpressionHook(expression?.expr, coerce);
 }
 
 export function matchesType(
@@ -288,6 +318,7 @@ export function useJsonataExpression(
   jExpr: string,
   dataContext: DataContext,
   bindings?: () => Record<string, any>,
+  coerce: (v: any) => any = (x) => x,
 ): Control<any> {
   const pathString = jsonPathString(dataContext.path, (x) => `#$i[${x}]`);
   const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
@@ -322,9 +353,11 @@ export function useJsonataExpression(
         const bindingData = bindings
           ? collectChanges(collect, bindings)
           : undefined;
-        control.value = await compiledExpr.evaluate(
-          trackedStructure(dataContext.data, collect),
-          bindingData,
+        control.value = coerce(
+          await compiledExpr.evaluate(
+            trackedValue(dataContext.data, collect),
+            bindingData,
+          ),
         );
       } finally {
         updateSubscriptions();
