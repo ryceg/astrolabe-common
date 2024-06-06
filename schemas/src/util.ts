@@ -312,15 +312,13 @@ export function addMissingControls(
     .filter((x) => !fieldHasTag(x, "_NoControl"))
     .flatMap((x) => existsInGroups(x, rootLookup));
   missingFields.forEach(([f, lookup]) => {
-    const groupToAdd = f.tags?.find(x => x.startsWith("_ControlGroup:"));
+    const groupToAdd = f.tags?.find((x) => x.startsWith("_ControlGroup:"));
     let insertGroup: ControlDefinition | undefined = undefined;
-    if (groupToAdd)
-    {
+    if (groupToAdd) {
       const groupName = groupToAdd.substring(14);
-      insertGroup = lookup.groups.find(x => x.title === groupName);
+      insertGroup = lookup.groups.find((x) => x.title === groupName);
     }
-    if (!insertGroup)
-      insertGroup = lookup.groups[0];
+    if (!insertGroup) insertGroup = lookup.groups[0];
     insertGroup?.children?.push(defaultControlForField(f));
   });
   return controls;
@@ -347,10 +345,16 @@ export function getDisplayOnlyOptions(
 
 export function getTypeField(
   context: ControlDataContext,
+  fieldPath: SchemaField[],
 ): Control<string> | undefined {
-  const typeSchemaField = context.fields.find((x) => x.isTypeField);
+  const withoutLast = fieldPath.slice(0, -1);
+  const fieldList =
+    withoutLast.length > 0
+      ? (withoutLast.at(-1) as CompoundField).children
+      : context.fields;
+  const typeSchemaField = fieldList.find((x) => x.isTypeField);
   return typeSchemaField
-    ? lookupChildControl(context, typeSchemaField.field)
+    ? lookupChildControl(context, [...withoutLast, typeSchemaField])
     : undefined;
 }
 
@@ -436,9 +440,19 @@ export function visitControlData<A>(
 
 export function lookupChildControl(
   data: DataContext,
-  child: JsonPath,
+  path: SchemaField[],
 ): Control<any> | undefined {
-  const childPath = [...data.path, child];
+  return lookupChildControlPath(
+    data,
+    path.map((x) => x.field),
+  );
+}
+
+export function lookupChildControlPath(
+  data: DataContext,
+  jsonPath: JsonPath[],
+): Control<any> | undefined {
+  const childPath = [...data.path, ...jsonPath];
   return watchControlLookup(data.data, childPath);
 }
 
@@ -551,7 +565,7 @@ export function rendererClass(
   return oc ? oc : undefined;
 }
 
-function watchControlLookup(
+export function watchControlLookup(
   base: Control<any> | undefined,
   path: (string | number)[],
 ): Control<any> | undefined {
@@ -637,4 +651,26 @@ export function applyLengthRestrictions<Min, Max>(
     min == null || length > min ? minValue : undefined,
     max == null || length < max ? maxValue : undefined,
   ];
+}
+
+export function findFieldPath(
+  fields: SchemaField[],
+  fieldPath: string,
+): SchemaField[] | undefined {
+  const fieldNames = fieldPath.split("/");
+  const foundFields: SchemaField[] = [];
+  let i = 0;
+  let currentFields: SchemaField[] | undefined = fields;
+  while (i < fieldNames.length && currentFields) {
+    const cf = fieldNames[i];
+    const nextField = findField(currentFields, cf);
+    if (!nextField) return undefined;
+    foundFields.push(nextField);
+    currentFields =
+      isCompoundField(nextField) && !nextField.collection
+        ? nextField.children
+        : undefined;
+    i++;
+  }
+  return foundFields.length === fieldNames.length ? foundFields : undefined;
 }

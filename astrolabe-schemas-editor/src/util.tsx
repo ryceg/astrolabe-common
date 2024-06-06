@@ -8,8 +8,11 @@ import {
   defaultDataProps,
   FieldOption,
   FieldType,
+  findField,
+  findFieldPath,
   isCompoundField,
   lookupChildControl,
+  lookupChildControlPath,
   SchemaField,
   useUpdatedRef,
 } from "@react-typed-forms/schemas";
@@ -124,13 +127,12 @@ export function useEditorDataHook(
 
         default:
           const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
-          const otherFieldName = lookupChildControl(
-            parentContext,
+          const otherFieldName = lookupChildControlPath(parentContext, [
             otherField,
-          )?.value;
-          const fieldInSchema = fieldList.find(
-            (x) => x.field === otherFieldName,
-          );
+          ])?.value;
+          const fieldInSchema = otherFieldName
+            ? findFieldPath(fieldList, otherFieldName)?.at(-1)
+            : undefined;
           const opts = fieldInSchema?.options;
           return [
             opts && opts.length > 0 ? opts : undefined,

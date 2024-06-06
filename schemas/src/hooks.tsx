@@ -29,7 +29,7 @@ import {
   defaultValueForField,
   DynamicHookGenerator,
   elementValueForField,
-  findField,
+  findFieldPath,
   getDisplayOnlyOptions,
   getTypeField,
   HookDep,
@@ -53,7 +53,7 @@ export type UseEvalExpressionHook = (
 export function useEvalVisibilityHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
-  schemaField?: SchemaField,
+  fieldPath?: SchemaField[],
 ): EvalExpressionHook<boolean> {
   const dynamicVisibility = useEvalDynamicBoolHook(
     definition,
@@ -62,15 +62,15 @@ export function useEvalVisibilityHook(
   );
   return makeDynamicPropertyHook(
     dynamicVisibility,
-    (ctx, { schemaField, definition }) =>
+    (ctx, { fieldPath, definition }) =>
       useComputed(() => {
         return (
-          matchesType(ctx, schemaField?.onlyForTypes) &&
-          (!schemaField ||
-            !hideDisplayOnly(ctx, schemaField, definition, ctx.schemaInterface))
+          matchesType(ctx, fieldPath) &&
+          (!fieldPath ||
+            !hideDisplayOnly(ctx, fieldPath, definition, ctx.schemaInterface))
         );
       }),
-    { schemaField, definition },
+    { fieldPath, definition },
   );
 }
 
@@ -192,10 +192,8 @@ function useDataExpression(
   data: DataContext,
   coerce: (v: any) => any = (x) => x,
 ) {
-  const refField = findField(fields, fvExpr.field);
-  const otherField = refField
-    ? lookupChildControl(data, refField.field)
-    : undefined;
+  const refField = findFieldPath(fields, fvExpr.field);
+  const otherField = refField ? lookupChildControl(data, refField) : undefined;
   return useCalculatedControl(() => coerce(otherField?.value));
 }
 
@@ -205,10 +203,8 @@ function useDataMatchExpression(
   data: DataContext,
   coerce: (v: any) => any = (x) => x,
 ) {
-  const refField = findField(fields, fvExpr.field);
-  const otherField = refField
-    ? lookupChildControl(data, refField.field)
-    : undefined;
+  const refField = findFieldPath(fields, fvExpr.field);
+  const otherField = refField ? lookupChildControl(data, refField) : undefined;
   return useCalculatedControl(() => {
     const fv = otherField?.value;
     return coerce(
@@ -290,16 +286,19 @@ export function useEvalDynamicHook(
 
 export function matchesType(
   context: ControlDataContext,
-  types?: string[] | null,
+  fieldPath?: SchemaField[],
 ) {
+  const types = fieldPath
+    ? fieldPath[fieldPath.length - 1].onlyForTypes
+    : undefined;
   if (types == null || types.length === 0) return true;
-  const typeField = getTypeField(context);
+  const typeField = getTypeField(context, fieldPath!);
   return typeField && types.includes(typeField.value);
 }
 
 export function hideDisplayOnly(
   context: ControlDataContext,
-  field: SchemaField,
+  fieldPath: SchemaField[],
   definition: ControlDefinition,
   schemaInterface: SchemaInterface,
 ) {
@@ -308,8 +307,8 @@ export function hideDisplayOnly(
     displayOptions &&
     !displayOptions.emptyText &&
     schemaInterface.isEmptyValue(
-      field,
-      lookupChildControl(context, field.field)?.value,
+      fieldPath.at(-1)!,
+      lookupChildControl(context, fieldPath)?.value,
     )
   );
 }

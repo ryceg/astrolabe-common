@@ -98,7 +98,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       dropSuccess,
     ),
   });
-  const field = lookupSchemaField(definition, fields);
+  const fieldPath = lookupSchemaField(definition, fields);
+  const field = fieldPath?.at(-1);
   const groupControl = useControl({});
   const parentContext: ControlDataContext = {
     data: groupControl,
@@ -106,7 +107,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     fields,
     schemaInterface: props.schemaInterface ?? defaultSchemaInterface,
   };
-  const [, , dataContext] = getControlData(field, parentContext, elementIndex);
+  const [, , dataContext] = getControlData(
+    fieldPath,
+    parentContext,
+    elementIndex,
+  );
   const isRequired = isDataControlDefinition(definition) && definition.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const sampleData = useMemo(

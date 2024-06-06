@@ -10,7 +10,6 @@ import React, {
 import {
   addElement,
   Control,
-  Fcheckbox,
   newControl,
   removeElement,
   useCalculatedControl,
@@ -43,9 +42,10 @@ import {
   ControlDataContext,
   elementValueForField,
   fieldDisplayName,
-  findField,
+  findFieldPath,
   isCompoundField,
   JsonPath,
+  lookupChildControlPath,
   useDynamicHooks,
   useUpdatedRef,
 } from "./util";
@@ -260,8 +260,8 @@ export function useControlRenderer(
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
 
-  const schemaField = lookupSchemaField(definition, fields);
-
+  const fieldPath = lookupSchemaField(definition, fields);
+  const schemaField = fieldPath?.at(-1);
   const dynamicHooks = useDynamicHooks({
     defaultValueControl: useEvalDefaultValueHook(
       useExpr,
@@ -269,7 +269,7 @@ export function useControlRenderer(
       schemaField,
       elementIndex != null,
     ),
-    visibleControl: useEvalVisibilityHook(useExpr, definition, schemaField),
+    visibleControl: useEvalVisibilityHook(useExpr, definition, fieldPath),
     readonlyControl: useEvalReadonlyHook(useExpr, definition),
     disabledControl: useEvalDisabledHook(useExpr, definition),
     allowedOptions: useEvalAllowedOptionsHook(useExpr, definition),
@@ -293,7 +293,7 @@ export function useControlRenderer(
     options,
     definition,
     fields,
-    schemaField,
+    fieldPath,
     elementIndex,
   });
 
@@ -305,9 +305,10 @@ export function useControlRenderer(
           definition: c,
           options,
           fields,
-          schemaField,
+          fieldPath,
           elementIndex,
         } = r.current;
+        const schemaField = fieldPath?.at(-1);
         const parentDataContext: ControlDataContext = {
           fields,
           schemaInterface,
@@ -348,7 +349,7 @@ export function useControlRenderer(
         );
 
         const [parentControl, control, controlDataContext] = getControlData(
-          schemaField,
+          fieldPath,
           parentDataContext,
           elementIndex,
         );
@@ -465,20 +466,23 @@ export function useControlRenderer(
 export function lookupSchemaField(
   c: ControlDefinition,
   fields: SchemaField[],
-): SchemaField | undefined {
+): SchemaField[] | undefined {
   const fieldName = isGroupControlsDefinition(c)
     ? c.compoundField
     : isDataControlDefinition(c)
       ? c.field
       : undefined;
-  return fieldName ? findField(fields, fieldName) : undefined;
+  return fieldName ? findFieldPath(fields, fieldName) : undefined;
 }
 export function getControlData(
-  schemaField: SchemaField | undefined,
+  fieldPath: SchemaField[] | undefined,
   parentContext: ControlDataContext,
   elementIndex: number | undefined,
 ): [Control<any> | undefined, Control<any> | undefined, ControlDataContext] {
-  const { data, path } = parentContext;
+  const { data, path: pp } = parentContext;
+  const extraPath = fieldPath?.slice(0, -1).map((x) => x.field) ?? [];
+  const path = [...pp, ...extraPath];
+  const schemaField = fieldPath?.at(-1);
   const parentControl = data.lookupControl(path);
   const childPath = schemaField
     ? elementIndex != null
@@ -665,6 +669,7 @@ export function renderControlLayout(
     parentContext,
     useChildVisibility,
   } = props;
+
   if (isDataControlDefinition(c)) {
     return renderData(c);
   }
