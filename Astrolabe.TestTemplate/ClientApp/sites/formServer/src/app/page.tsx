@@ -43,15 +43,27 @@ const StdFormRenderer = createFormRenderer(
 
 interface TestSchema {
   things: {
-    thingId: string;
+    sub: {
+      thingId: string;
+    };
   };
 }
 
 const TestSchema = buildSchema<TestSchema>({
   things: compoundField(
     "Things",
-    buildSchema<{ thingId: string }>({
-      thingId: makeScalarField({ type: FieldType.DateTime }),
+
+    buildSchema<{
+      sub: {
+        thingId: string;
+      };
+    }>({
+      sub: compoundField(
+        "Sub",
+        buildSchema<{ thingId: string }>({
+          thingId: makeScalarField({ type: FieldType.DateTime }),
+        }),
+      ),
     }),
   ),
 });

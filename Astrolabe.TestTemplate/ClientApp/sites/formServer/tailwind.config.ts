@@ -8,6 +8,7 @@ const config: Config = {
     "node_modules/@astroapps/schemas-editor/lib/*.js",
     "./**/node_modules/@astroapps/ui-tree/*.js",
     "node_modules/@astrolabe/ui/**/*.tsx",
+    "node_modules/@astroapps/schemas-datepicker/lib/*.js",
   ],
   presets: [ti],
   theme: {

@@ -359,7 +359,7 @@ export function useControlRenderer(
             defaultValueControl.value,
             control,
             isDataControlDefinition(definition) && definition.dontClearHidden,
-            parentControl?.isNull,
+            parentControl.isNull,
             options.hidden,
           ],
           ([vc, dv, cd, dontClear, parentNull, hidden]) => {
@@ -372,8 +372,8 @@ export function useControlRenderer(
                 cd.value = dv;
               }
             }
-            if (parentNull && parentControl?.isNull) {
-              parentControl.value = {};
+            if (parentNull) {
+              parentControl.setValue((x) => x ?? {});
             }
           },
           true,
@@ -399,7 +399,7 @@ export function useControlRenderer(
           if (control && typeof myOptions.disabled === "boolean")
             control.disabled = myOptions.disabled;
         }, [control, myOptions.disabled]);
-        if (parentControl?.isNull) return <></>;
+        if (parentControl.isNull) return <></>;
 
         const adornments =
           definition.adornments?.map((x) =>
@@ -478,19 +478,19 @@ export function getControlData(
   fieldPath: SchemaField[] | undefined,
   parentContext: ControlDataContext,
   elementIndex: number | undefined,
-): [Control<any> | undefined, Control<any> | undefined, ControlDataContext] {
+): [Control<any>, Control<any> | undefined, ControlDataContext] {
   const { data, path: pp } = parentContext;
   const extraPath = fieldPath?.slice(0, -1).map((x) => x.field) ?? [];
   const path = [...pp, ...extraPath];
   const schemaField = fieldPath?.at(-1);
-  const parentControl = data.lookupControl(path);
+  const [parentControl, found] = lookupControl(data, path);
   const childPath = schemaField
     ? elementIndex != null
       ? [...path, schemaField.field, elementIndex]
       : [...path, schemaField.field]
     : path;
   const childControl =
-    schemaField && parentControl
+    schemaField && found
       ? parentControl.fields?.[schemaField.field]
       : undefined;
   return [
@@ -508,6 +508,26 @@ export function getControlData(
         }
       : parentContext,
   ];
+}
+
+function lookupControl(
+  control: Control<any>,
+  path: (string | number)[],
+): [Control<any>, boolean] {
+  let base = control;
+  let index = 0;
+  while (index < path.length && base) {
+    control = base;
+    const childId = path[index];
+    const c = base.current;
+    if (typeof childId === "string") {
+      base = c.fields?.[childId];
+    } else {
+      base = c.elements?.[childId];
+    }
+    index++;
+  }
+  return [base ?? control, !!base];
 }
 
 export function ControlRenderer({
