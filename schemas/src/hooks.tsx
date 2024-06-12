@@ -13,8 +13,10 @@ import {
 import React, { useEffect, useMemo, useRef } from "react";
 import {
   addAfterChangesCallback,
+  ChangeListenerFunc,
   collectChanges,
   Control,
+  ControlChange,
   makeChangeTracker,
   trackedValue,
   useCalculatedControl,
@@ -331,14 +333,15 @@ export function useJsonataExpression(
   }, [fullExpr]);
   const control = useControl();
   const listenerRef = useRef<() => void>();
+  const updateRef = useRef(0);
   const [ref] = useRefState(() =>
     makeChangeTracker(() => {
       const l = listenerRef.current;
       if (l) {
         listenerRef.current = undefined;
         addAfterChangesCallback(() => {
-          l();
           listenerRef.current = l;
+          l();
         });
       }
     }),
@@ -349,6 +352,7 @@ export function useJsonataExpression(
     async function apply() {
       const [collect, updateSubscriptions] = ref.current;
       try {
+        updateRef.current++;
         const bindingData = bindings
           ? collectChanges(collect, bindings)
           : undefined;
@@ -359,7 +363,7 @@ export function useJsonataExpression(
           ),
         );
       } finally {
-        updateSubscriptions();
+        if (!--updateRef.current) updateSubscriptions();
       }
     }
     return () => ref.current[1](true);
