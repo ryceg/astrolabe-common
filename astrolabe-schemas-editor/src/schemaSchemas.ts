@@ -926,6 +926,7 @@ export interface ControlDefinitionForm {
   renderOptions: RenderOptionsForm | null;
   defaultValue: any | null;
   readonly: boolean | null;
+  disabled: boolean | null;
   dontClearHidden: boolean | null;
   validators: SchemaValidatorForm[] | null;
   compoundField: string | null;
@@ -1031,6 +1032,12 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     onlyForTypes: ["Data"],
     defaultValue: false,
     displayName: "Readonly",
+  }),
+  disabled: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Data"],
+    defaultValue: false,
+    displayName: "Disabled",
   }),
   dontClearHidden: makeScalarField({
     type: FieldType.Bool,

@@ -9,9 +9,7 @@
         "field": "title",
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false,
-        "required": false
+        }
       },
       {
         "type": "Data",
@@ -20,8 +18,7 @@
         "required": true,
         "renderOptions": {
           "type": "Radio"
-        },
-        "readonly": false
+        }
       },
       {
         "type": "Data",
@@ -30,8 +27,7 @@
         "required": true,
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false
+        }
       },
       {
         "type": "Data",
@@ -39,8 +35,7 @@
         "field": "actionData",
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false
+        }
       },
       {
         "type": "Data",
@@ -49,8 +44,7 @@
         "required": true,
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false
+        }
       },
       {
         "type": "Group",
@@ -66,18 +60,14 @@
                 "field": "hideTitle",
                 "renderOptions": {
                   "type": "Checkbox"
-                },
-                "readonly": false,
-                "required": false
+                }
               }
             ],
             "field": "groupOptions",
             "hideTitle": true,
-            "required": false,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -85,9 +75,7 @@
             "field": "hideTitle",
             "renderOptions": {
               "type": "Checkbox"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -95,9 +83,7 @@
             "field": "required",
             "renderOptions": {
               "type": "Checkbox"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -105,9 +91,15 @@
             "field": "readonly",
             "renderOptions": {
               "type": "Checkbox"
-            },
-            "readonly": false,
-            "required": false
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Disabled",
+            "field": "disabled",
+            "renderOptions": {
+              "type": "Checkbox"
+            }
           }
         ],
         "groupOptions": {
@@ -115,16 +107,6 @@
           "hideTitle": true,
           "columns": 4
         }
-      },
-      {
-        "type": "Data",
-        "title": "Default Value",
-        "field": "defaultValue",
-        "renderOptions": {
-          "type": "Standard"
-        },
-        "readonly": false,
-        "required": false
       },
       {
         "type": "Data",
@@ -138,8 +120,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -147,9 +128,7 @@
             "field": "placeholder",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -163,8 +142,7 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               },
               {
                 "type": "Data",
@@ -172,9 +150,7 @@
                 "field": "hideTitle",
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false,
-                "required": false
+                }
               },
               {
                 "type": "Data",
@@ -182,9 +158,7 @@
                 "field": "direction",
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false,
-                "required": false
+                }
               },
               {
                 "type": "Data",
@@ -192,9 +166,7 @@
                 "field": "gap",
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false,
-                "required": false
+                }
               },
               {
                 "type": "Data",
@@ -202,9 +174,7 @@
                 "field": "columns",
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false,
-                "required": false
+                }
               },
               {
                 "type": "Data",
@@ -213,12 +183,9 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               }
             ],
-            "readonly": false,
-            "required": false,
             "renderOptions": {
               "type": "Standard"
             }
@@ -229,9 +196,7 @@
             "field": "emptyText",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -239,9 +204,7 @@
             "field": "sampleText",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -250,8 +213,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -260,8 +222,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -269,9 +230,7 @@
             "field": "format",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -280,8 +239,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -290,8 +248,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -305,8 +262,7 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               },
               {
                 "type": "Data",
@@ -314,13 +270,9 @@
                 "field": "materialIcon",
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false,
-                "required": false
+                }
               }
-            ],
-            "readonly": false,
-            "required": false
+            ]
           },
           {
             "type": "Data",
@@ -329,13 +281,18 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           }
         ],
-        "readonly": false,
         "hideTitle": true,
-        "required": false,
+        "renderOptions": {
+          "type": "Standard"
+        }
+      },
+      {
+        "type": "Data",
+        "title": "Default Value",
+        "field": "defaultValue",
         "renderOptions": {
           "type": "Standard"
         }
@@ -352,8 +309,7 @@
             "required": true,
             "renderOptions": {
               "type": "Radio"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -362,8 +318,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -372,8 +327,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -382,12 +336,9 @@
             "required": true,
             "renderOptions": {
               "type": "HtmlEditor"
-            },
-            "readonly": false
+            }
           }
         ],
-        "readonly": false,
-        "required": false,
         "renderOptions": {
           "type": "Standard"
         },
@@ -401,60 +352,48 @@
             "type": "Data",
             "title": "Renderer",
             "field": "type",
-            "required": false,
             "renderOptions": {
               "type": "Radio"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
             "title": "Direction",
             "field": "direction",
-            "required": false,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
             "title": "Gap",
             "field": "gap",
-            "required": false,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
             "title": "Columns",
             "field": "columns",
-            "required": false,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
             "title": "Value",
             "field": "value",
-            "required": false,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           }
         ],
         "field": "groupOptions",
         "hideTitle": true,
-        "required": false,
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false
+        }
       }
     ],
     "groupOptions": {
@@ -471,9 +410,7 @@
         "field": "styleClass",
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false,
-        "required": false
+        }
       },
       {
         "type": "Data",
@@ -481,9 +418,7 @@
         "field": "labelClass",
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false,
-        "required": false
+        }
       },
       {
         "type": "Data",
@@ -491,9 +426,7 @@
         "field": "layoutClass",
         "renderOptions": {
           "type": "Standard"
-        },
-        "readonly": false,
-        "required": false
+        }
       }
     ],
     "groupOptions": {
@@ -511,9 +444,7 @@
         "field": "dontClearHidden",
         "renderOptions": {
           "type": "Checkbox"
-        },
-        "readonly": false,
-        "required": false
+        }
       },
       {
         "type": "Data",
@@ -527,8 +458,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -537,8 +467,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -546,9 +475,7 @@
             "field": "placement",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -557,8 +484,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -567,8 +493,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -577,8 +502,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -587,12 +511,9 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           }
-        ],
-        "readonly": false,
-        "required": false
+        ]
       },
       {
         "type": "Data",
@@ -606,8 +527,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -616,8 +536,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -626,8 +545,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -635,9 +553,7 @@
             "field": "fixedDate",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -645,9 +561,7 @@
             "field": "daysFromCurrent",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -655,9 +569,7 @@
             "field": "min",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           },
           {
             "type": "Data",
@@ -665,13 +577,9 @@
             "field": "max",
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false,
-            "required": false
+            }
           }
         ],
-        "readonly": false,
-        "required": false,
         "renderOptions": {
           "type": "Standard"
         }
@@ -688,8 +596,7 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            },
-            "readonly": false
+            }
           },
           {
             "type": "Data",
@@ -703,8 +610,7 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               },
               {
                 "type": "Data",
@@ -713,8 +619,7 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               },
               {
                 "type": "Data",
@@ -723,8 +628,7 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               },
               {
                 "type": "Data",
@@ -733,8 +637,7 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               },
               {
                 "type": "Data",
@@ -743,16 +646,11 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                },
-                "readonly": false
+                }
               }
-            ],
-            "readonly": false,
-            "required": false
+            ]
           }
-        ],
-        "readonly": false,
-        "required": false
+        ]
       }
     ],
     "groupOptions": {
@@ -765,8 +663,6 @@
     "field": "compoundField",
     "renderOptions": {
       "type": "Standard"
-    },
-    "readonly": false,
-    "required": false
+    }
   }
 ]

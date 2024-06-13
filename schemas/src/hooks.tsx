@@ -35,6 +35,7 @@ import {
   getDisplayOnlyOptions,
   getTypeField,
   HookDep,
+  isControlDisabled,
   isControlReadonly,
   jsonPathString,
   lookupChildControl,
@@ -137,7 +138,7 @@ export function useEvalDisabledHook(
   );
   return makeDynamicPropertyHook(
     dynamicDisabled,
-    () => useControl(false),
+    () => useComputed(() => isControlDisabled(definition)),
     undefined,
   );
 }

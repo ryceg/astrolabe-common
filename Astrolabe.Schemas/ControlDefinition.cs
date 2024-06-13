@@ -57,6 +57,9 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     [DefaultValue(false)]
     public bool? Readonly { get; set; }
 
+    [DefaultValue(false)]
+    public bool? Disabled { get; set; }
+
     public bool? DontClearHidden { get; set; }
 
     public IEnumerable<SchemaValidator>? Validators { get; set; }

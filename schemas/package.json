@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas",
-  "version": "11.0.3",
+  "version": "11.1.0",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

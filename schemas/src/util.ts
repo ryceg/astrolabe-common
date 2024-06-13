@@ -333,6 +333,10 @@ export function isControlReadonly(c: ControlDefinition): boolean {
   return isDataControl(c) && !!c.readonly;
 }
 
+export function isControlDisabled(c: ControlDefinition): boolean {
+  return isDataControl(c) && !!c.disabled;
+}
+
 export function getDisplayOnlyOptions(
   d: ControlDefinition,
 ): DisplayOnlyRenderOptions | undefined {
@@ -459,14 +463,17 @@ export function lookupChildControlPath(
 export function cleanDataForSchema(
   v: { [k: string]: any } | undefined,
   fields: SchemaField[],
+  removeIfDefault?: boolean,
 ): any {
   if (!v) return v;
   const typeField = fields.find((x) => x.isTypeField);
   if (!typeField) return v;
   const typeValue = v[typeField.field];
-  const cleanableFields = fields.filter(
-    (x) => isCompoundField(x) || (x.onlyForTypes?.length ?? 0) > 0,
-  );
+  const cleanableFields = !removeIfDefault
+    ? fields.filter(
+        (x) => isCompoundField(x) || (x.onlyForTypes?.length ?? 0) > 0,
+      )
+    : fields;
   if (!cleanableFields.length) return v;
   const out = { ...v };
   cleanableFields.forEach((x) => {
@@ -483,16 +490,21 @@ export function cleanDataForSchema(
       if (x.collection) {
         if (Array.isArray(childValue)) {
           out[x.field] = childValue.map((cv) =>
-            cleanDataForSchema(cv, childFields),
+            cleanDataForSchema(cv, childFields, removeIfDefault),
           );
         }
       } else {
-        out[x.field] = cleanDataForSchema(childValue, childFields);
+        out[x.field] = cleanDataForSchema(
+          childValue,
+          childFields,
+          removeIfDefault,
+        );
       }
     }
     function canBeNull() {
       return (
-        x.collection && Array.isArray(childValue) && !childValue.length
+        (removeIfDefault && x.defaultValue === childValue) ||
+        (x.collection && Array.isArray(childValue) && !childValue.length)
         //|| (x.type === FieldType.Bool && childValue === false)
       );
     }

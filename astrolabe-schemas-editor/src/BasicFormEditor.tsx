@@ -203,7 +203,9 @@ export function BasicFormEditor<A extends string>({
 
   async function doSave() {
     saveForm(
-      controls.value.map((c) => cleanDataForSchema(c, ControlDefinitionSchema)),
+      controls.value.map((c) =>
+        cleanDataForSchema(c, ControlDefinitionSchema, true),
+      ),
     );
   }
 
