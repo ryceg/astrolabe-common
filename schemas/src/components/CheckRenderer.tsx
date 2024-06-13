@@ -102,7 +102,9 @@ export function CheckButtons({
                 readOnly={readonly}
                 disabled={disabled}
                 checked={checked}
-                onChange={(x) => setChecked(control, o, x.target.checked)}
+                onChange={(x) => {
+                  !readonly && setChecked(control, o, x.target.checked);
+                }}
               />
               <label className={labelClass} htmlFor={name + "_" + i}>
                 {o.name}

@@ -61,7 +61,13 @@ const TestSchema = buildSchema<TestSchema>({
       sub: compoundField(
         "Sub",
         buildSchema<{ thingId: string }>({
-          thingId: makeScalarField({ type: FieldType.DateTime }),
+          thingId: makeScalarField({
+            type: FieldType.String,
+            options: [
+              { name: "One", value: "one" },
+              { name: "Two", value: "two" },
+            ],
+          }),
         }),
       ),
     }),
