@@ -31,6 +31,7 @@ export function getBreadcrumbs(
   segments: string[],
   baseHref: string,
   overrideLabels: Record<string, string | undefined>,
+  makeHref: (href: string) => string = (x) => x,
 ): BreadcrumbLink[] {
   if (!segments.length) {
     return [];
@@ -46,10 +47,11 @@ export function getBreadcrumbs(
         rest,
         baseHref + seg + "/",
         overrideLabels,
+        makeHref,
       )
     : [];
   if (!definition.label) return childCrumbs;
-  const href = baseHref + seg;
+  const href = makeHref(baseHref + seg);
   return [
     { label: overrideLabels[href] ?? definition.label, href },
     ...childCrumbs,
