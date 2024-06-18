@@ -68,6 +68,7 @@ export interface SchemaInterface {
   ): string | undefined;
   controlLength(field: SchemaField, control: Control<any>): number;
   valueLength(field: SchemaField, value: any): number;
+  getOptions(field: SchemaField): FieldOption[] | undefined | null;
 }
 export interface ControlDefinition {
   type: string;

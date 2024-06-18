@@ -66,7 +66,10 @@ import {
 } from "./hooks";
 import { useValidationHook } from "./validators";
 import { cc } from "./internal";
-import { defaultSchemaInterface } from "./schemaInterface";
+import {
+  DefaultSchemaInterface,
+  defaultSchemaInterface,
+} from "./schemaInterface";
 
 export interface FormRenderer {
   renderData: (
@@ -235,6 +238,7 @@ export interface DataControlProps {
   elementIndex?: number;
   allowedOptions?: Control<any[] | undefined>;
   useChildVisibility: ChildVisibilityFunc;
+  schemaInterface?: SchemaInterface;
 }
 
 export type CreateDataProps = (
@@ -432,6 +436,7 @@ export function useControlRenderer(
           parentContext: parentDataContext,
           control: displayControl ?? control,
           elementIndex,
+          schemaInterface,
           labelText,
           field: schemaField,
           displayControl,
@@ -556,6 +561,7 @@ export function defaultDataProps({
   formOptions,
   style,
   allowedOptions,
+  schemaInterface = defaultSchemaInterface,
   ...props
 }: DataControlProps): DataRendererProps {
   const lengthVal = definition.validators?.find(
@@ -563,8 +569,7 @@ export function defaultDataProps({
   ) as LengthValidator | undefined;
   const className = cc(definition.styleClass);
   const required = !!definition.required;
-  const fieldOptions =
-    (field.options?.length ?? 0) === 0 ? null : field.options;
+  const fieldOptions = schemaInterface.getOptions(field);
   const allowed = allowedOptions?.value ?? [];
   return {
     definition,
@@ -671,6 +676,7 @@ export interface RenderControlProps {
   actionDataControl?: Control<any | undefined | null>;
   useChildVisibility: ChildVisibilityFunc;
   actionOnClick?: (actionId: string, actionData: any) => () => void;
+  schemaInterface?: SchemaInterface;
 }
 export function renderControlLayout(
   props: RenderControlProps,

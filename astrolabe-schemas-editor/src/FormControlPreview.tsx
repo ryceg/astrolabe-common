@@ -82,6 +82,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     dropIndex,
     noDrop,
     keyPrefix,
+    schemaInterface,
   } = props;
   const { selected, dropSuccess, renderer } = usePreviewContext();
   const item = unsafeRestoreControl(definition) as
@@ -147,6 +148,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           elementIndex={c?.elementIndex}
           fields={c?.dataContext?.fields ?? dataContext.fields}
           keyPrefix={keyPrefix}
+          schemaInterface={schemaInterface}
         />
       );
     },
@@ -154,6 +156,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     formOptions: {},
     dataContext,
     control,
+    schemaInterface,
     field,
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
   });

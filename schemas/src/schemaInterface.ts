@@ -1,7 +1,10 @@
-import { FieldType, SchemaField, SchemaInterface } from "./types";
+import { FieldOption, FieldType, SchemaField, SchemaInterface } from "./types";
 import { Control } from "@react-typed-forms/core";
 
 export class DefaultSchemaInterface implements SchemaInterface {
+  getOptions({ options }: SchemaField): FieldOption[] | null | undefined {
+    return options && options.length > 0 ? options : null;
+  }
   isEmptyValue(f: SchemaField, value: any): boolean {
     if (f.collection)
       return Array.isArray(value) ? value.length === 0 : value == null;

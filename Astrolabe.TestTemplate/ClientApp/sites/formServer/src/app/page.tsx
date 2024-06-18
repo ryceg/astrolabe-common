@@ -14,6 +14,7 @@ import {
   createFormRenderer,
   defaultTailwindTheme,
   FieldType,
+  intField,
   makeScalarField,
 } from "@react-typed-forms/schemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
@@ -56,11 +57,12 @@ const TestSchema = buildSchema<TestSchema>({
     buildSchema<{
       sub: {
         thingId: string;
+        other?: string;
       };
     }>({
       sub: compoundField(
         "Sub",
-        buildSchema<{ thingId: string }>({
+        buildSchema<{ thingId: string; other?: string }>({
           thingId: makeScalarField({
             type: FieldType.String,
             options: [
@@ -68,6 +70,7 @@ const TestSchema = buildSchema<TestSchema>({
               { name: "Two", value: "two" },
             ],
           }),
+          other: intField("Test drop down"),
         }),
       ),
     }),
