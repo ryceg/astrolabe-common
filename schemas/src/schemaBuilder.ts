@@ -197,6 +197,7 @@ export function addFieldOption(
   value: any,
 ): SchemaField {
   const options = typeField.options ?? [];
+  if (options.some((x) => x.value === value)) return typeField;
   return {
     ...typeField,
     options: [...options, { name, value }],
