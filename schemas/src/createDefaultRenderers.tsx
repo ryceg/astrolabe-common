@@ -9,6 +9,7 @@ import {
 import {
   ActionRendererRegistration,
   AdornmentRendererRegistration,
+  createActionRenderer,
   createDataRenderer,
   createLayoutRenderer,
   DataRendererRegistration,
@@ -83,15 +84,16 @@ interface DefaultActionRendererOptions {
 export function createDefaultActionRenderer(
   options: DefaultActionRendererOptions = {},
 ): ActionRendererRegistration {
-  function render({ onClick, actionText }: ActionRendererProps) {
-    return (
-      <button className={options.className} onClick={onClick}>
-        {actionText}
-      </button>
-    );
-  }
-
-  return { render, type: "action" };
+  return createActionRenderer(
+    undefined,
+    ({ onClick, actionText }: ActionRendererProps) => {
+      return (
+        <button className={options.className} onClick={onClick}>
+          {actionText}
+        </button>
+      );
+    },
+  );
 }
 
 interface DefaultGroupRendererOptions {

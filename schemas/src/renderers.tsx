@@ -122,6 +122,14 @@ export function createLayoutRenderer(
   return { type: "layout", render, ...options };
 }
 
+export function createActionRenderer(
+  actionId: string | string[] | undefined,
+  render: ActionRendererRegistration["render"],
+  options?: Partial<ActionRendererRegistration>,
+): ActionRendererRegistration {
+  return { type: "action", actionType: actionId, render, ...options };
+}
+
 export function createArrayRenderer(
   render: ArrayRendererRegistration["render"],
   options?: Partial<ArrayRendererRegistration>,
