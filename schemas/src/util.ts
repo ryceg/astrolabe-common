@@ -416,15 +416,16 @@ export function visitControlData<A>(
 
     const thisPath = [...ctx.path, fieldData.field];
     const control = ctx.data.lookupControl(thisPath);
-    if (!control) throw "No control for field";
+    if (!control) return undefined;
     const result = def ? cb(def, fieldData, control, false) : undefined;
     if (result !== undefined) return result;
+    const compound = isCompoundField(fieldData);
     if (fieldData.collection) {
       let cIndex = 0;
       for (const c of control!.elements ?? []) {
         const elemResult = def ? cb(def, fieldData, c, true) : undefined;
         if (elemResult !== undefined) return elemResult;
-        if (isCompoundField(fieldData)) {
+        if (compound) {
           const cfResult = visitControlDataArray(
             children,
             {
@@ -438,7 +439,18 @@ export function visitControlData<A>(
         }
         cIndex++;
       }
+    } else if (compound) {
+      return visitControlDataArray(
+        children,
+        {
+          ...ctx,
+          fields: fieldData.children,
+          path: thisPath,
+        },
+        cb,
+      );
     }
+    return undefined;
   }
 }
 

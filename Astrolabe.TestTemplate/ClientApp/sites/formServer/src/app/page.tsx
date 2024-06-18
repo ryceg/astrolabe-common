@@ -5,17 +5,19 @@ import {
   BasicFormEditor,
   ControlDefinitionSchema,
 } from "@astroapps/schemas-editor";
-import { useControl } from "@react-typed-forms/core";
+import { newControl, useControl } from "@react-typed-forms/core";
 import {
   buildSchema,
   compoundField,
   createDefaultRenderers,
   createDisplayRenderer,
   createFormRenderer,
+  defaultSchemaInterface,
   defaultTailwindTheme,
   FieldType,
   intField,
   makeScalarField,
+  visitControlData,
 } from "@react-typed-forms/schemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
 import {
@@ -46,6 +48,7 @@ interface TestSchema {
   things: {
     sub: {
       thingId: string;
+      other: number;
     };
   };
 }
@@ -54,15 +57,10 @@ const TestSchema = buildSchema<TestSchema>({
   things: compoundField(
     "Things",
 
-    buildSchema<{
-      sub: {
-        thingId: string;
-        other?: string;
-      };
-    }>({
+    buildSchema<TestSchema["things"]>({
       sub: compoundField(
         "Sub",
-        buildSchema<{ thingId: string; other?: string }>({
+        buildSchema<TestSchema["things"]["sub"]>({
           thingId: makeScalarField({
             type: FieldType.String,
             options: [
@@ -111,6 +109,19 @@ export default function Editor() {
         saveForm={async (controls) => {
           if (selectedForm.value === "EditorControls") {
             await new Client().controlDefinition(controls);
+          } else {
+            visitControlData(
+              controls[0],
+              {
+                data: newControl({
+                  things: { sub: { thingId: "", other: 1 } },
+                } satisfies TestSchema),
+                fields: TestSchema,
+                schemaInterface: defaultSchemaInterface,
+                path: [],
+              },
+              (d, f, c) => console.log(d.field, c.value),
+            );
           }
         }}
         previewOptions={{
