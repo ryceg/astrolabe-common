@@ -68,7 +68,7 @@ const TestSchema = buildSchema<TestSchema>({
               { name: "Two", value: "two" },
             ],
           }),
-          other: intField("Test drop down"),
+          other: intField("Test drop down", { required: true }),
         }),
       ),
     }),
@@ -106,6 +106,11 @@ export default function Editor() {
           ["EditorControls", "EditorControls"],
           ["Test", "Test"],
         ]}
+        validation={async (data) => {
+          data.touched = true;
+          data.clearErrors();
+          data.validate();
+        }}
         saveForm={async (controls) => {
           if (selectedForm.value === "EditorControls") {
             await new Client().controlDefinition(controls);
