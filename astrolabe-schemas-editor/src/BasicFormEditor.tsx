@@ -62,6 +62,8 @@ import defaultEditorControls from "./ControlDefinition.json";
 
 interface PreviewData {
   showing: boolean;
+  showJson: boolean;
+  showRawEditor: boolean;
   key: number;
   data: any;
   fields: SchemaField[];
@@ -124,6 +126,8 @@ export function BasicFormEditor<A extends string>({
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const previewData = useControl<PreviewData>({
     showing: false,
+    showJson: false,
+    showRawEditor: false,
     key: 0,
     data: {},
     controls: [],
@@ -394,8 +398,15 @@ function FormPreview({
   previewOptions?: ControlRenderOptions;
   rootControlClass?: string;
 }) {
-  const data = previewData.fields.data;
-  const { controls, fields } = previewData.fields;
+  const { controls, fields, data, showJson, showRawEditor } =
+    previewData.fields;
+  const rawControls: GroupedControlsDefinition = useMemo(
+    () => ({
+      type: ControlDefinitionType.Group,
+      children: addMissingControls(fields.value, []),
+    }),
+    [],
+  );
 
   useControlEffect(
     () => data.value,
@@ -403,13 +414,45 @@ function FormPreview({
   );
   return (
     <>
-      <div className="my-2">
+      <div className="my-2 flex gap-2">
         {formRenderer.renderAction({
           onClick: runValidation,
           actionId: "validate",
           actionText: "Run Validation",
         })}
+        {formRenderer.renderAction({
+          onClick: () => showRawEditor.setValue((x) => !x),
+          actionId: "",
+          actionText: "Toggle Raw Edit",
+        })}
+        {formRenderer.renderAction({
+          onClick: () => showJson.setValue((x) => !x),
+          actionId: "",
+          actionText: "Toggle JSON",
+        })}
       </div>
+      <div className="grid grid-cols-2 gap-3 my-4 border p-4">
+        <RenderControl
+          render={() =>
+            showRawEditor.value && (
+              <div>
+                <ControlRenderer
+                  definition={rawControls}
+                  renderer={formRenderer}
+                  fields={fields.value}
+                  control={data}
+                />
+              </div>
+            )
+          }
+        />
+        <RenderControl
+          render={() =>
+            showJson.value && <pre>{JSON.stringify(data.value, null, 2)}</pre>
+          }
+        />
+      </div>
+
       <RenderArrayElements
         array={controls.value}
         children={(c) => (
