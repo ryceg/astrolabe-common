@@ -79,6 +79,11 @@ interface StyleProps {
 
 interface DefaultActionRendererOptions {
   className?: string;
+  renderContent?: (
+    actionText: string,
+    actionId: string,
+    actionData: any,
+  ) => ReactNode;
 }
 
 export function createButtonActionRenderer(
@@ -87,14 +92,22 @@ export function createButtonActionRenderer(
 ): ActionRendererRegistration {
   return createActionRenderer(
     actionId,
-    ({ onClick, actionText, className, style }: ActionRendererProps) => {
+    ({
+      onClick,
+      actionText,
+      className,
+      style,
+      actionId,
+      actionData,
+    }: ActionRendererProps) => {
       return (
         <button
           className={rendererClass(className, options.className)}
           style={style}
           onClick={onClick}
         >
-          {actionText}
+          {options.renderContent?.(actionText, actionId, actionData) ??
+            actionText}
         </button>
       );
     },
