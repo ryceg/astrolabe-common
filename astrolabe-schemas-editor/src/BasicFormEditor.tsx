@@ -97,6 +97,7 @@ export interface BasicFormEditorProps<A extends string> {
   rootControlClass?: string;
   editorClass?: string;
   editorPanelClass?: string;
+  controlsClass?: string;
 }
 
 export function BasicFormEditor<A extends string>({
@@ -115,6 +116,7 @@ export function BasicFormEditor<A extends string>({
   editorClass,
   rootControlClass,
   collectClasses,
+  controlsClass,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
@@ -242,23 +244,27 @@ export function BasicFormEditor<A extends string>({
                     formRenderer={formRenderer}
                     validation={validation}
                     previewOptions={previewOptions}
+                    rawRenderer={editorRenderer}
                     rootControlClass={rootControlClass}
+                    controlsClass={controlsClass}
                   />
                 ) : (
-                  <RenderElements
-                    key={formType}
-                    control={controls}
-                    children={(c, i) => (
-                      <div className={rootControlClass}>
-                        <FormControlPreview
-                          keyPrefix={formType}
-                          definition={trackedValue(c)}
-                          fields={trackedValue(fields)}
-                          dropIndex={i}
-                        />
-                      </div>
-                    )}
-                  />
+                  <div className={controlsClass}>
+                    <RenderElements
+                      key={formType}
+                      control={controls}
+                      children={(c, i) => (
+                        <div className={rootControlClass}>
+                          <FormControlPreview
+                            keyPrefix={formType}
+                            definition={trackedValue(c)}
+                            fields={trackedValue(fields)}
+                            dropIndex={i}
+                          />
+                        </div>
+                      )}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -391,12 +397,16 @@ function FormPreview({
   validation,
   rootControlClass,
   previewOptions,
+  rawRenderer,
+  controlsClass,
 }: {
   previewData: Control<PreviewData>;
   formRenderer: FormRenderer;
+  rawRenderer: FormRenderer;
   validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
   previewOptions?: ControlRenderOptions;
   rootControlClass?: string;
+  controlsClass?: string;
 }) {
   const { controls, fields, data, showJson, showRawEditor } =
     previewData.fields;
@@ -408,10 +418,6 @@ function FormPreview({
     [],
   );
 
-  useControlEffect(
-    () => data.value,
-    (v) => console.log(v),
-  );
   return (
     <>
       <div className="my-2 flex gap-2">
@@ -431,44 +437,54 @@ function FormPreview({
           actionText: "Toggle JSON",
         })}
       </div>
-      <div className="grid grid-cols-2 gap-3 my-4 border p-4">
-        <RenderControl
-          render={() =>
-            showRawEditor.value && (
-              <div>
-                <ControlRenderer
-                  definition={rawControls}
-                  renderer={formRenderer}
-                  fields={fields.value}
-                  control={data}
-                />
-              </div>
-            )
-          }
-        />
-        <RenderControl
-          render={() =>
-            showJson.value && <pre>{JSON.stringify(data.value, null, 2)}</pre>
-          }
+      <RenderControl render={renderRaw} />
+
+      <div className={controlsClass}>
+        <RenderArrayElements
+          array={controls.value}
+          children={(c) => (
+            <div className={rootControlClass}>
+              <ControlRenderer
+                definition={c}
+                fields={fields.value}
+                renderer={formRenderer}
+                control={data}
+                options={previewOptions}
+              />
+            </div>
+          )}
         />
       </div>
-
-      <RenderArrayElements
-        array={controls.value}
-        children={(c) => (
-          <div className={rootControlClass}>
-            <ControlRenderer
-              definition={c}
-              fields={fields.value}
-              renderer={formRenderer}
-              control={data}
-              options={previewOptions}
-            />
-          </div>
-        )}
-      />
     </>
   );
+
+  function renderRaw() {
+    const sre = showRawEditor.value;
+    const sj = showJson.value;
+    return (
+      (sre || sj) && (
+        <div className="grid grid-cols-2 gap-3 my-4 border p-4">
+          {sre && (
+            <div>
+              <div className="text-xl">Raw editor</div>
+              <ControlRenderer
+                definition={rawControls}
+                renderer={rawRenderer}
+                fields={fields.value}
+                control={data}
+              />
+            </div>
+          )}
+          {sj && (
+            <div>
+              <div className="text-xl">JSON</div>
+              <pre>{JSON.stringify(data.value, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      )
+    );
+  }
 
   async function runValidation() {
     data.touched = true;
