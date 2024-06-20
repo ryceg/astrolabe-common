@@ -64,10 +64,7 @@ interface PreviewData {
   showing: boolean;
   showJson: boolean;
   showRawEditor: boolean;
-  key: number;
   data: any;
-  fields: SchemaField[];
-  controls: ControlDefinition[];
 }
 
 export function applyEditorExtensions(
@@ -130,10 +127,7 @@ export function BasicFormEditor<A extends string>({
     showing: false,
     showJson: false,
     showRawEditor: false,
-    key: 0,
     data: {},
-    controls: [],
-    fields: [],
   });
   const controlGroup: GroupedControlsDefinition = useMemo(() => {
     return {
@@ -146,6 +140,7 @@ export function BasicFormEditor<A extends string>({
     };
   }, [editorControls, defaultEditorControls]);
 
+  const loadedForm = useControl<A>();
   useControlEffect(
     () => selectedForm.value,
     (ft) => {
@@ -204,6 +199,7 @@ export function BasicFormEditor<A extends string>({
     groupedChanges(() => {
       controls.setInitialValue(res.controls.map(toControlDefinitionForm));
       fields.setInitialValue(res.fields.map(toSchemaFieldForm));
+      loadedForm.value = dt;
     });
   }
 
@@ -240,6 +236,9 @@ export function BasicFormEditor<A extends string>({
               <div className={editorClass}>
                 {previewMode ? (
                   <FormPreview
+                    key={loadedForm.value ?? ""}
+                    fields={trackedValue(fields)}
+                    controls={trackedValue(controls)}
                     previewData={previewData}
                     formRenderer={formRenderer}
                     validation={validation}
@@ -287,7 +286,6 @@ export function BasicFormEditor<A extends string>({
                       previewMode ? "Edit Mode" : "Editable Preview",
                     )}
                     {button(addMissing, "Add missing controls")}
-                    {button(addMissingInGroup, "Add missing (group)")}
                   </div>
                   <ControlTree
                     treeState={treeState}
@@ -335,28 +333,8 @@ export function BasicFormEditor<A extends string>({
       toControlDefinitionForm,
     );
   }
-
-  function addMissingInGroup() {
-    controls.value = [
-      toControlDefinitionForm({
-        type: ControlDefinitionType.Group,
-        children: addMissingControls(fields.value, controls.value).map(
-          toControlDefinitionForm,
-        ),
-      }),
-    ];
-  }
-
   function togglePreviewMode() {
-    if (previewMode) previewData.fields.showing.value = false;
-    else
-      previewData.setValue((v) => ({
-        ...v,
-        showing: true,
-        key: v.key + 1,
-        controls: trackedValue(controls),
-        fields: fields.value,
-      }));
+    previewData.fields.showing.setValue((x) => !x);
   }
 
   function treeActions(
@@ -394,6 +372,8 @@ export function BasicFormEditor<A extends string>({
 function FormPreview({
   previewData,
   formRenderer,
+  controls,
+  fields,
   validation,
   rootControlClass,
   previewOptions,
@@ -401,6 +381,8 @@ function FormPreview({
   controlsClass,
 }: {
   previewData: Control<PreviewData>;
+  fields: SchemaField[];
+  controls: ControlDefinition[];
   formRenderer: FormRenderer;
   rawRenderer: FormRenderer;
   validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
@@ -408,16 +390,14 @@ function FormPreview({
   rootControlClass?: string;
   controlsClass?: string;
 }) {
-  const { controls, fields, data, showJson, showRawEditor } =
-    previewData.fields;
+  const { data, showJson, showRawEditor } = previewData.fields;
   const rawControls: GroupedControlsDefinition = useMemo(
     () => ({
       type: ControlDefinitionType.Group,
-      children: addMissingControls(fields.value, []),
+      children: addMissingControls(fields, []),
     }),
     [],
   );
-
   return (
     <>
       <div className="my-2 flex gap-2">
@@ -441,12 +421,12 @@ function FormPreview({
 
       <div className={controlsClass}>
         <RenderArrayElements
-          array={controls.value}
+          array={controls}
           children={(c) => (
             <div className={rootControlClass}>
               <ControlRenderer
                 definition={c}
-                fields={fields.value}
+                fields={fields}
                 renderer={formRenderer}
                 control={data}
                 options={previewOptions}
@@ -470,7 +450,7 @@ function FormPreview({
               <ControlRenderer
                 definition={rawControls}
                 renderer={rawRenderer}
-                fields={fields.value}
+                fields={fields}
                 control={data}
               />
             </div>
@@ -488,6 +468,6 @@ function FormPreview({
 
   async function runValidation() {
     data.touched = true;
-    await validation?.(data, controls.value);
+    await validation?.(data, controls);
   }
 }

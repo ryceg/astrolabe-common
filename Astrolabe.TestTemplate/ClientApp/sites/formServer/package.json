@@ -10,7 +10,7 @@
 		"genclient": "nswag openapi2tsclient /input:http://localhost:5000/swagger/v1/swagger.json /output:src/client.ts /NullValue:Null /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string /TypeScriptVersion:4.9"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.2.0",
+		"@react-typed-forms/core": "^3.5.2",
 		"@react-typed-forms/schemas": "workspace:*",
 		"@astroapps/client": "workspace:*",
 		"@astroapps/client-nextjs": "workspace:^0.1.2",
