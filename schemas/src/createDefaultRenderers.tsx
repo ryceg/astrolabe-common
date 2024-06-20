@@ -81,14 +81,19 @@ interface DefaultActionRendererOptions {
   className?: string;
 }
 
-export function createDefaultActionRenderer(
+export function createButtonActionRenderer(
+  actionId: string | string[] | undefined,
   options: DefaultActionRendererOptions = {},
 ): ActionRendererRegistration {
   return createActionRenderer(
-    undefined,
-    ({ onClick, actionText }: ActionRendererProps) => {
+    actionId,
+    ({ onClick, actionText, className, style }: ActionRendererProps) => {
       return (
-        <button className={options.className} onClick={onClick}>
+        <button
+          className={rendererClass(className, options.className)}
+          style={style}
+          onClick={onClick}
+        >
           {actionText}
         </button>
       );
@@ -373,7 +378,7 @@ export function createDefaultRenderers(
   return {
     data: createDefaultDataRenderer(options.data),
     display: createDefaultDisplayRenderer(options.display),
-    action: createDefaultActionRenderer(options.action),
+    action: createButtonActionRenderer(undefined, options.action),
     array: createDefaultArrayRenderer(options.array),
     group: createDefaultGroupRenderer(options.group),
     label: createDefaultLabelRenderer(options.label),
