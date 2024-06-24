@@ -391,12 +391,19 @@ function FormPreview({
   controlsClass?: string;
 }) {
   const { data, showJson, showRawEditor } = previewData.fields;
+  const jsonControl = useControl(() =>
+    JSON.stringify(data.current.value, null, 2),
+  );
   const rawControls: GroupedControlsDefinition = useMemo(
     () => ({
       type: ControlDefinitionType.Group,
       children: addMissingControls(fields, []),
     }),
     [],
+  );
+  useControlEffect(
+    () => data.value,
+    (v) => (jsonControl.value = JSON.stringify(v, null, 2)),
   );
   return (
     <>
@@ -446,7 +453,7 @@ function FormPreview({
         <div className="grid grid-cols-2 gap-3 my-4 border p-4">
           {sre && (
             <div>
-              <div className="text-xl">Raw editor</div>
+              <div className="text-xl">Edit Data</div>
               <ControlRenderer
                 definition={rawControls}
                 renderer={rawRenderer}
@@ -458,7 +465,23 @@ function FormPreview({
           {sj && (
             <div>
               <div className="text-xl">JSON</div>
-              <pre>{JSON.stringify(data.value, null, 2)}</pre>
+              <RenderControl>
+                {() => (
+                  <textarea
+                    className="w-full"
+                    rows={10}
+                    onChange={(e) => (jsonControl.value = e.target.value)}
+                    value={jsonControl.value}
+                  />
+                )}
+              </RenderControl>
+              {formRenderer.renderAction({
+                actionText: "Apply JSON",
+                onClick: () => {
+                  data.value = JSON.parse(jsonControl.value);
+                },
+                actionId: "applyJson",
+              })}
             </div>
           )}
         </div>

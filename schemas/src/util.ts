@@ -89,6 +89,7 @@ export function defaultValueForFields(fields: SchemaField[]): any {
 export function defaultValueForField(
   sf: SchemaField,
   required?: boolean | null,
+  forceNotNull?: boolean,
 ): any {
   if (sf.defaultValue !== undefined) return sf.defaultValue;
   const isRequired = !!(required || sf.required);
@@ -97,7 +98,11 @@ export function defaultValueForField(
       const childValue = defaultValueForFields(sf.children);
       return sf.collection ? [childValue] : childValue;
     }
-    return sf.notNullable ? (sf.collection ? [] : {}) : undefined;
+    return sf.notNullable || forceNotNull
+      ? sf.collection
+        ? []
+        : {}
+      : undefined;
   }
   if (sf.collection) {
     return [];

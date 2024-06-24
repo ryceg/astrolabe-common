@@ -13,10 +13,8 @@ import {
 import React, { useEffect, useMemo, useRef } from "react";
 import {
   addAfterChangesCallback,
-  ChangeListenerFunc,
   collectChanges,
   Control,
-  ControlChange,
   makeChangeTracker,
   trackedValue,
   useCalculatedControl,
@@ -180,7 +178,7 @@ export function useEvalDefaultValueHook(
           (schemaField
             ? element
               ? elementValueForField(schemaField)
-              : defaultValueForField(schemaField, required)
+              : defaultValueForField(schemaField, required, true)
             : undefined)
         );
       }

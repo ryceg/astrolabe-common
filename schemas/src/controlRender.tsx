@@ -361,23 +361,25 @@ export function useControlRenderer(
           () => [
             visibility.value,
             defaultValueControl.value,
-            control,
+            control?.isNull,
             isDataControlDefinition(definition) && definition.dontClearHidden,
             parentControl.isNull,
             options.hidden,
+            readonlyControl.value,
           ],
-          ([vc, dv, cd, dontClear, parentNull, hidden]) => {
-            if (vc && cd && vc.visible === vc.showing) {
-              if (hidden || !vc.visible) {
-                if (options.clearHidden && !dontClear) {
-                  cd.value = undefined;
+          ([vc, dv, _, dontClear, parentNull, hidden, ro]) => {
+            if (!ro) {
+              if (control) {
+                if (vc && vc.visible === vc.showing) {
+                  if (hidden || !vc.visible) {
+                    if (options.clearHidden && !dontClear) {
+                      control.value = undefined;
+                    }
+                  } else control.setValue((x) => (x ? x : dv));
                 }
-              } else if (cd.value == null) {
-                cd.value = dv;
+              } else if (parentNull) {
+                parentControl.setValue((x) => x ?? {});
               }
-            }
-            if (parentNull) {
-              parentControl.setValue((x) => x ?? {});
             }
           },
           true,
@@ -413,6 +415,7 @@ export function useControlRenderer(
           definition: c,
           renderer,
           renderChild: (k, child, options) => {
+            if (control && control.isNull) return <Fragment key={k} />;
             const dataContext = options?.dataContext ?? controlDataContext;
             return (
               <ControlRenderer
