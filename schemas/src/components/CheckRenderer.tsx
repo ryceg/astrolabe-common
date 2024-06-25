@@ -134,16 +134,14 @@ export function createCheckboxRenderer(options: CheckRendererOptions = {}) {
       ...p,
       label: undefined,
       children: (
-        <div className={rendererClass(props.className, options.className)}>
-          <div className={options.entryClass}>
-            <Fcheckbox
-              id={props.id}
-              control={props.control}
-              style={props.style}
-              className={options.checkClass}
-            />
-            {p.label && renderer.renderLabel(p.label, undefined, undefined)}
-          </div>
+        <div className={rendererClass(props.className, options.entryClass)}>
+          <Fcheckbox
+            id={props.id}
+            control={props.control}
+            style={props.style}
+            className={options.checkClass}
+          />
+          {p.label && renderer.renderLabel(p.label, undefined, undefined)}
         </div>
       ),
     }),
