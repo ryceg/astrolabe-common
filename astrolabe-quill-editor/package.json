@@ -1,10 +1,9 @@
 {
   "name": "@astroapps/quill-editor",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "",
-  "type": "module",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "author": "Astrolabe Enterprises",
   "license": "ISC",
   "bugs": {
@@ -16,7 +15,8 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline"
+    "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -31,6 +31,8 @@
     "@babel/preset-env": "^7.23.8",
     "@babel/preset-react": "^7.23.3",
     "@babel/preset-typescript": "^7.23.3",
+    "microbundle": "^0.15.1",
+    "rimraf": "^5.0.5",
     "typescript": "5.2.2",
     "@types/react": "^18.2.37",
     "prettier": "^3.0.3"
