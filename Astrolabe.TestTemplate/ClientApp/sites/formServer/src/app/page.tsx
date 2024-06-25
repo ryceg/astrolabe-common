@@ -7,6 +7,7 @@ import {
 } from "@astroapps/schemas-editor";
 import { newControl, useControl } from "@react-typed-forms/core";
 import {
+  boolField,
   buildSchema,
   compoundField,
   createDefaultRenderers,
@@ -50,6 +51,7 @@ interface TestSchema {
       thingId: string;
       other: number;
     };
+    bool?: boolean;
   };
 }
 
@@ -58,6 +60,7 @@ const TestSchema = buildSchema<TestSchema>({
     "Things",
 
     buildSchema<TestSchema["things"]>({
+      bool: boolField("Radio"),
       sub: compoundField(
         "Sub",
         buildSchema<TestSchema["things"]["sub"]>({

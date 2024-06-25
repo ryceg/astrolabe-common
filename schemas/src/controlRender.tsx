@@ -375,7 +375,7 @@ export function useControlRenderer(
                     if (options.clearHidden && !dontClear) {
                       control.value = undefined;
                     }
-                  } else control.setValue((x) => (x ? x : dv));
+                  } else control.setValue((x) => (x != null ? x : dv));
                 }
               } else if (parentNull) {
                 parentControl.setValue((x) => x ?? {});
