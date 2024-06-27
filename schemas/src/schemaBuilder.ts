@@ -9,7 +9,11 @@ import { isCompoundField } from "./util";
 
 type AllowedSchema<T> = T extends string
   ? SchemaField & {
-      type: FieldType.String | FieldType.Date | FieldType.DateTime;
+      type:
+        | FieldType.String
+        | FieldType.Date
+        | FieldType.DateTime
+        | FieldType.Time;
     }
   : T extends number
     ? SchemaField & {
@@ -101,6 +105,17 @@ export function dateField<S extends Partial<SchemaField>>(
 ) {
   return makeScalarField({
     type: FieldType.Date as const,
+    displayName,
+    ...(options as S),
+  });
+}
+
+export function timeField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options?: S,
+) {
+  return makeScalarField({
+    type: FieldType.Time as const,
     displayName,
     ...(options as S),
   });

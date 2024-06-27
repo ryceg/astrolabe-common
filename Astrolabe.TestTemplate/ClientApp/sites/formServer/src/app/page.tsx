@@ -20,6 +20,7 @@ import {
   FieldType,
   intField,
   makeScalarField,
+  timeField,
   visitControlData,
 } from "@react-typed-forms/schemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
@@ -57,11 +58,13 @@ interface TestSchema {
   };
   date: string;
   dateTime: string;
+  time: string;
 }
 
 const TestSchema = buildSchema<TestSchema>({
   dateTime: dateTimeField("Date and Time"),
   date: dateField("Date Only"),
+  time: timeField("Time only"),
   things: compoundField(
     "Things",
 

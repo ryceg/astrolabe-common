@@ -25,6 +25,7 @@ export enum FieldType {
   Int = "Int",
   Date = "Date",
   DateTime = "DateTime",
+  Time = "Time",
   Double = "Double",
   EntityRef = "EntityRef",
   Compound = "Compound",

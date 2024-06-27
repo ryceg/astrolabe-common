@@ -1,6 +1,11 @@
 import { FieldType } from "../types";
 import React from "react";
-import { Control, formControlProps } from "@react-typed-forms/core";
+import {
+  Control,
+  formControlProps,
+  useControl,
+  useControlEffect,
+} from "@react-typed-forms/core";
 
 export function ControlInput({
   control,
@@ -12,27 +17,46 @@ export function ControlInput({
 }) {
   const { errorText, value, onChange, ...inputProps } =
     formControlProps(control);
+  const textValue = useControl(() => toText(value));
+  useControlEffect(
+    () => control.value,
+    (v) => (textValue.value = toText(v)),
+  );
   return (
     <input
       {...inputProps}
       type={convert[0]}
-      value={value == null ? "" : convert[2](value)}
+      value={textValue.value}
       onChange={(e) => {
-        control.value = convert[1](e.target.value);
+        textValue.value = e.target.value;
+        const converted = convert[1](e.target.value);
+        if (converted !== undefined) control.value = converted;
       }}
       {...props}
     />
   );
+
+  function toText(value: any) {
+    return value == null ? "" : convert[2](value);
+  }
 }
 
-type InputConversion = [string, (s: any) => any, (a: any) => string | number];
+type InputConversion = [
+  string,
+  (s: string) => any,
+  (a: any) => string | number,
+];
 
 export function createInputConversion(ft: string): InputConversion {
   switch (ft) {
     case FieldType.String:
       return ["text", (a) => a, (a) => a];
     case FieldType.Bool:
-      return ["text", (a) => a === "true", (a) => a?.toString() ?? ""];
+      return [
+        "text",
+        (a) => (a === "true" ? true : a === "false" ? false : undefined),
+        (a) => a?.toString() ?? "",
+      ];
     case FieldType.Int:
       return [
         "number",
@@ -41,6 +65,17 @@ export function createInputConversion(ft: string): InputConversion {
       ];
     case FieldType.Date:
       return ["date", (a) => a, (a) => a];
+    case FieldType.Time:
+      return [
+        "time",
+        (a) => {
+          const l = a.length;
+          if (l === 5) return a + ":00";
+          if (l === 8) return a;
+          return undefined;
+        },
+        (a) => (a ? a.substring(0, 5) : ""),
+      ];
     case FieldType.Double:
       return ["number", (a) => parseFloat(a), (a) => a];
     default:

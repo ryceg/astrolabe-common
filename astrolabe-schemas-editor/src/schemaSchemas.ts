@@ -196,6 +196,10 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
         value: "DateTime",
       },
       {
+        name: "Time",
+        value: "Time",
+      },
+      {
         name: "Double",
         value: "Double",
       },
