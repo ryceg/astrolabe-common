@@ -9,7 +9,7 @@ public abstract class TypeVisitor<T>
     private Dictionary<(Type, bool), T> _visited = new();
 
     protected HashSet<Type> _primitives = new()
-        { typeof(string), typeof(Guid), typeof(DateTime), typeof(DateTimeOffset), typeof(DateOnly), typeof(bool), 
+        { typeof(string), typeof(Guid), typeof(DateTime), typeof(DateTimeOffset), typeof(DateOnly), typeof(TimeOnly), typeof(bool), 
             typeof(long), typeof(object), typeof(int), typeof(short), typeof(ushort), typeof(uint), typeof(ulong) };
 
     public T VisitType(ContextualType ctype)
