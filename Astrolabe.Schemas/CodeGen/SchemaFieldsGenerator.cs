@@ -378,6 +378,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             || type == typeof(Guid)
             || type == typeof(DateTime)
             || type == typeof(DateOnly)
+            || type == typeof(TimeOnly)
             || type == typeof(DateTimeOffset)
         )
             return new TsTypeRef("string");
@@ -442,6 +443,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             _ when type == typeof(DateTime) => FieldType.DateTime,
             _ when type == typeof(DateTimeOffset) => FieldType.DateTime,
             _ when type == typeof(DateOnly) => FieldType.Date,
+            _ when type == typeof(TimeOnly) => FieldType.Time,
             _ when type == typeof(string) || type == typeof(Guid) => FieldType.String,
             _
                 when type == typeof(int)

@@ -59,6 +59,7 @@ public enum FieldType
     Int,
     Date,
     DateTime,
+    Time,
     Double,
     EntityRef,
     Compound,

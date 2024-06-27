@@ -125,6 +125,7 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
             _ when type == typeof(DateTime) => FieldType.DateTime,
             _ when type == typeof(DateTimeOffset) => FieldType.DateTime,
             _ when type == typeof(DateOnly) => FieldType.Date,
+            _ when type == typeof(TimeOnly) => FieldType.Time,
             _ when type == typeof(string) || type == typeof(Guid) => FieldType.String,
             _ when type == typeof(int) || type == typeof(long) => FieldType.Int,
             _ when type == typeof(double) => FieldType.Double,
