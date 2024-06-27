@@ -11,9 +11,7 @@ export interface DialogProps extends AriaDialogProps, DialogClasses {
   children: React.ReactNode;
 }
 
-export const DefaultDialogClasses: DialogClasses = {
-  className: "p-8",
-};
+export const DefaultDialogClasses: DialogClasses = {};
 export function Dialog({ title, children, ...props }: DialogProps) {
   let ref = useRef(null);
   const { className, titleClass } = {
