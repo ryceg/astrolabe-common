@@ -15,10 +15,15 @@ export function createApiClient<A>(
     baseUrl: string | undefined,
     http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> },
   ) => A,
-  fetcher: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> },
+  fetcher: {
+    fetch(url: RequestInfo, init?: RequestInit): Promise<Response>;
+    baseApiUrl?: string;
+  },
 ) {
   return new f(
-    typeof window === "undefined" ? undefined : window.origin,
+    fetcher.baseApiUrl ?? typeof window === "undefined"
+      ? undefined
+      : window.origin,
     fetcher,
   );
 }

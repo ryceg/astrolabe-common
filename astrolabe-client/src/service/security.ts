@@ -36,6 +36,8 @@ export interface SecurityService {
   login(): Promise<void>;
 
   logout(): Promise<void>;
+
+  baseApiUrl?: string;
 }
 
 export interface TokenSecurityService extends SecurityService {
