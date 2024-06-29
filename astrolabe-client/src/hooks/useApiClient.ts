@@ -21,9 +21,8 @@ export function createApiClient<A>(
   },
 ) {
   return new f(
-    fetcher.baseApiUrl ?? typeof window === "undefined"
-      ? undefined
-      : window.origin,
+    fetcher.baseApiUrl ??
+      (typeof window === "undefined" ? undefined : window.origin),
     fetcher,
   );
 }
