@@ -9,9 +9,11 @@ import React from "react";
 import { rendererClass } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
 import {
+  CalendarDate,
   CalendarDateTime,
   parseAbsolute,
   parseDate,
+  toCalendarDate,
   toCalendarDateTime,
   toZoned,
 } from "@internationalized/date";
@@ -91,7 +93,7 @@ function DatePickerRenderer({
         control.value = c
           ? dateTime
             ? toZoned(c, "UTC").toAbsoluteString()
-            : c.toString()
+            : toCalendarDate(c).toString()
           : null;
       }}
     />
