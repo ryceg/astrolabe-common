@@ -79,6 +79,7 @@ function DatePickerRenderer({
   return (
     <DatePicker
       {...classes}
+      className={className}
       portalContainer={portalContainer}
       isDisabled={disabled}
       isReadOnly={readonly}
