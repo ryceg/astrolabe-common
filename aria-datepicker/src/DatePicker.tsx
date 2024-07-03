@@ -19,6 +19,7 @@ export interface DatePickerClasses {
   buttonClass?: string;
   calenderClasses?: CalendarClasses;
   iconClass?: string;
+  containerClass?: string;
 }
 
 export const DefaultDatePickerClasses = {
@@ -43,6 +44,7 @@ export function DatePicker<T extends DateValue>(
     popoverClasses,
     dialogClasses,
     iconClass,
+    containerClass,
     portalContainer,
   } = {
     ...DefaultDatePickerClasses,
@@ -56,7 +58,10 @@ export function DatePicker<T extends DateValue>(
     ? Object.keys(props.value).includes("hour")
     : false;
   return (
-    <div style={{ display: "inline-flex", flexDirection: "column" }}>
+    <div
+      style={{ display: "inline-flex", flexDirection: "column" }}
+      className={containerClass}
+    >
       <div {...groupProps} ref={ref} className={props.className}>
         <DateField {...fieldProps} />
 
