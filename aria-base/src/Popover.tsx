@@ -13,6 +13,7 @@ export interface PopoverProps
     PopoverClasses {
   children: React.ReactNode;
   state: OverlayTriggerState;
+  portalContainer?: Element;
   renderArrow?: (props: DOMAttributes) => ReactNode;
 }
 
@@ -25,6 +26,7 @@ export function Popover({
   children,
   state,
   renderArrow,
+  portalContainer,
   ...props
 }: PopoverProps) {
   let popoverRef = useRef(null);
@@ -41,7 +43,7 @@ export function Popover({
   );
 
   return (
-    <Overlay>
+    <Overlay portalContainer={portalContainer}>
       <div {...underlayProps} className={underlayClass} />
       <div
         {...popoverProps}

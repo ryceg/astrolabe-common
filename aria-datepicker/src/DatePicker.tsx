@@ -5,7 +5,7 @@ import { DateField } from "./DateField";
 import { Calendar, CalendarClasses } from "./Calendar";
 import { DateValue } from "@internationalized/date";
 import { Button, Dialog, Popover } from "@astroapps/aria-base";
-import { DialogClasses, PopoverClasses } from "@astroapps/aria-base/lib";
+import { DialogClasses, PopoverClasses } from "@astroapps/aria-base";
 
 export interface DatePickerClasses {
   className?: string;
@@ -22,7 +22,9 @@ export const DefaultDatePickerClasses = {
 
 export interface DatePickerProps<T extends DateValue = DateValue>
   extends DatePickerStateOptions<T>,
-    DatePickerClasses {}
+    DatePickerClasses {
+  portalContainer?: Element;
+}
 
 export function DatePicker<T extends DateValue = DateValue>(
   props: DatePickerProps<T>,
@@ -34,6 +36,7 @@ export function DatePicker<T extends DateValue = DateValue>(
     popoverClasses,
     dialogClasses,
     iconClass,
+    portalContainer,
   } = {
     ...DefaultDatePickerClasses,
     ...props,
@@ -58,6 +61,7 @@ export function DatePicker<T extends DateValue = DateValue>(
           state={state}
           triggerRef={ref}
           placement="bottom start"
+          portalContainer={portalContainer}
           {...popoverClasses}
         >
           <Dialog {...dialogProps} {...dialogClasses}>

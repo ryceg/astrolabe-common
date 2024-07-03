@@ -33,6 +33,7 @@ import { DndProvider } from "react-dnd";
 import { Client } from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
+import { useMemo, useState } from "react";
 
 const CustomControlSchema = applyEditorExtensions({});
 
@@ -41,12 +42,19 @@ const customDisplay = createDisplayRenderer(
   { renderType: "Custom" },
 );
 
-const StdFormRenderer = createFormRenderer(
-  [customDisplay, createDatePickerRenderer()],
-  createDefaultRenderers({
-    ...defaultTailwindTheme,
-  }),
-);
+function createStdFormRenderer(container: HTMLElement | null) {
+  return createFormRenderer(
+    [
+      customDisplay,
+      createDatePickerRenderer(undefined, {
+        portalContainer: container ? container : undefined,
+      }),
+    ],
+    createDefaultRenderers({
+      ...defaultTailwindTheme,
+    }),
+  );
+}
 
 interface TestSchema {
   things: {
@@ -90,6 +98,7 @@ const TestSchema = buildSchema<TestSchema>({
 export default function Editor() {
   const qc = useQueryControl();
   const selectedForm = useControl("Test");
+  const [container, setContainer] = useState<HTMLElement | null>(null);
   useSyncParam(
     qc,
     selectedForm,
@@ -100,8 +109,13 @@ export default function Editor() {
       "Test",
     ),
   );
+  const StdFormRenderer = useMemo(
+    () => createStdFormRenderer(container),
+    [container],
+  );
   return (
     <DndProvider backend={HTML5Backend}>
+      <div id="dialog_container" ref={setContainer} />
       <BasicFormEditor<string>
         formRenderer={StdFormRenderer}
         editorRenderer={StdFormRenderer}

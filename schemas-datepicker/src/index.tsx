@@ -9,9 +9,11 @@ import React from "react";
 import { rendererClass } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
 import {
+  CalendarDate,
   CalendarDateTime,
   parseAbsolute,
   parseDate,
+  toCalendarDate,
   toCalendarDateTime,
   toZoned,
 } from "@internationalized/date";
@@ -20,18 +22,20 @@ import { DatePickerClasses } from "@astroapps/aria-datepicker/lib";
 export const DefaultDatePickerClass =
   "flex border border-black w-full pl-3 py-2 space-x-4";
 
+export interface DatePickerOptions extends DatePickerClasses {
+  portalContainer?: Element;
+}
+
 export function createDatePickerRenderer(
   className: string = DefaultDatePickerClass,
-  classes?: DatePickerClasses,
+  pickerOptions?: DatePickerOptions,
 ) {
   return createDataRenderer(
     (p) => (
       <DatePickerRenderer
         dateTime={p.field.type == FieldType.DateTime}
-        classes={{
-          ...classes,
-          className: rendererClass(p.className, className),
-        }}
+        pickerOptions={pickerOptions}
+        className={rendererClass(p.className, className)}
         control={p.control}
         readonly={p.readonly}
         options={p.renderOptions as DateTimeRenderOptions}
@@ -46,19 +50,22 @@ export function createDatePickerRenderer(
 
 function DatePickerRenderer({
   dateTime,
-  classes,
+  className,
   id,
   control,
   readonly,
   options = {},
+  pickerOptions,
 }: {
   control: Control<string | null>;
-  classes?: DatePickerClasses;
+  className?: string;
   readonly?: boolean;
   id?: string;
   dateTime?: boolean;
   options?: Omit<DateTimeRenderOptions, "type">;
+  pickerOptions?: DatePickerOptions;
 }) {
+  const { portalContainer, ...classes } = pickerOptions ?? {};
   const disabled = control.disabled;
   let dateValue: CalendarDateTime | null = null;
   try {
@@ -74,6 +81,8 @@ function DatePickerRenderer({
   return (
     <DatePicker
       {...classes}
+      className={className}
+      portalContainer={portalContainer}
       isDisabled={disabled}
       isReadOnly={readonly}
       value={dateValue}
@@ -84,7 +93,7 @@ function DatePickerRenderer({
         control.value = c
           ? dateTime
             ? toZoned(c, "UTC").toAbsoluteString()
-            : c.toString()
+            : toCalendarDate(c).toString()
           : null;
       }}
     />

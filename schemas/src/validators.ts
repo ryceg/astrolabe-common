@@ -122,11 +122,7 @@ function useJsonataValidator(
   i: number,
 ) {
   const errorMsg = useJsonataExpression(expr.expression, context);
-  useControlEffect(
-    () => [hidden, errorMsg.value],
-    ([hidden, msg]) => control.setError("jsonata" + i, !hidden ? msg : null),
-    true,
-  );
+  useValidator(control, () => (!hidden ? errorMsg.value : null), "jsonata" + i);
 }
 
 function useDateValidator(
