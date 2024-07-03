@@ -1,5 +1,3 @@
-"use client";
-
 import {
   type DateSegment,
   TimeFieldState,
@@ -12,23 +10,23 @@ import {
   AriaTimeFieldProps,
   TimeValue,
 } from "react-aria";
-import {
-  createCalendar,
-  parseZonedDateTime,
-  Time,
-} from "@internationalized/date";
-import React, { useRef } from "react";
+import React from "react";
 import clsx from "clsx";
 
-export function TimeField(
-  props: AriaTimeFieldProps<TimeValue> & {
-    containerProps?: React.HTMLAttributes<HTMLDivElement>;
-    labelClasses?: string;
-    fieldClasses?: string;
-    invalidClasses?: string;
-    segmentClasses?: string;
-  },
-) {
+export interface TimeFieldClasses {
+  containerProps?: React.HTMLAttributes<HTMLDivElement>;
+  labelClass?: string;
+  fieldClass?: string;
+  invalidClass?: string;
+  segmentClass?: string;
+}
+
+export const DefaultTimeFieldClasses: TimeFieldClasses = {
+  fieldClass: "flex gap-1",
+};
+
+export type TimeFieldProps = AriaTimeFieldProps<TimeValue> & TimeFieldClasses;
+export function TimeField(props: TimeFieldProps) {
   let { locale } = useLocale();
   let state = useTimeFieldState({
     ...props,
@@ -36,29 +34,31 @@ export function TimeField(
     locale,
   });
 
+  const { containerProps, labelClass, fieldClass, invalidClass, segmentClass } =
+    {
+      ...DefaultTimeFieldClasses,
+      ...props,
+    };
+
   let ref = React.useRef(null);
   let { labelProps, fieldProps } = useTimeField(props, state, ref);
 
   return (
-    <div {...props.containerProps}>
-      <span {...labelProps} className={clsx(props.labelClasses)}>
+    <div {...containerProps}>
+      <span {...labelProps} className={clsx(labelClass)}>
         {props.label}
       </span>
-      <div
-        {...fieldProps}
-        ref={ref}
-        className={clsx("field", props.fieldClasses)}
-      >
+      <div {...fieldProps} ref={ref} className={clsx("field", fieldClass)}>
         {state.segments.map((segment, i) => (
           <DateSegment
-            segmentClasses={props.segmentClasses}
+            segmentClass={segmentClass}
             key={i}
             segment={segment}
             state={state}
           />
         ))}
         {state.isInvalid && (
-          <span className={props.invalidClasses} aria-hidden="true">
+          <span className={invalidClass} aria-hidden="true">
             🚫
           </span>
         )}
@@ -70,17 +70,17 @@ export function TimeField(
 function DateSegment({
   segment,
   state,
-  segmentClasses,
+  segmentClass,
 }: {
   segment: DateSegment;
   state: TimeFieldState;
-  segmentClasses?: string;
+  segmentClass?: string;
 }) {
   let ref = React.useRef(null);
   let { segmentProps } = useDateSegment(segment, state, ref);
 
   return (
-    <div
+    <span
       {...segmentProps}
       style={{
         ...segmentProps.style,
@@ -94,10 +94,10 @@ function DateSegment({
         segment.isPlaceholder && "text-center italic",
 
         // segment.isPlaceholder && "invisible pointer-events-none",
-        segmentClasses,
+        segmentClass,
       )}
     >
       {segment.isPlaceholder ? <>{segment.placeholder}</> : <>{segment.text}</>}
-    </div>
+    </span>
   );
 }
