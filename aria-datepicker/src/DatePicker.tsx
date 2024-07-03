@@ -30,6 +30,7 @@ export interface DatePickerProps<T extends DateValue = DateValue>
   extends DatePickerStateOptions<T>,
     DatePickerClasses {
   portalContainer?: Element;
+  noTimeField?: boolean;
 }
 type DateValueWithTime = CalendarDateTime | ZonedDateTime;
 export function DatePicker<T extends DateValue>(
@@ -80,7 +81,7 @@ export function DatePicker<T extends DateValue>(
           {...popoverClasses}
         >
           <Dialog {...dialogProps} {...dialogClasses}>
-            {hasTime ? (
+            {hasTime && !props.noTimeField ? (
               <TimeField
                 value={props.value as DateValueWithTime}
                 {...props.time}
