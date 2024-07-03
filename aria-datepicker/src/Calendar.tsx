@@ -4,7 +4,7 @@ import {
   useLocale,
 } from "react-aria";
 import { useCalendarState } from "react-stately";
-import { createCalendar, DateValue } from "@internationalized/date";
+import { DateValue, GregorianCalendar } from "@internationalized/date";
 import React from "react";
 
 // Reuse the Button from your component library. See below for details.
@@ -37,6 +37,16 @@ export const DefaultCalendarClasses = {
   navButtonContainerClass: "flex gap-2",
   ...DefaultCalendarGridClasses,
 } satisfies CalendarClasses;
+
+/** Our own implementation of createCalendar to treeshake all of the others out- we don't need the Persian calendar! @see https://react-spectrum.adobe.com/internationalized/date/Calendar.html */
+function createCalendar(identifier: string) {
+  switch (identifier) {
+    case "gregory":
+      return new GregorianCalendar();
+    default:
+      throw new Error(`Unsupported calendar ${identifier}`);
+  }
+}
 
 export function Calendar<T extends DateValue = DateValue>(
   props: CalendarProps<T>,
