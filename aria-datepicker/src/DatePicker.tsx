@@ -32,12 +32,7 @@ export interface DatePickerProps<T extends DateValue = DateValue>
   portalContainer?: Element;
   noTimeField?: boolean;
 }
-type DateValueWithTime = CalendarDateTime | ZonedDateTime;
-export function DatePicker<T extends DateValue>(
-  props: DatePickerProps<T> & {
-    time?: TimeFieldProps;
-  },
-) {
+export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
   const {
     isReadOnly,
     buttonClass,
