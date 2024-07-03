@@ -17,7 +17,7 @@ export interface DatePickerClasses {
   dialogClasses?: DialogClasses;
   popoverClasses?: PopoverClasses;
   buttonClass?: string;
-  calenderClasses?: CalendarClasses;
+  calendarClasses?: CalendarClasses;
   iconClass?: string;
   containerClass?: string;
 }
@@ -41,7 +41,7 @@ export function DatePicker<T extends DateValue>(
   const {
     isReadOnly,
     buttonClass,
-    calenderClasses,
+    calendarClasses,
     popoverClasses,
     dialogClasses,
     iconClass,
@@ -87,7 +87,7 @@ export function DatePicker<T extends DateValue>(
                 {...props.time}
               />
             ) : null}
-            <Calendar {...calendarProps} {...calenderClasses} />
+            <Calendar {...calendarProps} {...calendarClasses} />
           </Dialog>
         </Popover>
       )}
