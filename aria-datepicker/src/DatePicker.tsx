@@ -55,9 +55,6 @@ export function DatePicker<T extends DateValue>(
   let ref = React.useRef(null);
   let { groupProps, fieldProps, buttonProps, dialogProps, calendarProps } =
     useDatePicker<T>(props, state, ref);
-  const hasTime = props.value
-    ? Object.keys(props.value).includes("hour")
-    : false;
   return (
     <div
       style={{ display: "inline-flex", flexDirection: "column" }}
@@ -81,12 +78,6 @@ export function DatePicker<T extends DateValue>(
           {...popoverClasses}
         >
           <Dialog {...dialogProps} {...dialogClasses}>
-            {hasTime && !props.noTimeField ? (
-              <TimeField
-                value={props.value as DateValueWithTime}
-                {...props.time}
-              />
-            ) : null}
             <Calendar {...calendarProps} {...calendarClasses} />
           </Dialog>
         </Popover>
