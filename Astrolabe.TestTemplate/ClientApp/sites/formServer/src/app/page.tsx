@@ -119,6 +119,7 @@ export default function Editor() {
       <BasicFormEditor<string>
         formRenderer={StdFormRenderer}
         editorRenderer={StdFormRenderer}
+        // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {
           return c === "EditorControls"
             ? {

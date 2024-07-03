@@ -50,6 +50,10 @@ import {
 } from "./index";
 import { DefaultTreeItem } from "./DefaultTreeItem";
 
+interface TreeItemConfig {
+  handleIcon?: ReactNode;
+}
+
 export interface ControlTreeItemProps {
   node: ControlTreeNode;
   clone?: boolean;
@@ -63,6 +67,7 @@ export interface ControlTreeItemProps {
   onCollapse?: () => void;
   canHaveChildren?: boolean;
   actions?: ReactNode;
+  itemConfig?: TreeItemConfig;
 }
 
 export interface ControlTreeContainerProps
@@ -83,6 +88,7 @@ export interface ControlTreeProps {
   indicator?: boolean;
   TreeItem?: FC<ControlTreeItemProps>;
   TreeContainer?: FC<ControlTreeContainerProps>;
+  itemConfig?: TreeItemConfig;
   actions?: (node: ControlTreeNode) => ReactNode | undefined;
 }
 export function ControlTree({
@@ -93,6 +99,7 @@ export function ControlTree({
   treeState,
   actions,
   TreeItem = DefaultTreeItem,
+  itemConfig = {},
   TreeContainer = ({ children, ...props }) => <>{children}</>,
 }: ControlTreeProps) {
   const sensors = useSensors(useSensor(PointerSensor));
@@ -272,6 +279,7 @@ export function ControlTree({
           active={dragState.fields.active}
           onCollapse={hasChildren ? () => onCollapse(x) : undefined}
           canHaveChildren={canHaveChildren}
+          itemConfig={itemConfig}
           actions={itemActions ?? actions?.(x)}
         />
       ),
@@ -389,6 +397,7 @@ const measuring = {
 
 export interface SortableTreeItem {
   handleProps: HTMLAttributes<HTMLElement>;
+  handleIcon?: ReactNode;
   itemProps: {
     style: CSSProperties;
     onClick: () => void;
@@ -417,6 +426,7 @@ export function useSortableTreeItem({
   onCollapse,
   canHaveChildren,
   title,
+  itemConfig,
 }: ControlTreeItemProps): SortableTreeItem {
   const {
     transform,
@@ -456,6 +466,7 @@ export function useSortableTreeItem({
     expanded: node.expanded,
     onCollapse,
     paddingLeft: clone ? 0 : depth * indentationWidth,
+    ...itemConfig,
   };
 }
 

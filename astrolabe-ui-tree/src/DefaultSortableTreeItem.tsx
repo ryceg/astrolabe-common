@@ -15,6 +15,7 @@ export function DefaultSortableTreeItem({
   expanded,
   title,
   actions,
+  handleIcon,
 }: SortableTreeItem) {
   return (
     <div
@@ -35,7 +36,7 @@ export function DefaultSortableTreeItem({
         ref={setDraggableNodeRef}
       >
         <div {...handleProps}>
-          <i className="fa fa-grip-vertical cursor-grabbing" />
+          {handleIcon || <i className="fa fa-grip-vertical cursor-grabbing" />}
         </div>
         {canHaveChildren && (
           <div

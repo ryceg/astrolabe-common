@@ -51,7 +51,7 @@ import {
 } from "./controlTree";
 import { ControlTreeNode, useTreeStateControl } from "@astroapps/ui-tree";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import React, { ReactElement, useMemo } from "react";
+import React, { ReactElement, ReactNode, useMemo } from "react";
 import { controlIsCompoundField, controlIsGroupControl } from "./util";
 import {
   createTailwindcss,
@@ -95,6 +95,7 @@ export interface BasicFormEditorProps<A extends string> {
   editorClass?: string;
   editorPanelClass?: string;
   controlsClass?: string;
+  handleIcon?: ReactNode;
 }
 
 export function BasicFormEditor<A extends string>({
@@ -114,6 +115,7 @@ export function BasicFormEditor<A extends string>({
   rootControlClass,
   collectClasses,
   controlsClass,
+  handleIcon,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
@@ -292,6 +294,7 @@ export function BasicFormEditor<A extends string>({
                     controls={controls}
                     indicator={false}
                     canDropAtRoot={() => true}
+                    itemConfig={{ handleIcon }}
                   />
                   {button(
                     () =>
