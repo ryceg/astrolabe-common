@@ -92,8 +92,9 @@ public class TestDsl : AbstractValidator<VehicleDefinitionEdit>
     public TestDsl()
     {
         AddRules([
-            RuleFor(x => x.Width) < 10,
-            RuleFor(x => x.NotNullable) > 4
+            RuleFor(x => x.Width).Must(x => x < 10),
+            RuleFor(x => x.NotNullable).Must(x => x > 4),
+            RuleFor(x => x.SteerAxleCompliant).Must(x => !x)
         ]);
     }
 }

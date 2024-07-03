@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Astrolabe.Validation;
+﻿namespace Astrolabe.Validation;
 
 public enum CompareType
 {
@@ -128,36 +126,17 @@ public static class ConstantExtensions
 
 }
 
-public class NumberConstant(int? intValue, double? doubleValue) : NumberExpr
-{
-    public int? IntValue { get; } = intValue;
-    public double? DoubleValue { get; } = doubleValue;
-}
+public record NumberConstant(int? IntValue, double? DoubleValue) : NumberExpr;
 
-public class PathExpr(bool config, string path) : BoolExpr, NumberExpr
-{
-    public bool Config { get; } = config;
-    public string Path { get; } = path;
-}
+public record NumberCast(Expr Expr) : NumberExpr;
 
-public class LogicOpExpr(LogicType logicType, BoolExpr e1, BoolExpr? e2) : BoolExpr
-{
-    public LogicType LogicType { get; } = logicType;
-    public BoolExpr E1 { get; } = e1;
-    public BoolExpr? E2 { get; } = e2;
-}
+public record BoolCast(Expr Expr) : BoolExpr;
 
-public class CompareExpr(CompareType compareType, Expr e1, Expr e2) : BoolExpr
-{
-    public CompareType CompareType { get; } = compareType;
-    public Expr E1 { get; } = e1;
-    public Expr E2 { get; } = e2;
-}
+public record PathExpr(bool Config, string Path) : Expr;
 
-public class MathBinOpExpr(MathBinOp compareType, NumberExpr e1, NumberExpr e2) : NumberExpr
-{
-    public MathBinOp CompareType { get; } = compareType;
-    public NumberExpr E1 { get; } = e1;
-    public NumberExpr E2 { get; } = e2;
-}
+public record LogicOpExpr(LogicType LogicType, BoolExpr E1, BoolExpr? E2) : BoolExpr;
+
+public record CompareExpr(CompareType CompareType, Expr E1, Expr E2) : BoolExpr;
+
+public record MathBinOpExpr(MathBinOp MathBinOp, NumberExpr E1, NumberExpr E2) : NumberExpr;
 

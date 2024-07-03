@@ -6,20 +6,32 @@ namespace Astrolabe.Validation;
 
 public class AbstractValidator<T>
 {
-    public void AddRules(ICollection<BoolExpr> rules)
+    public void AddRules(ICollection<Rule> rules)
     {
         
     }
-    public NumberExpr RuleFor<TN>(Expression<Func<T, TN?>> expr) where TN : struct, ISignedNumber<TN> 
+    public RuleFor<NumberExpr> RuleFor<TN>(Expression<Func<T, TN?>> expr) where TN : struct, ISignedNumber<TN> 
     {
         var propertyInfo = expr.GetPropertyInfo();
-        return new PathExpr(false, propertyInfo.Name);
+        return new RuleFor<NumberExpr>(new PathExpr(false, propertyInfo.Name));
     }
     
-    public NumberExpr RuleFor<TN>(Expression<Func<T, TN>> expr) where TN : struct, ISignedNumber<TN> 
+    public RuleFor<NumberExpr> RuleFor<TN>(Expression<Func<T, TN>> expr) where TN : struct, ISignedNumber<TN> 
     {
         var propertyInfo = expr.GetPropertyInfo();
-        return new PathExpr(false, propertyInfo.Name);
+        return new RuleFor<NumberExpr>(new PathExpr(false, propertyInfo.Name));
+    }
+
+    public RuleFor<BoolExpr> RuleFor(Expression<Func<T, bool>> expr) 
+    {
+        var propertyInfo = expr.GetPropertyInfo();
+        return new RuleFor<BoolExpr>(new PathExpr(false, propertyInfo.Name));
+    }
+
+    public RuleFor<BoolExpr> RuleFor(Expression<Func<T, bool?>> expr) 
+    {
+        var propertyInfo = expr.GetPropertyInfo();
+        return new RuleFor<BoolExpr>(new PathExpr(false, propertyInfo.Name));
     }
 
 }
