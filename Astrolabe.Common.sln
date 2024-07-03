@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Web.Common", "Ast
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Workflow", "Astrolabe.Workflow\Astrolabe.Workflow.csproj", "{602932A6-FAFD-43E9-BEF9-3C8AEE673A7B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Validation", "Astrolabe.Validation\Astrolabe.Validation.csproj", "{AF0FA595-8CE6-4914-AD65-9F1275D16F9E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -96,5 +98,9 @@ Global
 		{602932A6-FAFD-43E9-BEF9-3C8AEE673A7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{602932A6-FAFD-43E9-BEF9-3C8AEE673A7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{602932A6-FAFD-43E9-BEF9-3C8AEE673A7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF0FA595-8CE6-4914-AD65-9F1275D16F9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF0FA595-8CE6-4914-AD65-9F1275D16F9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF0FA595-8CE6-4914-AD65-9F1275D16F9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF0FA595-8CE6-4914-AD65-9F1275D16F9E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
