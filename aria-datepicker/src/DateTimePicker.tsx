@@ -1,7 +1,5 @@
-"use client";
-
-import React from "react";
-import { useDatePicker } from "react-aria";
+import React, { useState } from "react";
+import { TimeValue, useDatePicker } from "react-aria";
 import {
   DatePickerStateOptions,
   useDatePickerState,
@@ -12,16 +10,24 @@ import { Calendar, CalendarClasses } from "./Calendar";
 import {
   CalendarDateTime,
   DateValue,
+  getLocalTimeZone,
+  now,
+  parseAbsoluteToLocal,
+  parseZonedDateTime,
+  toCalendarDateTime,
+  today,
   ZonedDateTime,
 } from "@internationalized/date";
 import { Button, Dialog, Popover } from "@astroapps/aria-base";
 import { DialogClasses, PopoverClasses } from "@astroapps/aria-base";
 import { DatePickerProps, DefaultDatePickerClasses } from "./DatePicker";
-import { TimeField } from "./TimeField";
+import { TimeField, TimeFieldProps } from "./TimeField";
 
-type DateValueWithTime = CalendarDateTime | ZonedDateTime;
-export function DateTimePicker<T extends DateValueWithTime = ZonedDateTime>(
-  props: DatePickerProps<T>,
+type DateValueWithTime = CalendarDateTime | ZonedDateTime | DateValue;
+export function DateTimePicker<T extends DateValueWithTime = CalendarDateTime>(
+  props: DatePickerProps<T> & {
+    time: TimeFieldProps;
+  },
 ) {
   const {
     isReadOnly,
@@ -34,7 +40,9 @@ export function DateTimePicker<T extends DateValueWithTime = ZonedDateTime>(
     ...DefaultDatePickerClasses,
     ...props,
   };
-  let state = useDatePickerState(props);
+  let state = useDatePickerState({
+    ...props,
+  });
   let ref = React.useRef(null);
   let { groupProps, fieldProps, buttonProps, dialogProps, calendarProps } =
     useDatePicker<T>(props, state, ref);
@@ -45,7 +53,7 @@ export function DateTimePicker<T extends DateValueWithTime = ZonedDateTime>(
         <DateField {...fieldProps} />
         {!isReadOnly && (
           <Button {...buttonProps} className={buttonClass}>
-            <i className={iconClass} />
+            <i aria-hidden className={iconClass} />
           </Button>
         )}
       </div>
@@ -57,7 +65,7 @@ export function DateTimePicker<T extends DateValueWithTime = ZonedDateTime>(
           {...popoverClasses}
         >
           <Dialog {...dialogProps} {...dialogClasses}>
-            <TimeField />
+            <TimeField {...props.time} />
             <Calendar {...calendarProps} {...calenderClasses} />
           </Dialog>
         </Popover>
