@@ -9,12 +9,12 @@ public static class RuleExtensions
 {
     public static Rule Must(this RuleFor<NumberExpr> ruleFor, Func<NumberExpr, BoolExpr> must)
     {
-        return new Rule(ruleFor.Path, must(new NumberCast(ruleFor.Path)));
+        return new Rule(ruleFor.Path, must(new NumberExpr(ruleFor.Path)));
     }
     
     public static Rule Must(this RuleFor<BoolExpr> ruleFor, Func<BoolExpr, BoolExpr> must)
     {
-        return new Rule(ruleFor.Path, must(new BoolCast(ruleFor.Path)));
+        return new Rule(ruleFor.Path, must(new BoolExpr(ruleFor.Path)));
     }
 
 }

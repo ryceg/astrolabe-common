@@ -6,9 +6,11 @@ namespace Astrolabe.Validation;
 
 public class AbstractValidator<T>
 {
+    public readonly List<Rule> Rules = [];
+    
     public void AddRules(ICollection<Rule> rules)
     {
-        
+        Rules.AddRange(rules);
     }
     public RuleFor<NumberExpr> RuleFor<TN>(Expression<Func<T, TN?>> expr) where TN : struct, ISignedNumber<TN> 
     {
