@@ -1,10 +1,19 @@
 "use client";
-import { DateTimePicker, TimeField } from "@astroapps/aria-datepicker";
+import {
+  DatePicker,
+  DateTimePicker,
+  TimeField,
+} from "@astroapps/aria-datepicker";
 import { useControl } from "@react-typed-forms/core";
+import {
+  now,
+  getLocalTimeZone,
+  ZonedDateTime,
+  CalendarDateTime,
+} from "@internationalized/date";
 import { useState, useEffect } from "react";
 export default function Page() {
-  type Time = Parameters<typeof DateTimePicker>[0]["value"];
-  const time = useControl<Time>(null);
+  const date = useControl<ZonedDateTime>(now(getLocalTimeZone()));
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -13,23 +22,24 @@ export default function Page() {
   return isClient ? (
     <div className="container">
       <h1>Page</h1>
-      <TimeField
-        hideTimeZone={true}
+      <DatePicker
         shouldForceLeadingZeros={true}
-        value={time.value}
-        onChange={(v) => (time.value = v)}
+        value={date.value}
+        onChange={(v) => (date.value = v)}
         label="Time"
-        fieldClasses="flex gap-1 border border-surface-300"
+        buttonClass="px-2"
+        calenderClasses={{
+          cellClass: "md:size-10 text-center",
+          dayClass:
+            "aspect-square size-8 grid place-items-center hover:bg-primary-400 hover:text-white rounded-full",
+          className:
+            "p-6 pt-2 rounded-b shadow-lg border border-t-0 border-surface-300",
+        }}
+        time={{
+          shouldForceLeadingZeros: true,
+          fieldClass: "px-2 pl-8 flex border border-surface-300 rounded-t",
+        }}
       />
-      <DateTimePicker
-        hideTimeZone={true}
-        shouldForceLeadingZeros={true}
-        value={time.value}
-        onChange={(v) => (time.value = v)}
-        label="Time"
-        fieldClasses="flex gap-1 border border-surface-300"
-      />
-      {JSON.stringify(time.value)} !
     </div>
   ) : (
     <>TEST</>
