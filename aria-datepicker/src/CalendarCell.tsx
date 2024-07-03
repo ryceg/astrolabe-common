@@ -19,10 +19,11 @@ export interface CalendarCellProps extends CalendarCellClasses {
 }
 export const DefaultCalendarCellClasses = {
   selectedClass: "bg-secondary-400",
-  cellClass: "w-8 h-8 text-center",
+  cellClass: "size-8 text-center",
   dayClass: "hover:bg-primary-400 hover:text-white rounded-md",
   unavailableClass: "",
-  disabledClass: "",
+  disabledClass:
+    "text-gray-400 hover:bg-transparent aria-disabled:hover:text-gray-400",
 };
 
 export function CalendarCell(props: CalendarCellProps) {

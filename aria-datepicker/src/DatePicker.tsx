@@ -3,17 +3,23 @@ import { useDatePicker } from "react-aria";
 import { DatePickerStateOptions, useDatePickerState } from "react-stately";
 import { DateField } from "./DateField";
 import { Calendar, CalendarClasses } from "./Calendar";
-import { DateValue } from "@internationalized/date";
+import {
+  CalendarDateTime,
+  DateValue,
+  ZonedDateTime,
+} from "@internationalized/date";
 import { Button, Dialog, Popover } from "@astroapps/aria-base";
 import { DialogClasses, PopoverClasses } from "@astroapps/aria-base";
+import { TimeField, TimeFieldProps } from "./TimeField";
 
 export interface DatePickerClasses {
   className?: string;
   dialogClasses?: DialogClasses;
   popoverClasses?: PopoverClasses;
   buttonClass?: string;
-  calenderClasses?: CalendarClasses;
+  calendarClasses?: CalendarClasses;
   iconClass?: string;
+  containerClass?: string;
 }
 
 export const DefaultDatePickerClasses = {
@@ -24,18 +30,17 @@ export interface DatePickerProps<T extends DateValue = DateValue>
   extends DatePickerStateOptions<T>,
     DatePickerClasses {
   portalContainer?: Element;
+  noTimeField?: boolean;
 }
-
-export function DatePicker<T extends DateValue = DateValue>(
-  props: DatePickerProps<T>,
-) {
+export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
   const {
     isReadOnly,
     buttonClass,
-    calenderClasses,
+    calendarClasses,
     popoverClasses,
     dialogClasses,
     iconClass,
+    containerClass,
     portalContainer,
   } = {
     ...DefaultDatePickerClasses,
@@ -45,11 +50,14 @@ export function DatePicker<T extends DateValue = DateValue>(
   let ref = React.useRef(null);
   let { groupProps, fieldProps, buttonProps, dialogProps, calendarProps } =
     useDatePicker<T>(props, state, ref);
-
   return (
-    <div style={{ display: "inline-flex", flexDirection: "column" }}>
+    <div
+      style={{ display: "inline-flex", flexDirection: "column" }}
+      className={containerClass}
+    >
       <div {...groupProps} ref={ref} className={props.className}>
         <DateField {...fieldProps} />
+
         {!isReadOnly && (
           <Button {...buttonProps} className={buttonClass}>
             <i className={iconClass} />
@@ -65,7 +73,7 @@ export function DatePicker<T extends DateValue = DateValue>(
           {...popoverClasses}
         >
           <Dialog {...dialogProps} {...dialogClasses}>
-            <Calendar {...calendarProps} {...calenderClasses} />
+            <Calendar {...calendarProps} {...calendarClasses} />
           </Dialog>
         </Popover>
       )}
