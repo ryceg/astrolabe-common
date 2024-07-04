@@ -14,7 +14,12 @@ import {
   RenderedControl,
   VisibilityRendererProps,
 } from "./controlRender";
-import { ControlAdornment, ControlAdornmentType, IconAdornment } from "./types";
+import {
+  AccordionAdornment,
+  ControlAdornment,
+  ControlAdornmentType,
+  IconAdornment,
+} from "./types";
 
 export interface DefaultRenderers {
   data: DataRendererRegistration;
@@ -113,6 +118,12 @@ export type RendererRegistration =
 
 export function isIconAdornment(a: ControlAdornment): a is IconAdornment {
   return a.type === ControlAdornmentType.Icon;
+}
+
+export function isAccordionAdornment(
+  a: ControlAdornment,
+): a is AccordionAdornment {
+  return a.type === ControlAdornmentType.Accordion;
 }
 
 export function createLayoutRenderer(

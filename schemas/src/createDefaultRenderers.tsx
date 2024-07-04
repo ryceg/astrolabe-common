@@ -15,6 +15,7 @@ import {
   DataRendererRegistration,
   DefaultRenderers,
   GroupRendererRegistration,
+  isAccordionAdornment,
   isIconAdornment,
   LabelRendererRegistration,
 } from "./renderers";
@@ -29,6 +30,7 @@ import {
   GroupRendererProps,
   LabelType,
   renderLayoutParts,
+  wrapLayout,
 } from "./controlRender";
 import {
   AdornmentPlacement,
@@ -48,7 +50,7 @@ import {
   SelectRendererOptions,
 } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
-import { Fcheckbox } from "@react-typed-forms/core";
+import { Control, Fcheckbox } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
   createDefaultArrayRenderer,
@@ -60,6 +62,7 @@ import {
   createCheckListRenderer,
   createRadioRenderer,
 } from "./components/CheckRenderer";
+import { DefaultAccordion } from "./components/DefaultAccordion";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -291,20 +294,43 @@ export function createDefaultDataRenderer(
   });
 }
 
-export interface DefaultAdornmentRendererOptions {}
+export interface DefaultAdornmentRendererOptions {
+  accordion?: {
+    className?: string;
+    togglerOpenClass?: string;
+    togglerClosedClass?: string;
+    renderTitle?: (
+      title: string | undefined,
+      current: Control<boolean>,
+    ) => ReactNode;
+    renderToggler?: (current: Control<boolean>) => ReactNode;
+  };
+}
 
 export function createDefaultAdornmentRenderer(
   options: DefaultAdornmentRendererOptions = {},
 ): AdornmentRendererRegistration {
   return {
     type: "adornment",
-    render: ({ adornment }) => ({
+    render: ({ adornment, designMode }) => ({
       apply: (rl) => {
         if (isIconAdornment(adornment)) {
           return appendMarkupAt(
             adornment.placement ?? AdornmentPlacement.ControlStart,
             <i className={adornment.iconClass} />,
           )(rl);
+        }
+        if (isAccordionAdornment(adornment)) {
+          return wrapLayout((x) => (
+            <DefaultAccordion
+              children={x}
+              accordion={adornment}
+              contentStyle={rl.style}
+              contentClassName={rl.className}
+              designMode={designMode}
+              {...options.accordion}
+            />
+          ))(rl);
         }
       },
       priority: 0,
@@ -325,7 +351,9 @@ function createDefaultLayoutRenderer(
       renderers,
     );
     return {
-      children: <DefaultLayout layout={layout} {...options} />,
+      children: layout.wrapLayout(
+        <DefaultLayout layout={layout} {...options} />,
+      ),
       className: layout.className,
       style: layout.style,
       divRef: (e) =>

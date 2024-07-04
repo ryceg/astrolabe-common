@@ -32,4 +32,11 @@ export const defaultTailwindTheme = {
     },
     selectOptions: { emptyText: "<select>" },
   },
+  adornment: {
+    accordion: {
+      className: "flex items-center gap-2 my-2",
+      togglerOpenClass: "fa fa-chevron-up",
+      togglerClosedClass: "fa fa-chevron-down",
+    },
+  },
 } satisfies DefaultRendererOptions;

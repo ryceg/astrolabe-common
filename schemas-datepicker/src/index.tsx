@@ -38,6 +38,7 @@ export function createDatePickerRenderer(
         className={rendererClass(p.className, className)}
         control={p.control}
         readonly={p.readonly}
+        designMode={p.designMode}
         options={p.renderOptions as DateTimeRenderOptions}
       />
     ),
@@ -54,12 +55,14 @@ function DatePickerRenderer({
   id,
   control,
   readonly,
+  designMode,
   options = {},
   pickerOptions,
 }: {
   control: Control<string | null>;
   className?: string;
   readonly?: boolean;
+  designMode?: boolean;
   id?: string;
   dateTime?: boolean;
   options?: Omit<DateTimeRenderOptions, "type">;
@@ -88,6 +91,7 @@ function DatePickerRenderer({
       value={dateValue}
       label={"FIXME"}
       granularity={dateTime && !options.forceMidnight ? "minute" : "day"}
+      designMode={designMode}
       onChange={(c) => {
         control.touched = true;
         control.value = c

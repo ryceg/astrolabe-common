@@ -3,6 +3,7 @@ import React, {
   FC,
   Fragment,
   Key,
+  ReactElement,
   ReactNode,
   useCallback,
   useEffect,
@@ -93,6 +94,7 @@ export interface FormRenderer {
 
 export interface AdornmentProps {
   adornment: ControlAdornment;
+  designMode?: boolean;
 }
 
 export const AppendAdornmentPriority = 0;
@@ -130,6 +132,7 @@ export interface RenderedLayout {
   errorControl?: Control<any>;
   className?: string;
   style?: React.CSSProperties;
+  wrapLayout: (layout: ReactElement) => ReactElement;
 }
 
 export interface RenderedControl {
@@ -185,6 +188,7 @@ export interface ParentRendererProps {
   dataContext: ControlDataContext;
   parentContext: ControlDataContext;
   useChildVisibility: ChildVisibilityFunc;
+  designMode?: boolean;
 }
 
 export interface GroupRendererProps extends ParentRendererProps {
@@ -239,6 +243,7 @@ export interface DataControlProps {
   allowedOptions?: Control<any[] | undefined>;
   useChildVisibility: ChildVisibilityFunc;
   schemaInterface?: SchemaInterface;
+  designMode?: boolean;
 }
 
 export type CreateDataProps = (
@@ -680,6 +685,7 @@ export interface RenderControlProps {
   useChildVisibility: ChildVisibilityFunc;
   actionOnClick?: (actionId: string, actionData: any) => () => void;
   schemaInterface?: SchemaInterface;
+  designMode?: boolean;
 }
 export function renderControlLayout(
   props: RenderControlProps,
@@ -697,6 +703,7 @@ export function renderControlLayout(
     labelText,
     parentContext,
     useChildVisibility,
+    designMode,
   } = props;
 
   if (isDataControlDefinition(c)) {
@@ -722,6 +729,7 @@ export function renderControlLayout(
         className: cc(c.styleClass),
         useChildVisibility,
         style,
+        designMode,
       }),
       label: {
         label: labelText?.value ?? c.title,
@@ -787,8 +795,12 @@ export function renderControlLayout(
   }
 }
 
+type MarkupKeys = keyof Omit<
+  RenderedLayout,
+  "errorControl" | "style" | "className" | "wrapLayout"
+>;
 export function appendMarkup(
-  k: keyof Omit<RenderedLayout, "errorControl" | "style" | "className">,
+  k: MarkupKeys,
   markup: ReactNode,
 ): (layout: RenderedLayout) => void {
   return (layout) =>
@@ -801,15 +813,13 @@ export function appendMarkup(
 }
 
 export function wrapMarkup(
-  k: keyof Omit<RenderedLayout, "errorControl" | "style" | "className">,
+  k: MarkupKeys,
   wrap: (ex: ReactNode) => ReactNode,
 ): (layout: RenderedLayout) => void {
   return (layout) => (layout[k] = wrap(layout[k]));
 }
 
-export function layoutKeyForPlacement(
-  pos: AdornmentPlacement,
-): keyof Omit<RenderedLayout, "errorControl" | "style" | "className"> {
+export function layoutKeyForPlacement(pos: AdornmentPlacement): MarkupKeys {
   switch (pos) {
     case AdornmentPlacement.ControlEnd:
       return "controlEnd";
@@ -820,6 +830,15 @@ export function layoutKeyForPlacement(
     case AdornmentPlacement.LabelEnd:
       return "labelEnd";
   }
+}
+
+export function wrapLayout(
+  wrap: (layout: ReactElement) => ReactElement,
+): (renderedLayout: RenderedLayout) => void {
+  return (rl) => {
+    const orig = rl.wrapLayout;
+    rl.wrapLayout = (x) => wrap(orig(x));
+  };
 }
 
 export function appendMarkupAt(
@@ -847,6 +866,7 @@ export function renderLayoutParts(
     errorControl,
     style,
     className: cc(className),
+    wrapLayout: (x) => x,
   };
   (adornments ?? [])
     .sort((a, b) => a.priority - b.priority)

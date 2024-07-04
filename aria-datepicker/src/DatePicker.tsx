@@ -30,7 +30,7 @@ export interface DatePickerProps<T extends DateValue = DateValue>
   extends DatePickerStateOptions<T>,
     DatePickerClasses {
   portalContainer?: Element;
-  noTimeField?: boolean;
+  designMode?: boolean;
 }
 export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
   const {
@@ -42,6 +42,7 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
     iconClass,
     containerClass,
     portalContainer,
+    designMode,
   } = {
     ...DefaultDatePickerClasses,
     ...props,
@@ -59,7 +60,7 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
         <DateField {...fieldProps} />
 
         {!isReadOnly && (
-          <Button {...buttonProps} className={buttonClass}>
+          <Button {...(!designMode ? buttonProps : {})} className={buttonClass}>
             <i className={iconClass} />
           </Button>
         )}

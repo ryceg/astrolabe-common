@@ -130,7 +130,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const control = useMemo(() => newControl(sampleData), [sampleData]);
   const adornments =
     definition.adornments?.map((x) =>
-      renderer.renderAdornment({ adornment: x }),
+      renderer.renderAdornment({ adornment: x, designMode: true }),
     ) ?? [];
 
   const layout = renderControlLayout({
@@ -159,6 +159,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     schemaInterface,
     field,
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
+    designMode: true,
   });
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
