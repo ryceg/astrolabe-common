@@ -87,14 +87,3 @@ public record VehicleDefinitionEdit(
     double NotNullable
 );
 
-public class TestDsl : AbstractValidator<VehicleDefinitionEdit>
-{
-    public TestDsl()
-    {
-        AddRules([
-            RuleFor(x => x.Width).Must(x => x < 10),
-            RuleFor(x => x.NotNullable).Must(x => x > 4),
-            RuleFor(x => x.SteerAxleCompliant).Must(x => !x)
-        ]);
-    }
-}
