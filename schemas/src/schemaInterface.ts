@@ -2,6 +2,8 @@ import { FieldOption, FieldType, SchemaField, SchemaInterface } from "./types";
 import { Control } from "@react-typed-forms/core";
 
 export class DefaultSchemaInterface implements SchemaInterface {
+  constructor(protected boolStrings: [string, string] = ["No", "Yes"]) {}
+
   getOptions({ options }: SchemaField): FieldOption[] | null | undefined {
     return options && options.length > 0 ? options : null;
   }
@@ -25,6 +27,8 @@ export class DefaultSchemaInterface implements SchemaInterface {
         return new Date(value).toLocaleDateString();
       case FieldType.Date:
         return new Date(value).toLocaleDateString();
+      case FieldType.Bool:
+        return this.boolStrings[value ? 1 : 0];
       default:
         return value != null ? value.toString() : undefined;
     }
