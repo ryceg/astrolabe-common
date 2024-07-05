@@ -184,7 +184,7 @@ export function createVisibilityRenderer(
 }
 
 export function createAdornmentRenderer(
-  render: (props: AdornmentProps) => AdornmentRenderer,
+  render: AdornmentRendererRegistration["render"],
   options?: Partial<AdornmentRendererRegistration>,
 ): AdornmentRendererRegistration {
   return { type: "adornment", ...options, render };
