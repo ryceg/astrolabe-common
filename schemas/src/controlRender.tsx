@@ -90,6 +90,7 @@ export interface FormRenderer {
   ) => ReactNode;
   renderLayout: (props: ControlLayoutProps) => RenderedControl;
   renderVisibility: (props: VisibilityRendererProps) => ReactNode;
+  renderLabelText: (props: ReactNode) => ReactNode;
 }
 
 export interface AdornmentProps {

@@ -403,11 +403,7 @@ export function createDefaultLabelRenderer(
             )}
           >
             {labelStart}
-            {renderers.renderLabel(
-              { label: props.label, type: LabelType.Text },
-              undefined,
-              undefined,
-            )}
+            {renderers.renderLabelText(props.label)}
             {props.required && requiredElement}
           </label>
           {labelEnd}
