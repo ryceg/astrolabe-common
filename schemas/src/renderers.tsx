@@ -62,7 +62,7 @@ export interface LabelRendererRegistration {
     labelStart: ReactNode,
     labelEnd: ReactNode,
     renderers: FormRenderer,
-  ) => ReactElement;
+  ) => ReactNode;
 }
 
 export interface ActionRendererRegistration {

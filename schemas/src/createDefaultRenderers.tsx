@@ -387,7 +387,8 @@ export function createDefaultLabelRenderer(
     ...options,
   };
   return {
-    render: (props, labelStart, labelEnd) => {
+    render: (props, labelStart, labelEnd, renderers) => {
+      if (props.type == LabelType.Text) return props.label;
       return labelContainer(
         <>
           <label
@@ -402,7 +403,11 @@ export function createDefaultLabelRenderer(
             )}
           >
             {labelStart}
-            {props.label}
+            {renderers.renderLabel(
+              { label: props.label, type: LabelType.Text },
+              undefined,
+              undefined,
+            )}
             {props.required && requiredElement}
           </label>
           {labelEnd}

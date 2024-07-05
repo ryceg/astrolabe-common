@@ -159,6 +159,7 @@ export interface ControlLayoutProps {
 export enum LabelType {
   Control,
   Group,
+  Text,
 }
 export interface LabelRendererProps {
   type: LabelType;
