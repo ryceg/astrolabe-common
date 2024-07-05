@@ -294,17 +294,21 @@ export function createDefaultDataRenderer(
   });
 }
 
+export interface DefaultAccordionRendererOptions {
+  className?: string;
+  titleClass?: string;
+  togglerClass?: string;
+  iconOpenClass?: string;
+  iconClosedClass?: string;
+  renderTitle?: (
+    title: string | undefined,
+    current: Control<boolean>,
+  ) => ReactNode;
+  renderToggler?: (current: Control<boolean>, title: ReactNode) => ReactNode;
+}
+
 export interface DefaultAdornmentRendererOptions {
-  accordion?: {
-    className?: string;
-    togglerOpenClass?: string;
-    togglerClosedClass?: string;
-    renderTitle?: (
-      title: string | undefined,
-      current: Control<boolean>,
-    ) => ReactNode;
-    renderToggler?: (current: Control<boolean>) => ReactNode;
-  };
+  accordion?: DefaultAccordionRendererOptions;
 }
 
 export function createDefaultAdornmentRenderer(
@@ -312,7 +316,7 @@ export function createDefaultAdornmentRenderer(
 ): AdornmentRendererRegistration {
   return {
     type: "adornment",
-    render: ({ adornment, designMode }) => ({
+    render: ({ adornment, designMode }, renderers) => ({
       apply: (rl) => {
         if (isIconAdornment(adornment)) {
           return appendMarkupAt(
@@ -323,6 +327,7 @@ export function createDefaultAdornmentRenderer(
         if (isAccordionAdornment(adornment)) {
           return wrapLayout((x) => (
             <DefaultAccordion
+              renderers={renderers}
               children={x}
               accordion={adornment}
               contentStyle={rl.style}

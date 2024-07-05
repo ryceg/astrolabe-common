@@ -2,6 +2,8 @@ import React, { CSSProperties, Fragment, ReactElement, ReactNode } from "react";
 import { AccordionAdornment } from "../types";
 import { Control, useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
+import { FormRenderer } from "../controlRender";
+import { DefaultAccordionRendererOptions } from "../createDefaultRenderers";
 
 export function DefaultAccordion({
   children,
@@ -9,44 +11,38 @@ export function DefaultAccordion({
   contentStyle,
   contentClassName,
   designMode,
-  togglerOpenClass,
-  togglerClosedClass,
+  iconOpenClass,
+  iconClosedClass,
   className,
-  renderTitle = (x) => <span>{x}</span>,
+  renderTitle = (t) => t,
   renderToggler,
+  renderers,
+  titleClass,
 }: {
   children: ReactElement;
   accordion: Partial<AccordionAdornment>;
   contentStyle?: CSSProperties;
   contentClassName?: string;
   designMode?: boolean;
-  className?: string;
-  togglerOpenClass?: string;
-  togglerClosedClass?: string;
-  renderTitle?: (
-    title: string | undefined,
-    current: Control<boolean>,
-  ) => ReactNode;
-  renderToggler?: (current: Control<boolean>) => ReactNode;
-}) {
+  renderers: FormRenderer;
+} & DefaultAccordionRendererOptions) {
   const open = useControl(!!accordion.defaultExpanded);
   const isOpen = open.value;
   const fullContentStyle =
     isOpen || designMode ? contentStyle : { ...contentStyle, display: "none" };
+  const title = renderers.renderLabelText(renderTitle(accordion.title, open));
   const toggler = renderToggler ? (
-    renderToggler(open)
+    renderToggler(open, title)
   ) : (
-    <button onClick={() => open.setValue((x) => !x)}>
-      <i className={clsx(isOpen ? togglerOpenClass : togglerClosedClass)} />
+    <button className={className} onClick={() => open.setValue((x) => !x)}>
+      <label className={titleClass}>{title}</label>
+      <i className={clsx(isOpen ? iconOpenClass : iconClosedClass)} />
     </button>
   );
 
   return (
     <>
-      <div className={className}>
-        {renderTitle(accordion.title, open)}
-        {toggler}
-      </div>
+      {toggler}
       <div style={fullContentStyle} className={contentClassName}>
         {children}
       </div>

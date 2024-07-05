@@ -35,8 +35,9 @@ export const defaultTailwindTheme = {
   adornment: {
     accordion: {
       className: "flex items-center gap-2 my-2",
-      togglerOpenClass: "fa fa-chevron-up",
-      togglerClosedClass: "fa fa-chevron-down",
+      titleClass: "cursor-pointer",
+      iconOpenClass: "fa fa-chevron-up",
+      iconClosedClass: "fa fa-chevron-down",
     },
   },
 } satisfies DefaultRendererOptions;
