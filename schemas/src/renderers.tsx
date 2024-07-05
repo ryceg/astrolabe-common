@@ -171,7 +171,7 @@ export function createDisplayRenderer(
 
 export function createLabelRenderer(
   render: LabelRendererRegistration["render"],
-  options?: Omit<LabelRendererRegistration, "type">,
+  options?: Partial<LabelRendererRegistration>,
 ): LabelRendererRegistration {
   return { type: "label", render, ...options };
 }
