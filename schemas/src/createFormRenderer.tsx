@@ -70,7 +70,7 @@ export function createFormRenderer(
       adornmentRegistrations.find((x) =>
         isOneOf(x.adornmentType, props.adornment.type),
       ) ?? defaultRenderers.adornment;
-    return renderer.render(props);
+    return renderer.render(props, formRenderers);
   }
 
   function renderArray(props: ArrayRendererProps) {

@@ -97,7 +97,7 @@ export interface DisplayRendererRegistration {
 export interface AdornmentRendererRegistration {
   type: "adornment";
   adornmentType?: string | string[];
-  render: (props: AdornmentProps) => AdornmentRenderer;
+  render: (props: AdornmentProps, renderers: FormRenderer) => AdornmentRenderer;
 }
 
 export interface VisibilityRendererRegistration {
