@@ -6,33 +6,29 @@ namespace Astrolabe.Validation;
 
 public static class Interpreter
 {
-    public static (EvalEnvironment, object) Evaluate(Expr expr, EvalEnvironment environment)
+    public static (EvalEnvironment, Value) Evaluate(Expr expr, EvalEnvironment environment)
     {
         return expr switch
         {
-            CompareExpr compareExpr => DoCompareExpr(compareExpr),
-            ConstantExpr {Value:var v} => (environment, v),
-            LogicOpExpr logicOpExpr => DoLogicOpExpr(logicOpExpr),
-            FromPath fromPath => DoFromPath(fromPath),
-            MathBinOpExpr mathBinOpExpr => DoMath(mathBinOpExpr),
+            CallExpr callExpr => EvalCallExpr(callExpr),
+            GetData getData => DoGetData(getData),
+            Value v => (environment, v),
             _ => throw new ArgumentOutOfRangeException(expr.ToString())
         };
-
         
-        (EvalEnvironment, object) DoMath(MathBinOpExpr me)
-        {
-            var (env2, v1) = Evaluate(me.E1, environment);
-            var (env3, v2) = Evaluate(me.E2, env2);
-            return (env3, DoMathOp(me.MathBinOp, v1, v2));
-        }
-
-        (EvalEnvironment, object) DoFromPath(FromPath fromPath)
+        (EvalEnvironment, Value) DoGetData(GetData fromPath)
         {
             var (newEnv, segments) = EvalPath(environment, fromPath.Path, JsonPathSegments.Empty);
             var outNode = segments.Traverse(newEnv.Data);
             return (newEnv, outNode switch
             {
-                JsonValue v => v.GetValue<object>()
+                JsonValue v => v.GetValue<object>() switch
+                {
+                    int i => new LongValue(i),
+                    long l => new LongValue(l),
+                    double d => new DoubleValue(d),
+                    string s => new StringValue(s)
+                }
             });
         }
 
@@ -47,80 +43,101 @@ public static class Interpreter
             var (nextEnv, seg) = Evaluate(pathExpr.Segment, env);
             return seg switch
             {
-                string s => (nextEnv, parentSegments.Field(s)),
-                int i => (nextEnv, parentSegments.Index(i))
+                StringValue s => (nextEnv, parentSegments.Field(s.Value)),
+                LongValue l => (nextEnv, parentSegments.Index((int)l.Value))
             };
         }
-        
-        (EvalEnvironment, bool) DoCompareExpr(CompareExpr ce)
+
+        (EvalEnvironment, Value) EvalCallExpr(CallExpr callExpr)
         {
-            var (env2, v1) = Evaluate(ce.E1, environment);
-            var (env3, v2) = Evaluate(ce.E2, env2);
-            return (env3, DoCompare(ce.CompareType, v1, v2));
-        }
-        
-        (EvalEnvironment, bool) DoLogicOpExpr(LogicOpExpr le)
-        {
-            var v1 = Evaluate(le.E1, environment);
-            if (le.LogicType == LogicType.Not)
-                return (v1.Item1, !(bool)v1.Item2);
-            var v2 = Evaluate(le.E2!, v1.Item1);
-            var res = (le.LogicType, v1.Item2, v2.Item2) switch
+            var (nextEnv, evalArgs) = callExpr.Args.Aggregate((environment, Enumerable.Empty<Value>()),
+                (e, v) =>
+                {
+                    var (newEnv, result) = Evaluate(v, e.environment);
+                    return (newEnv, e.Item2.Append(result));
+                });
+            var argsList = evalArgs.ToList();
+            if (argsList.Count == 2)
             {
-                (LogicType.Or, bool b1, bool b2) => b1 || b2, 
-                (LogicType.And, bool b1, bool b2) => b1 && b2
-            };
-            return (v2.Item1, res);
+                var v1 = argsList[0];
+                var v2 = argsList[1];
+                var result = callExpr.Function switch
+                {
+                    InbuiltFunction.Eq => new BoolValue(v1 == v2),
+                    InbuiltFunction.Ne => new BoolValue(v1 != v2),
+                    InbuiltFunction.And => (BoolValue)v1 && (BoolValue)v2,
+                    InbuiltFunction.Or => (BoolValue)v1 || (BoolValue)v2,
+                    InbuiltFunction.Add or InbuiltFunction.Divide or InbuiltFunction.Minus or InbuiltFunction.Multiply 
+                        => DoMathOp(callExpr.Function, v1, v2),
+                    var f => new BoolValue(DoCompare(f, v1, v2))
+                };
+                return (nextEnv, result);
+            }
+
+            if (argsList.Count == 1)
+            {
+                var v1 = argsList[0];
+                var result = callExpr.Function switch
+                {
+                    InbuiltFunction.Not => new BoolValue(!((BoolValue)v1).Value)
+                };
+                return (nextEnv, result);
+            }
+
+            throw new ArgumentException("Wrong number of arguments");
         }
 
     }
 
-    public static bool DoCompare(CompareType compareType, object o1, object o2)
+    public static bool DoCompare(InbuiltFunction compareType, Value o1, Value o2)
     {
         var diff = (o1, o2) switch
         {
-            (int v, IConvertible v2) => v.CompareTo(v2.ToInt32(null)), 
-            (double v, IConvertible v2) => v.CompareTo(v2.ToDouble(null)),
+            (LongValue v, DoubleValue v2) => ((double)v.Value).CompareTo(v2.Value), 
+            (LongValue v, LongValue v2) => v.Value.CompareTo(v2.Value),
+            (DoubleValue v, DoubleValue v2) => v.Value.CompareTo(v2.Value), 
+            (DoubleValue v, LongValue v2) => v.Value.CompareTo(v2.Value),
             _ => throw new ArgumentException($"Compare {o1.GetType()}-{o2.GetType()}")
         };
         return compareType switch
         {
-            CompareType.Eq => diff == 0,
-            CompareType.Ne => diff != 0,
-            CompareType.Gt => diff > 0,
-            CompareType.GtEq => diff >= 0,
-            CompareType.Lt => diff < 0,
-            CompareType.LtEq => diff <= 0,
+            InbuiltFunction.Eq => diff == 0,
+            InbuiltFunction.Ne => diff != 0,
+            InbuiltFunction.Gt => diff > 0,
+            InbuiltFunction.GtEq => diff >= 0,
+            InbuiltFunction.Lt => diff < 0,
+            InbuiltFunction.LtEq => diff <= 0,
         };
     }
     
-    public static object DoMathOp(MathBinOp op, object o1, object o2)
+    public static Value DoMathOp(InbuiltFunction op, Value o1, Value o2)
     {
         (double, double)? d = (o1, o2) switch
         {
-            (double v1, IConvertible v2) => (v1, v2.ToDouble(null)), 
-            (IConvertible v1, double v2) => (v1.ToDouble(null), v2),
+            (DoubleValue v1, LongValue v2) => (v1.Value, v2.Value), 
+            (DoubleValue v1, DoubleValue v2) => (v1.Value, v2.Value), 
+            (LongValue v1, DoubleValue v2) => (v1.Value, v2.Value), 
             _ => null
         };
         if (d is var (d1, d2))
         {
-            return op switch
+            return new DoubleValue(op switch
             {
-                MathBinOp.Add => d1 + d2,
-                MathBinOp.Minus => d1 - d2,
-                MathBinOp.Multiply => d1 * d2,
-                MathBinOp.Divide => d1 / d2,
-            };
+                InbuiltFunction.Add => d1 + d2,
+                InbuiltFunction.Minus => d1 - d2,
+                InbuiltFunction.Multiply => d1 * d2,
+                InbuiltFunction.Divide => d1 / d2,
+            });
         }
-        if ((o1, o2) is (int i1, int i2))
+        if ((o1, o2) is (LongValue {Value: var i1}, LongValue {Value: var i2}))
         {
-            return op switch
+            return new LongValue(op switch
             {
-                MathBinOp.Add => i1 + i2,
-                MathBinOp.Minus => i1 - i2,
-                MathBinOp.Multiply => i1 * i2,
-                MathBinOp.Divide => i1 / i2,
-            };
+                InbuiltFunction.Add => i1 + i2,
+                InbuiltFunction.Minus => i1 - i2,
+                InbuiltFunction.Multiply => i1 * i2,
+                InbuiltFunction.Divide => i1 / i2,
+            });
         }
         throw new ArgumentException($"MathOp {op} {o1.GetType()}-{o2.GetType()}");
     }

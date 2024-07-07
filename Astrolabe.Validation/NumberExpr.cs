@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace Astrolabe.Validation;
 
 public class NumberExpr<T>(Expr expr) where T : struct
@@ -9,62 +11,67 @@ public class NumberExpr<T>(Expr expr) where T : struct
         return $"Number({Expr})";
     }
 
-    public static implicit operator NumberExpr<T>(T from)
+    public static implicit operator NumberExpr<T>(int from)
     {
         return new NumberExpr<T>(from.ToExpr());
     }
 
+    public static NumberExpr<T> BinOp(InbuiltFunction func, NumberExpr<T> e1, NumberExpr<T> e2)
+    {
+        return new NumberExpr<T>(new CallExpr(func, [e1.Expr, e1.Expr]));
+    }
+
+    public static BoolExpr BinBoolOp(InbuiltFunction func, NumberExpr<T> e1, NumberExpr<T> e2)
+    {
+        return new BoolExpr(new CallExpr(func, [e1.Expr, e1.Expr]));
+    }
+
     public static NumberExpr<T> operator +(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new MathBinOpExpr(MathBinOp.Add, e1.Expr, e2.Expr);
+        return BinOp(InbuiltFunction.Add, e1, e2);
     }
     
     public static NumberExpr<T> operator -(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new MathBinOpExpr(MathBinOp.Minus, e1.Expr, e2.Expr);
+        return BinOp(InbuiltFunction.Minus, e1, e2);
     }
 
     public static NumberExpr<T> operator *(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new MathBinOpExpr(MathBinOp.Multiply, e1.Expr, e2.Expr);
+        return BinOp(InbuiltFunction.Multiply, e1, e2);
     }
     public static NumberExpr<T> operator /(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new MathBinOpExpr(MathBinOp.Divide, e1.Expr, e2.Expr);
-    }
-    
-    public static implicit operator NumberExpr<T>(MathBinOpExpr e)
-    {
-        return new NumberExpr<T>(e);
+        return BinOp(InbuiltFunction.Divide, e1, e2);
     }
 
     public static BoolExpr operator >(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new CompareExpr(CompareType.Gt, e1.Expr, e2.Expr);
+        return BinBoolOp(InbuiltFunction.Gt, e1, e2);
     }
     
     public static BoolExpr operator <(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new CompareExpr(CompareType.Lt, e1.Expr, e2.Expr);
+        return BinBoolOp(InbuiltFunction.Lt, e1, e2);
     }
     
     public static BoolExpr operator >=(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new CompareExpr(CompareType.GtEq, e1.Expr, e2.Expr);
+        return BinBoolOp(InbuiltFunction.GtEq, e1, e2);
     }
     
     public static BoolExpr operator <=(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new CompareExpr(CompareType.LtEq, e1.Expr, e2.Expr);
+        return BinBoolOp(InbuiltFunction.LtEq, e1, e2);
     }
     
     public static BoolExpr operator ==(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new CompareExpr(CompareType.Eq, e1.Expr, e2.Expr);
+        return BinBoolOp(InbuiltFunction.Eq, e1, e2);
     }
 
     public static BoolExpr operator !=(NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new CompareExpr(CompareType.Ne, e1.Expr, e2.Expr);
+        return BinBoolOp(InbuiltFunction.Ne, e1, e2);
     }
 }
