@@ -21,7 +21,7 @@ var (env, allRules) = rules.Aggregate(
         return (res.Item1, acc.Item2.Concat(res.Item2));
     });
 
-var failed = allRules.Where(x => Interpreter.Evaluate(x.Must, env).Item2 is BoolValue { Value: false });
+var failed = allRules.Select(x => (x.Path, Interpreter.Evaluate(x.Must, env).Item2));
 
 Console.WriteLine(string.Join("\n", failed));
 
@@ -30,30 +30,15 @@ public class TestDsl : AbstractValidator<VehicleDefinitionEdit>
     public TestDsl()
     {
         AddRules([
-            RuleFor(x => x.Width).Must(x => x + 10 < 110),
-            RuleFor(x => x.Startability).Constrained(),
+            RuleFor(x => x.Width).Must(x => x > 110),
             // RuleFor(x => x.NotNullable).Must(x => x > 4),
             RuleFor(x => x.SteerAxleCompliant).Must(x => !x),
             RulesFor(x => x.Components, (p) =>
             [
-                p.RuleFor(x => x.Tare).Must(x => x > 3)
-            ])
-        ]);
-    }
-}
-
-public class TestConstraints : AbstractValidator<VehicleDefinitionEdit>
-{
-    public TestConstraints()
-    {
-        AddRules([
-            RuleFor(x => x.Width).Constraint(0, 10),
-            RuleFor(x => x.Startability).Constrained(),
-            // RuleFor(x => x.NotNullable).Must(x => x > 4),
-            RuleFor(x => x.SteerAxleCompliant).Must(x => !x),
-            RulesFor(x => x.Components, (p) =>
-            [
-                p.RuleFor(x => x.Tare).Must(x => x > 3)
+                p.RulesFor(x => x.AxleGroups, (g) => [
+                    g.RuleFor(x => x.OperatingMass).Must(x => x < 10)
+                ]),
+                p.RuleFor(x => x.Tare).Must(x => x > 3),
             ])
         ]);
     }

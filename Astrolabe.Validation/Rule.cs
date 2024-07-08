@@ -1,38 +1,51 @@
+using System.Numerics;
+using System.Runtime.InteropServices;
 using Astrolabe.JSON;
 
 namespace Astrolabe.Validation;
 
-public record RuleBuilder<T, TProp>(PathExpr Path);
+public interface RuleBuilder<T, TProp>;
 
+public record SimpleRuleBuilder<T, TProp>(PathExpr Path) : RuleBuilder<T, TProp>;
 
-public interface Rule<T>;
-public record SingleRule<T>(PathExpr Path, Expr Must): Rule<T>;
-public record RulesForEach<T>(PathExpr Path, Expr Index, IEnumerable<Rule<T>> Rules): Rule<T>;
+public interface Rule<T>
+{ 
+    PathExpr Path { get; }
+    IEnumerable<Expr> Musts { get; }
+}
+
+public interface RuleAndBuilder<T, TProp> : Rule<T>, RuleBuilder<T, TProp>;
+
+public record Rules<T, TProp>(PathExpr Path, IEnumerable<Expr> Musts): RuleAndBuilder<T, TProp>;
+
+public record RulesForEach<T>(PathExpr Path, Expr Index, IEnumerable<Rule<T>> Rules) : Rule<T>
+{
+    public IEnumerable<Expr> Musts => [];
+}
 
 public record ResolvedRule<T>(JsonPathSegments Path, Expr Must);
 
 public static class RuleExtensions
 {
-    public static SingleRule<T> Must<T, TN>(this RuleBuilder<T, NumberExpr<TN>> ruleFor, Func<NumberExpr<TN>, BoolExpr> must) 
-        where TN : struct
+    private static (PathExpr, IEnumerable<Expr>) GetBuilder<T, TProp>(this RuleBuilder<T, TProp> builder)
     {
-        return new SingleRule<T>(ruleFor.Path, must(new NumberExpr<TN>(new GetData(ruleFor.Path))).Expr);
+        return builder switch
+        {
+            RuleAndBuilder<T, TProp> ruleAndBuilder => (ruleAndBuilder.Path, ruleAndBuilder.Musts),
+            SimpleRuleBuilder<T, TProp> simpleRuleBuilder => (simpleRuleBuilder.Path, []),
+            _ => throw new ArgumentOutOfRangeException(nameof(builder))
+        };
+    }
+    public static Rules<T, TN> Must<T, TN>(this RuleBuilder<T, TN> ruleFor, Func<NumberExpr<TN>, BoolExpr> must) 
+        where TN : struct, ISignedNumber<TN>
+    {
+        var (path, musts) = GetBuilder(ruleFor);
+        return new Rules<T, TN>(path, musts.Append(must(new NumberExpr<TN>(new GetData(path))).Expr));
     }
     
-    public static SingleRule<T> Must<T>(this RuleBuilder<T, BoolExpr> ruleFor, Func<BoolExpr, BoolExpr> must)
+    public static Rules<T, bool> Must<T>(this RuleBuilder<T, bool> ruleFor, Func<BoolExpr, BoolExpr> must)
     {
-        return new SingleRule<T>(ruleFor.Path, must(new BoolExpr(new GetData(ruleFor.Path))).Expr);
-    }
-
-    public static SingleRule<T> Constrained<T, TProp>(this RuleBuilder<T, TProp> ruleFor)
-    {
-        return new SingleRule<T>(ruleFor.Path, new ConstraintExpr(ruleFor.Path));
-    }
-    
-    public static SingleRule<T> Constraint<T, TN>(this RuleBuilder<T, NumberExpr<TN>> ruleFor, double lower, double upper) 
-        where TN : struct
-    {
-        return new SingleRule<T>(ruleFor.Path, new DefineConstraintExpr(ruleFor.Path, new BoolValue(true), lower.ToExpr(), upper.ToExpr(), 
-            new BoolValue(false), new BoolValue(true)));
+        var (path, musts) = GetBuilder(ruleFor);
+        return new Rules<T, bool>(path, musts.Append(must(new BoolExpr(new GetData(path))).Expr));
     }
 }

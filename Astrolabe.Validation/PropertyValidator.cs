@@ -11,7 +11,7 @@ public class PropertyValidator<T, T2>(PathExpr? parentPath)
 
     private RuleBuilder<T, TProp> RuleFor<TProp>(string propertyName)
     {
-        return new RuleBuilder<T, TProp>(MakePathExpr(propertyName));
+        return new SimpleRuleBuilder<T, TProp>(MakePathExpr(propertyName));
     }
 
     protected PathExpr MakePathExpr(string propertyName)
@@ -19,29 +19,17 @@ public class PropertyValidator<T, T2>(PathExpr? parentPath)
         return new PathExpr(JsonNamingPolicy.CamelCase.ConvertName(propertyName).ToExpr(), ParentPath);
     }
 
-    public RuleBuilder<T, NumberExpr<TN>> RuleFor<TN>(Expression<Func<T2, TN?>> expr) where TN : struct, ISignedNumber<TN> 
+    public RuleBuilder<T, TN> RuleFor<TN>(Expression<Func<T2, TN?>> expr) where TN : struct 
     {
         var propertyInfo = expr.GetPropertyInfo();
-        return RuleFor<NumberExpr<TN>>(propertyInfo.Name);
+        return RuleFor<TN>(propertyInfo.Name);
     }
 
     
-    public RuleBuilder<T, NumberExpr<TN>> RuleFor<TN>(Expression<Func<T2, TN>> expr) where TN : struct, ISignedNumber<TN> 
+    public RuleBuilder<T, TN> RuleFor<TN>(Expression<Func<T2, TN>> expr) where TN : struct 
     {
         var propertyInfo = expr.GetPropertyInfo();
-        return RuleFor<NumberExpr<TN>>(propertyInfo.Name);
-    }
-    
-    public RuleBuilder<T, BoolExpr> RuleFor(Expression<Func<T2, bool>> expr) 
-    {
-        var propertyInfo = expr.GetPropertyInfo();
-        return RuleFor<BoolExpr>(propertyInfo.Name);
-    }
-
-    public RuleBuilder<T, BoolExpr> RuleFor(Expression<Func<T2, bool?>> expr) 
-    {
-        var propertyInfo = expr.GetPropertyInfo();
-        return RuleFor<BoolExpr>(propertyInfo.Name);
+        return RuleFor<TN>(propertyInfo.Name);
     }
     
     public RulesForEach<T> RulesFor<TC>(Expression<Func<T2, IEnumerable<TC>>> expr, Func<PropertyValidator<T, TC>, IEnumerable<Rule<T>>> rules)

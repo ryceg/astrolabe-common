@@ -1,4 +1,6 @@
-﻿namespace Astrolabe.Validation;
+﻿using System.Text.Json.Nodes;
+
+namespace Astrolabe.Validation;
 
 public enum InbuiltFunction
 {
@@ -20,64 +22,27 @@ public enum InbuiltFunction
 
 public interface Expr;
 
-public interface Value : Expr;
-
-public record NullValue : Value
+public interface ExprValue : Expr
 {
-    public static readonly NullValue Instance = new NullValue();
+    public static readonly NullValue Null = new();
 }
 
-public record BoolValue(bool Value) : Value
+public record NullValue : ExprValue;
+
+public record BoolValue(bool Value) : ExprValue;
+
+public record NumberValue(long? LongValue, double? DoubleValue) : ExprValue
 {
-    public static bool operator true(BoolValue bv)
+    public double AsDouble()
     {
-        return bv.Value;
-    }
-
-    public static bool operator false(BoolValue bv)
-    {
-        return !bv.Value;
-    }
-    
-    public static BoolValue operator &(BoolValue bv1, BoolValue bv2)
-    {
-        return new BoolValue(bv1.Value && bv2.Value);
-    }
-
-    public static BoolValue operator |(BoolValue bv1, BoolValue bv2)
-    {
-        return new BoolValue(bv1.Value || bv2.Value);
-    }
-
-    public override string ToString()
-    {
-        return Value ? "true" : "false";
+        return DoubleValue ?? LongValue!.Value;
     }
 }
 
-public record LongValue(long Value) : Value
-{
-    public override string ToString()
-    {
-        return Value.ToString();
-    }
-}
+public record StringValue(string Value) : ExprValue;
 
-public record DoubleValue(double Value) : Value
-{
-    public override string ToString()
-    {
-        return Value.ToString();
-    }
-}
+public record JsonValueValue(JsonValue Value) : ExprValue;
 
-public record StringValue(string Value) : Value
-{
-    public override string ToString()
-    {
-        return Value;
-    }
-}
 
 public record CallExpr(InbuiltFunction Function, ICollection<Expr> Args) : Expr
 {
@@ -89,46 +54,38 @@ public record CallExpr(InbuiltFunction Function, ICollection<Expr> Args) : Expr
 
 public record GetData(PathExpr Path) : Expr;
 
-public record ConstraintExpr(PathExpr Path) : Expr;
-
-public record DefineConstraintExpr(PathExpr Path, Expr Applies, Expr Lower, Expr Upper, Expr LowerExclusive, Expr UpperExclusive) : Expr;
-
-public record IndexExpr : Expr;
-
-public record ValidationRange(
-    double? Min,
-    double? Max,
-    bool MinExclusive = false,
-    bool MaxExclusive = false,
-    string? MinErrorMessage = null,
-    string? MaxErrorMessage = null
-) : Value;
+public class IndexExpr : Expr;
 
 public static class ValueExtensions
 {
-    public static BoolValue ToExpr(this bool b)
+    public static ExprValue ToExpr(this bool b)
     {
         return new BoolValue(b);
     }
     
-    public static LongValue ToExpr(this long b)
+    public static ExprValue ToExpr(this long l)
     {
-        return new LongValue(b);
+        return new NumberValue(null, l);
     }
     
-    public static LongValue ToExpr(this int b)
+    public static ExprValue ToExpr(this int i)
     {
-        return new LongValue(b);
+        return new NumberValue(i, null);
     }
     
-    public static DoubleValue ToExpr(this double b)
+    public static ExprValue ToExpr(this double d)
     {
-        return new DoubleValue(b);
+        return new NumberValue(null, d);
     }
 
-    public static StringValue ToExpr(this string b)
+    public static ExprValue ToExpr(this string s)
     {
-        return new StringValue(b);
+        return new StringValue(s);
+    }
+
+    public static bool AsBool(this ExprValue v)
+    {
+        return ((BoolValue)v).Value;
     }
 }
 public record PathExpr(Expr Segment, PathExpr? Parent)
