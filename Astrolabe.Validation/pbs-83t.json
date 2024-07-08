@@ -1,0 +1,167 @@
+{
+	"components": [
+		{
+			"bonnetType": "Long",
+			"type": "PrimeMover",
+			"tare": 6,
+			"axleStyle": null,
+			"axleGroups": [
+				{
+					"loadSharing": false,
+					"roadFriendlySuspension": false,
+					"operatingMass": 6,
+					"axles": [
+						{
+							"operatingMass": 6,
+							"spacing": 0,
+							"tyres": 2,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": true
+						}
+					]
+				},
+				{
+					"loadSharing": false,
+					"roadFriendlySuspension": true,
+					"operatingMass": 16,
+					"axles": [
+						{
+							"operatingMass": 8,
+							"spacing": 3,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						},
+						{
+							"operatingMass": 8,
+							"spacing": 1.2,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "SemiTrailer",
+			"tare": 6,
+			"axleStyle": null,
+			"axleGroups": [
+				{
+					"loadSharing": false,
+					"roadFriendlySuspension": true,
+					"operatingMass": 22.5,
+					"axles": [
+						{
+							"operatingMass": 8,
+							"spacing": 4,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						},
+						{
+							"operatingMass": 8,
+							"spacing": 1.2,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						},
+						{
+							"operatingMass": 6,
+							"spacing": 1.2,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "ConverterDolly",
+			"tare": 2,
+			"axleStyle": null,
+			"axleGroups": [
+				{
+					"loadSharing": false,
+					"roadFriendlySuspension": true,
+					"operatingMass": 17,
+					"axles": [
+						{
+							"operatingMass": 8,
+							"spacing": 4.5,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						},
+						{
+							"operatingMass": 8,
+							"spacing": 1.2,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "SemiTrailer",
+			"tare": 6,
+			"axleStyle": null,
+			"axleGroups": [
+				{
+					"loadSharing": false,
+					"roadFriendlySuspension": true,
+					"operatingMass": 22.5,
+					"axles": [
+						{
+							"operatingMass": 8,
+							"spacing": 4,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						},
+						{
+							"operatingMass": 8,
+							"spacing": 1.2,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						},
+						{
+							"operatingMass": 6,
+							"spacing": 1.2,
+							"tyres": 4,
+							"tyreSize": 225,
+							"contactWidth": 2.4,
+							"steerable": false
+						}
+					]
+				}
+			]
+		}
+	],
+	"steerAxleCompliant": true,
+	"length": 26.001,
+	"width": 2.42,
+	"height": 3,
+	"load": ["GeneralFreight"],
+	"startability": 20,
+	"gradeabilityA": 20,
+	"trackingAbilityOnStraightPath": 3,
+	"lowSpeedSweptPath": 5.5,
+	"highSpeedTransientOfftracking": 0.3,
+	"performanceLevel": 1
+}

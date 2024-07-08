@@ -11,10 +11,9 @@ public class BoolExpr(Expr expr)
     
     public static BoolExpr BinOp(InbuiltFunction func, BoolExpr e1, BoolExpr e2)
     {
-        return new BoolExpr(new CallExpr(func, [e1.Expr, e1.Expr]));
+        return new BoolExpr(new CallExpr(func, [e1.Expr, e2.Expr]));
     }
-
-
+    
     public static BoolExpr operator &(BoolExpr e1, BoolExpr e2)
     {
         return BinOp(InbuiltFunction.And, e1, e2);

@@ -18,12 +18,12 @@ public class NumberExpr<T>(Expr expr) where T : struct
 
     public static NumberExpr<T> BinOp(InbuiltFunction func, NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new NumberExpr<T>(new CallExpr(func, [e1.Expr, e1.Expr]));
+        return new NumberExpr<T>(new CallExpr(func, [e1.Expr, e2.Expr]));
     }
 
     public static BoolExpr BinBoolOp(InbuiltFunction func, NumberExpr<T> e1, NumberExpr<T> e2)
     {
-        return new BoolExpr(new CallExpr(func, [e1.Expr, e1.Expr]));
+        return new BoolExpr(new CallExpr(func, [e1.Expr, e2.Expr]));
     }
 
     public static NumberExpr<T> operator +(NumberExpr<T> e1, NumberExpr<T> e2)

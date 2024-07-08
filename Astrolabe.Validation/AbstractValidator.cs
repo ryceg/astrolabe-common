@@ -1,39 +1,18 @@
 using System.Linq.Expressions;
 using System.Numerics;
+using System.Text.Json;
 using Astrolabe.Common;
 
 namespace Astrolabe.Validation;
 
-public class AbstractValidator<T>
+public class AbstractValidator<T>() : PropertyValidator<T, T>(null)
 {
-    public readonly List<Rule> Rules = [];
+    public readonly List<Rule<T>> Rules = [];
     
-    public void AddRules(ICollection<Rule> rules)
+    public void AddRules(ICollection<Rule<T>> rules)
     {
         Rules.AddRange(rules);
     }
-    public RuleFor<NumberExpr<TN>> RuleFor<TN>(Expression<Func<T, TN?>> expr) where TN : struct, ISignedNumber<TN> 
-    {
-        var propertyInfo = expr.GetPropertyInfo();
-        return new RuleFor<NumberExpr<TN>>((PathExpr)propertyInfo.Name);
-    }
     
-    public RuleFor<NumberExpr<TN>> RuleFor<TN>(Expression<Func<T, TN>> expr) where TN : struct, ISignedNumber<TN> 
-    {
-        var propertyInfo = expr.GetPropertyInfo();
-        return new RuleFor<NumberExpr<TN>>((PathExpr) propertyInfo.Name);
-    }
-    
-    public RuleFor<BoolExpr> RuleFor(Expression<Func<T, bool>> expr) 
-    {
-        var propertyInfo = expr.GetPropertyInfo();
-        return new RuleFor<BoolExpr>((PathExpr) propertyInfo.Name);
-    }
-
-    public RuleFor<BoolExpr> RuleFor(Expression<Func<T, bool?>> expr) 
-    {
-        var propertyInfo = expr.GetPropertyInfo();
-        return new RuleFor<BoolExpr>((PathExpr) propertyInfo.Name);
-    }
-
+    public PathExpr? ParentPath => null;
 }

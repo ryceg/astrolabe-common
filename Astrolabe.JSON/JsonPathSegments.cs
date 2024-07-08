@@ -11,7 +11,7 @@ public record JsonPathSegments(ImmutableStack<object> Segments)
 
     public JsonNode? Traverse(JsonNode? node)
     {
-        var allSegments = Segments.ToArray();
+        var allSegments = Segments.ToArray().Reverse();
         foreach (var segment in allSegments)
         {
             if (node == null)
@@ -24,6 +24,11 @@ public record JsonPathSegments(ImmutableStack<object> Segments)
             };
         }
         return node;
+    }
+
+    public override string ToString()
+    {
+        return this.ToPathString();
     }
 }
 
