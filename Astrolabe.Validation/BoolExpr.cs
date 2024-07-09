@@ -1,6 +1,26 @@
+using System.Linq.Expressions;
+using System.Numerics;
+using System.Text.Json;
+using Astrolabe.Common;
+
 namespace Astrolabe.Validation;
 
-public class BoolExpr(Expr expr)
+public class TypedPath<T>(PathExpr path)
+{
+    protected PathExpr MakePathExpr(string propertyName)
+    {
+        return new PathExpr(JsonNamingPolicy.CamelCase.ConvertName(propertyName).ToExpr(), path);
+    }
+    
+    public NumberExpr Num<TN>(Expression<Func<T, TN?>> func) where TN : struct, ISignedNumber<TN>
+    {
+        var childPath = MakePathExpr(func.GetPropertyInfo().Name);
+        return new NumberExpr(new GetData(childPath));
+    }
+
+}
+
+public class BoolExpr(Expr expr) 
 {
     public Expr Expr { get; } = expr;
 
