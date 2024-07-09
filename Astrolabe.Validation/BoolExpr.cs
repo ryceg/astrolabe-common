@@ -20,7 +20,7 @@ public class TypedPath<T>(PathExpr path)
 
 }
 
-public class BoolExpr(Expr expr) 
+public class BoolExpr(Expr expr) : WrappedExpr
 {
     public Expr Expr { get; } = expr;
 
@@ -57,5 +57,10 @@ public class BoolExpr(Expr expr)
     public static BoolExpr operator !=(BoolExpr e1, BoolExpr e2)
     {
         return BinOp(InbuiltFunction.Ne, e1, e2);
+    }
+
+    public static implicit operator BoolExpr(bool b)
+    {
+        return new BoolExpr(b.ToExpr());
     }
 }

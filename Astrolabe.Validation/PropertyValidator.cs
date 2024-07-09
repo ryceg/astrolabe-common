@@ -36,7 +36,7 @@ public class PropertyValidator<T, T2>(PathExpr? parentPath)
         return RuleFor<TN>(propertyInfo.Name);
     }
     
-    public RulesForEach<T> RulesFor<TC>(Expression<Func<T2, IEnumerable<TC>>> expr, Func<PropertyValidator<T, TC>, IEnumerable<Rule<T>>> rules)
+    public RulesForEach<T> RuleForEach<TC>(Expression<Func<T2, IEnumerable<TC>>> expr, Func<PropertyValidator<T, TC>, Rule<T>> rules)
     {
         var arrayPath = MakePathExpr(expr.GetPropertyInfo().Name);
         var indexExpr = new IndexExpr();

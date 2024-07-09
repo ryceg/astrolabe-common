@@ -20,6 +20,7 @@ public static class Interpreter
         return expr switch
         {
             ExprValue v => v,
+            WrappedExpr we => we.Expr,
             GetData getData => new GetData(Path: ResolvePath(getData.Path, environment)),
             MapExpr mapExpr => ResolveMap(mapExpr),
             CallExpr callExpr => callExpr with
@@ -76,8 +77,8 @@ public static class Interpreter
 
                 return callExpr.Function switch
                 {
-                    InbuiltFunction.Eq when v1 is BoolValue or StringValue => ApplyDefaultMessage(v1 == v2, v1, v2),
-                    InbuiltFunction.Ne when v1 is BoolValue or StringValue => ApplyDefaultMessage(v1 != v2, v1, v2),
+                    InbuiltFunction.Eq when v1 is BoolValue or StringValue => ApplyEquality(false),
+                    InbuiltFunction.Ne when v1 is BoolValue or StringValue => ApplyEquality(true),
                     InbuiltFunction.And => DoAnd(),
                     InbuiltFunction.Or => DoOr(),
                     InbuiltFunction.Add or InbuiltFunction.Divide or InbuiltFunction.Minus or InbuiltFunction.Multiply
@@ -111,13 +112,20 @@ public static class Interpreter
                         : new EvaluatedExpr(env2 with { Failure = env2.Failure! with { Message = v2 } }, v1);
                 }
 
+                EvaluatedExpr ApplyEquality(bool not)
+                {
+                    return ApplyDefaultMessage(v1.Equals(v2) ^ not, v1, v2);
+                }
+
                 EvaluatedExpr ApplyDefaultMessage(bool boolResult, ExprValue actual, ExprValue failValue)
                 {
-                    return boolResult
-                        ? new EvaluatedExpr(env2, boolResult.ToExpr())
-                        : new EvaluatedExpr(
-                            env2 with { Failure = new Failure(ExprValue.Null, callExpr.Function, actual, failValue) },
-                            false.ToExpr());
+                    return new EvaluatedExpr(env2 with
+                        {
+                            Failure = boolResult
+                                ? env2.Failure
+                                : new Failure(ExprValue.Null, callExpr.Function, actual, failValue)
+                        }
+                        , boolResult.ToExpr());
                 }
             }
 
@@ -205,6 +213,11 @@ public static class Interpreter
         return new EvaluatedResult<T>(env, result);
     }
 
+    public static EvaluatedResult<IEnumerable<T>> WithEmpty<T>(this EvalEnvironment env)
+    {
+        return new EvaluatedResult<IEnumerable<T>>(env, []);
+    }
+
     public static EvaluatedExpr WithValue(this EvalEnvironment env, ExprValue value)
     {
         return new EvaluatedExpr(env, value);
@@ -234,6 +247,7 @@ public static class Interpreter
         {
             RulesForEach<T> rulesForEach => DoRulesForEach(rulesForEach),
             PathRule<T> pathRule => DoPathRule(pathRule),
+            MultiRule<T> multi => multi.Rules.Aggregate(environment.WithEmpty<ResolvedRule<T>>(), (a, r) => a.Env.EvaluateRule(r).AppendTo(a))
         };
 
         EvaluatedResult<IEnumerable<ResolvedRule<T>>> DoPathRule(PathRule<T> pathRule)
@@ -246,11 +260,11 @@ public static class Interpreter
 
         EvaluatedResult<IEnumerable<ResolvedRule<T>>> DoRulesForEach(RulesForEach<T> rules)
         {
-            var (_nextEnv, collectionSeg) = EvalPath(environment, rules.Path, JsonPathSegments.Empty);
+            var (pathEnv, collectionSeg) = EvalPath(environment, rules.Path, JsonPathSegments.Empty);
             var runningIndexExpr = new RunningIndex(rules.Index);
             var runningIndexOffset = environment.Evaluated.TryGetValue(runningIndexExpr, out var current)
                 ? ((NumberValue) current).ToTruncated() : 0;
-            var nextEnv = _nextEnv.WithExprValue(runningIndexExpr, runningIndexOffset.ToExpr());
+            var nextEnv = pathEnv.WithExprValue(runningIndexExpr, runningIndexOffset.ToExpr());
 
             var dataCollection = collectionSeg.Traverse(environment.Data);
             if (dataCollection is JsonArray array)
@@ -260,9 +274,9 @@ public static class Interpreter
                     (acc, index) =>
                     {
                         var envWithIndex = acc.Env.WithExprValue(rules.Index, index.ToExpr());
-                        return rules.Rules.Aggregate(acc with { Env = envWithIndex },
-                            (acc2, r) => 
-                                acc2.Env.EvaluateRule(r).WithExprValue(runningIndexExpr, (NumberValue) (runningIndexOffset + index + 1)).AppendTo(acc2));
+                        return envWithIndex.EvaluateRule(rules.Rule)
+                            .WithExprValue(runningIndexExpr, (NumberValue) (runningIndexOffset + index + 1))
+                            .AppendTo(acc);
                     });
             }
 

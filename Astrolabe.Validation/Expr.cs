@@ -27,17 +27,39 @@ public enum InbuiltFunction
 
 public interface Expr;
 
+public interface WrappedExpr : Expr
+{
+    Expr Expr { get; }
+}
+
 public interface ExprValue : Expr
 {
     public static readonly NullValue Null = new();
 }
 
-public record NullValue : ExprValue;
+public record NullValue : ExprValue
+{
+    public override string ToString()
+    {
+        return "null";
+    }
+}
 
-public record BoolValue(bool Value) : ExprValue;
+public record BoolValue(bool Value) : ExprValue
+{
+    public override string ToString()
+    {
+        return Value.ToString();
+    }
+}
 
 public record NumberValue(long? LongValue, double? DoubleValue) : ExprValue
 {
+    public override string ToString()
+    {
+        return (LongValue ?? DoubleValue).ToString()!;
+    }
+
     public long ToTruncated()
     {
         return LongValue ?? (long)DoubleValue!;
@@ -53,11 +75,29 @@ public record NumberValue(long? LongValue, double? DoubleValue) : ExprValue
     }
 }
 
-public record StringValue(string Value) : ExprValue;
+public record StringValue(string Value) : ExprValue
+{
+    public override string ToString()
+    {
+        return Value;
+    }
+}
 
-public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr;
+public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr
+{
+    public override string ToString()
+    {
+        return $"[{string.Join(", ", ValueExpr)}]";
+    }
+}
 
-public record ArrayValue(IEnumerable<ExprValue> Values) : ExprValue;
+public record ArrayValue(IEnumerable<ExprValue> Values) : ExprValue
+{
+    public override string ToString()
+    {
+        return $"[{string.Join(", ", Values)}]";
+    }
+}
 
 public record ObjectValue(JsonObject JsonObject) : ExprValue;
 
@@ -71,7 +111,13 @@ public record CallExpr(InbuiltFunction Function, ICollection<Expr> Args) : Expr
     }
 }
 
-public record GetData(PathExpr Path) : Expr;
+public record GetData(PathExpr Path) : Expr
+{
+    public override string ToString()
+    {
+        return "$."+Path;
+    }
+}
 
 public class IndexExpr : Expr;
 
@@ -95,6 +141,33 @@ public static class ValueExtensions
     public static bool AsBool(this ExprValue v)
     {
         return ((BoolValue)v).Value;
+    }
+
+    public static bool IsNull(this ExprValue v)
+    {
+        return v switch
+        {
+            NullValue => true,
+            _ => false
+        };
+    }
+
+    public static bool IsTrue(this ExprValue v)
+    {
+        return v switch
+        {
+            BoolValue bv => bv.Value,
+            _ => false
+        };
+    }
+
+    public static bool IsFalse(this ExprValue v)
+    {
+        return v switch
+        {
+            BoolValue bv => !bv.Value,
+            _ => false
+        };
     }
 
     public static string AsString(this ExprValue v)

@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace Astrolabe.Validation;
 
-public class NumberExpr(Expr expr)
+public class NumberExpr(Expr expr) : WrappedExpr
 {
     public Expr Expr { get; } = expr;
 
