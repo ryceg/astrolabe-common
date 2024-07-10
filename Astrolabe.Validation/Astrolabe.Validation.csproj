@@ -8,12 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="CsvHelper" Version="33.0.1" />
+      <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
     </ItemGroup>
 
 </Project>

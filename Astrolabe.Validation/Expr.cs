@@ -24,7 +24,6 @@ public enum InbuiltFunction
     Count
 }
 
-
 public interface Expr;
 
 public interface WrappedExpr : Expr
@@ -64,6 +63,7 @@ public record NumberValue(long? LongValue, double? DoubleValue) : ExprValue
     {
         return LongValue ?? (long)DoubleValue!;
     }
+
     public double AsDouble()
     {
         return DoubleValue ?? LongValue!.Value;
@@ -115,11 +115,24 @@ public record GetData(PathExpr Path) : Expr
 {
     public override string ToString()
     {
-        return "$."+Path;
+        return "$." + Path;
     }
 }
 
-public class IndexExpr : Expr;
+public record IndexExpr(int IndexId) : Expr
+{
+    private static int _indexCount;
+
+    public override string ToString()
+    {
+        return $"[i{IndexId}]";
+    }
+
+    public static IndexExpr MakeNew()
+    {
+        return new IndexExpr(++_indexCount);
+    }
+}
 
 public record RunningIndex(Expr CountExpr) : Expr;
 
@@ -137,7 +150,7 @@ public static class ValueExtensions
             double d => new NumberValue(null, d),
         };
     }
-    
+
     public static bool AsBool(this ExprValue v)
     {
         return ((BoolValue)v).Value;
@@ -179,8 +192,8 @@ public static class ValueExtensions
     {
         return expr == null ? other : new CallExpr(InbuiltFunction.And, [expr, other]);
     }
-    
 }
+
 public record PathExpr(Expr Segment, PathExpr? Parent)
 {
     public override string ToString()
@@ -197,7 +210,7 @@ public record PathExpr(Expr Segment, PathExpr? Parent)
     {
         return new PathExpr(path.ToExpr(), null);
     }
-    
+
     public static PathExpr IndexPath(int index, PathExpr? parent)
     {
         return new PathExpr(index.ToExpr(), parent);
