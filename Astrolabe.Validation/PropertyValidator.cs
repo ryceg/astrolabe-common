@@ -57,9 +57,10 @@ public class PropertyValidator<T, T2>(PathExpr? parentPath)
         var arrayPath = MakePathExpr(expr.GetPropertyInfo().Name);
         return new NumberExpr(new CallExpr(InbuiltFunction.Count, [new GetData(arrayPath)]));
     }
-
-    public object RunningCount()
+    
+    public NumberExpr Get<TN>(Expression<Func<T2, TN?>> expr)
     {
-        throw new NotImplementedException();
+        var propertyInfo = expr.GetPropertyInfo();
+        return new NumberExpr(new GetData(MakePathExpr(propertyInfo.Name)));
     }
 }

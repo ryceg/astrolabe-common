@@ -1,6 +1,7 @@
-Field,Compare,IsDrive
-Length,>26,
-Length,<=36.5,
-TyreSize,>=225,
-TyreSize,<=315,TRUE
-TyreSize,<=485,FALSE
+Field,Compare,IsDrive,Tyres
+Length,>26,,
+Length,<=36.5,,
+TyreSize,>=225,,
+TyreSize,<=315,TRUE,
+TyreSize,<=485,FALSE,
+TyreSize,<=315,,4

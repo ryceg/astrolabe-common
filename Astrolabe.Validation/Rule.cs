@@ -9,6 +9,11 @@ public interface RuleBuilder<T, TProp>
     PathExpr Path { get; }
 
     Expr? Must { get; }
+
+    Expr GetExpr()
+    {
+        return new GetData(Path);
+    }
 }
 
 public record SimpleRuleBuilder<T, TProp>(PathExpr Path) : RuleBuilder<T, TProp>
@@ -58,10 +63,22 @@ public static class RuleExtensions
         return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(new CallExpr(func, [new GetData(path), arg2])));
     }
 
+    public static PathRules<T, TN> CallInbuilt<T, TN>(this RuleBuilder<T, TN> ruleFor, InbuiltFunction func, Expr arg1, Expr arg2)
+    {
+        var path = ruleFor.Path;
+        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(new CallExpr(func, [arg1, arg2])));
+    }
+
     public static PathRules<T, TN> Must<T, TN>(this RuleBuilder<T, TN> ruleFor, Func<Expr, BoolExpr> must)
     {
         var path = ruleFor.Path;
         return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must(new GetData(path)).Expr));
+    }
+
+    public static PathRules<T, TN> MustExpr<T, TN>(this RuleBuilder<T, TN> ruleFor, Expr must)
+    {
+        var path = ruleFor.Path;
+        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must));
     }
 
     public static PathRules<T, TN> Must<T, TN>(this RuleBuilder<T, TN> ruleFor, Func<NumberExpr, BoolExpr> must)
@@ -102,6 +119,12 @@ public static class RuleExtensions
     {
         return new PathRules<T, TN>(ruleFor.Path, 
             new CallExpr(InbuiltFunction.IfElse, [ifExpr.Expr, ruleFor.Must ?? true.ToExpr(), ExprValue.Null]));
+    }
+
+    public static PathRules<T, TN> WhenExpr<T, TN>(this RuleBuilder<T, TN> ruleFor, Expr ifExpr)
+    {
+        return new PathRules<T, TN>(ruleFor.Path, 
+            new CallExpr(InbuiltFunction.IfElse, [ifExpr, ruleFor.Must ?? true.ToExpr(), ExprValue.Null]));
     }
 
 

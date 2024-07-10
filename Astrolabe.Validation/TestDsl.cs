@@ -89,3 +89,21 @@ public record VehicleDefinitionEdit(
     double? HighSpeedTransientOfftracking,
     double NotNullable
 );
+
+public enum ConstraintType
+{
+    GCW,
+    TyreSize,
+    TareMass,
+    GroupOperatingMass,
+    AxleOperatingMass,
+    AxleSpacing,
+    Startability,
+    GradeabilityA,
+    TrackingAbilityOnStraightPath,
+    LowSpeedSweptPath,
+    HighSpeedTransientOfftracking,
+    Length,
+    Width,
+    Height
+}
