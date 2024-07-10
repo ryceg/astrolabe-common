@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 
@@ -36,6 +37,17 @@ public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
     {
         return Env.WithResult(select(Result, Env));
     }
+    
+    public EvaluatedResult<T2> Map<T2>(Func<T, T2> select)
+    {
+        return Env.WithResult(select(Result));
+    }
+
+    public EvaluatedResult<IEnumerable<T>> Single()
+    {
+        return Env.WithResult<IEnumerable<T>>([Result]);
+    }
+
 }
 
 public static class EvalEnvironmentExtensions

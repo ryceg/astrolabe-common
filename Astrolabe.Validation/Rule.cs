@@ -4,21 +4,17 @@ using Astrolabe.JSON;
 
 namespace Astrolabe.Validation;
 
-public interface RuleBuilder<T, TProp>
+public interface RuleBuilder<T, TProp> : TypedPathExpr<T, TProp>
 {
-    PathExpr Path { get; }
+    Expr Path { get; }
 
     Expr? Must { get; }
-
-    Expr GetExpr()
-    {
-        return new GetData(Path);
-    }
 }
 
-public record SimpleRuleBuilder<T, TProp>(PathExpr Path) : RuleBuilder<T, TProp>
+public record SimpleRuleBuilder<T, TProp>(Expr Path) : RuleBuilder<T, TProp>
 {
     public Expr? Must => null;
+    public Expr Expr => Path;
 }
 
 public interface Rule<T>;
@@ -38,7 +34,7 @@ public record MultiRule<T>(IEnumerable<Rule<T>> Rules) : Rule<T>
 
 public interface PathRule<T> : Rule<T>
 {
-    PathExpr Path { get; }
+    Expr Path { get; }
 
     Expr Must { get; }
 }
@@ -48,9 +44,12 @@ public interface RuleAndBuilder<T, TProp> : Rule<T>, RuleBuilder<T, TProp>
     Expr Must { get; }
 }
 
-public record PathRules<T, TProp>(PathExpr Path, Expr Must) : RuleAndBuilder<T, TProp>, PathRule<T>;
+public record PathRules<T, TProp>(Expr Path, Expr Must) : RuleAndBuilder<T, TProp>, PathRule<T>
+{
+    public Expr Expr => Path;
+}
 
-public record RulesForEach<T>(PathExpr Path, Expr Index, Rule<T> Rule) : Rule<T>;
+public record RulesForEach<T>(Expr Path, Expr Index, Rule<T> Rule) : Rule<T>;
 
 public record ResolvedRule<T>(JsonPathSegments Path, Expr Must);
 
@@ -63,10 +62,7 @@ public static class RuleExtensions
     )
     {
         var path = ruleFor.Path;
-        return new PathRules<T, TN>(
-            path,
-            ruleFor.Must.AndExpr(new CallExpr(func, [new GetData(path), arg2]))
-        );
+        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(new CallExpr(func, [ruleFor.Get(), arg2])));
     }
 
     public static PathRules<T, TN> CallInbuilt<T, TN>(
@@ -86,7 +82,7 @@ public static class RuleExtensions
     )
     {
         var path = ruleFor.Path;
-        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must(new GetData(path)).Expr));
+        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must(ruleFor.Get()).Expr));
     }
 
     public static PathRules<T, TN> MustExpr<T, TN>(this RuleBuilder<T, TN> ruleFor, Expr must)
@@ -102,10 +98,7 @@ public static class RuleExtensions
         where TN : struct, ISignedNumber<TN>
     {
         var path = ruleFor.Path;
-        return new PathRules<T, TN>(
-            path,
-            ruleFor.Must.AndExpr(must(new NumberExpr(new GetData(path))).Expr)
-        );
+        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must(new NumberExpr(ruleFor.Get())).Expr));
     }
 
     public static PathRules<T, bool> Must<T>(
@@ -116,7 +109,7 @@ public static class RuleExtensions
         var path = ruleFor.Path;
         return new PathRules<T, bool>(
             path,
-            ruleFor.Must.AndExpr(must(new BoolExpr(new GetData(path))).Expr)
+            ruleFor.Must.AndExpr(must(new BoolExpr(ruleFor.Get())).Expr)
         );
     }
 
@@ -142,7 +135,7 @@ public static class RuleExtensions
             ruleFor.Must.AndExpr(
                 new CallExpr(
                     exclusive ? InbuiltFunction.Gt : InbuiltFunction.GtEq,
-                    [new GetData(ruleFor.Path), value.ToExpr()]
+                    [ruleFor.Get(), value.ToExpr()]
                 )
             )
         );
@@ -199,7 +192,7 @@ public static class RuleExtensions
             ruleFor.Must.AndExpr(
                 new CallExpr(
                     exclusive ? InbuiltFunction.Lt : InbuiltFunction.LtEq,
-                    [new GetData(ruleFor.Path), value.ToExpr()]
+                    [ruleFor.Get(), value.ToExpr()]
                 )
             )
         );

@@ -1,4 +1,10 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Collections;
+using System.Linq.Expressions;
+using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Astrolabe.Common;
+using Astrolabe.JSON;
 
 namespace Astrolabe.Validation;
 
@@ -20,6 +26,9 @@ public enum InbuiltFunction
     WithMessage,
     WithProperty,
     IfElse,
+    Get,
+    Dot,
+    Map,
     Sum,
     Count
 }
@@ -30,6 +39,10 @@ public interface WrappedExpr : Expr
 {
     Expr Expr { get; }
 }
+
+public interface TypedExpr<T> : WrappedExpr;
+
+public record TypedWrappedExpr<T>(Expr Expr) : TypedExpr<T>;
 
 public interface ExprValue : Expr
 {
@@ -101,21 +114,13 @@ public record ArrayValue(IEnumerable<ExprValue> Values) : ExprValue
 
 public record ObjectValue(JsonObject JsonObject) : ExprValue;
 
-public record MapExpr(PathExpr Path, Expr Index, Expr Value) : Expr;
+public record PathValue(JsonPathSegments Path) : ExprValue;
 
 public record CallExpr(InbuiltFunction Function, ICollection<Expr> Args) : Expr
 {
     public override string ToString()
     {
         return $"{Function}({string.Join(", ", Args)})";
-    }
-}
-
-public record GetData(PathExpr Path) : Expr
-{
-    public override string ToString()
-    {
-        return "$." + Path;
     }
 }
 
@@ -131,6 +136,21 @@ public record IndexExpr(int IndexId) : Expr
     public static IndexExpr MakeNew()
     {
         return new IndexExpr(++_indexCount);
+    }
+}
+
+public record VarExpr(int IndexId) : Expr
+{
+    private static int _indexCount;
+
+    public override string ToString()
+    {
+        return $"[v{IndexId}]";
+    }
+
+    public static VarExpr MakeNew()
+    {
+        return new VarExpr(++_indexCount);
     }
 }
 
@@ -194,25 +214,91 @@ public static class ValueExtensions
     }
 }
 
-public record PathExpr(Expr Segment, PathExpr? Parent)
+public static class TypedExprExtensions
 {
-    public override string ToString()
+    public static NumberExpr AsNumber(this Expr expr)
     {
-        return Parent != null ? $"{Parent}.{Segment}" : Segment.ToString()!;
+        return new NumberExpr(expr);
     }
 
-    public PathExpr Index(int number)
+    public static TypedExpr<T> ToTyped<T>(this Expr expr)
     {
-        return new PathExpr(number.ToExpr(), this);
+        return new TypedWrappedExpr<T>(expr);
+    }
+    
+    public static TypedPathExpr<T, T2> ToTypedPath<T, T2>(this Expr expr)
+    {
+        return new TypedWrappedPathExpr<T, T2>(expr);
     }
 
-    public static implicit operator PathExpr(string path)
+    public static TypedPathExpr<TRoot, TNext> Prop<TRoot, TCurrent, TNext>(
+        this TypedPathExpr<TRoot, TCurrent> expr, Expression<Func<TCurrent, TNext?>> prop)
+        where TNext : struct
     {
-        return new PathExpr(path.ToExpr(), null);
+        return expr.UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
     }
 
-    public static PathExpr IndexPath(int index, PathExpr? parent)
+    public static TypedPathExpr<TRoot, TNext> Prop<TRoot, TCurrent, TNext>(
+        this TypedPathExpr<TRoot, TCurrent> expr, Expression<Func<TCurrent, TNext?>> prop)
     {
-        return new PathExpr(index.ToExpr(), parent);
+        return expr.UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
     }
+
+    public static TypedPathExpr<TRoot, TCurrent> Indexed<TRoot, TCurrent>(
+        this TypedPathExpr<TRoot, IEnumerable<TCurrent>> expr, TypedExpr<int> index)
+    {
+        return new CallExpr(InbuiltFunction.Dot, [expr.Expr, index]).ToTypedPath<TRoot, TCurrent>();
+    }
+
+    public static TypedExpr<IEnumerable<TOut>> Map<TRoot, TCurrent, TOut>(
+        this TypedPathExpr<TRoot, ICollection<TCurrent>> arrayPath, 
+        Func<TypedPathExpr<TRoot, TCurrent>, TypedExpr<TOut>> mapFunc)
+    {
+        var current = VarExpr.MakeNew();;
+        return new CallExpr(InbuiltFunction.Map, [arrayPath.Get(), current,
+            mapFunc(new PropertyValidator<TRoot, TCurrent>(
+                current, null))]).ToTyped<IEnumerable<TOut>>();
+    }
+
+    public static TypedExpr<TCurrent> Sum<TCurrent>(
+        this TypedExpr<IEnumerable<TCurrent>> arrayExpr)
+    where TCurrent : INumber<TCurrent>
+    {
+        return new CallExpr(InbuiltFunction.Sum, [arrayExpr.Expr]).ToTyped<TCurrent>();
+    }
+
+}
+
+public record TypedWrappedPathExpr<TRoot, TCurrent>(Expr Expr) : TypedPathExpr<TRoot, TCurrent>;
+    
+public interface TypedPathExpr<TRoot, TCurrent> : WrappedExpr
+{
+    public TypedExpr<TCurrent> Get()
+    {
+        return new CallExpr(InbuiltFunction.Get, [Expr]).ToTyped<TCurrent>();
+    }
+
+    public TypedExpr<TN> Get<TN>(Expression<Func<TCurrent, TN?>> expr)
+        where TN : struct
+    {
+        return this.Prop(expr).Get();
+    }
+
+    internal Expr UnsafeProp<TNext>(Expression<Func<TCurrent, TNext>> prop)
+    {
+        var propName = JsonNamingPolicy.CamelCase.ConvertName(prop.GetPropertyInfo().Name);
+        return new CallExpr(InbuiltFunction.Dot, [Expr, propName.ToExpr()]);
+    }
+    
+    // public TypedPathExpr<TRoot, TNext> Prop<TNext>(Expression<Func<TCurrent, TNext?>> prop)
+    //     where TNext : struct
+    // {
+    //     return UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
+    // }
+    //
+    // public TypedPathExpr<TRoot, TNext> Prop<TNext>(Expression<Func<TCurrent, TNext?>> prop)
+    // {
+    //     return UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
+    // }
+
 }

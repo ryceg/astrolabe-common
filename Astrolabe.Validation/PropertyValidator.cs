@@ -1,81 +1,76 @@
 using System.Linq.Expressions;
-using System.Numerics;
-using System.Text.Json;
-using Astrolabe.Common;
+using NotImplementedException = System.NotImplementedException;
 
 namespace Astrolabe.Validation;
 
-public class PropertyValidator<T, T2>(PathExpr? parentPath)
+public class PropertyValidator<T, T2>(Expr path, NumberExpr? index) : TypedPathExpr<T, T2>
 {
-    public PathExpr? ParentPath { get; } = parentPath;
+    public NumberExpr Index => index!;
 
-    public NumberExpr Index => new(parentPath!.Segment);
+    public NumberExpr RunningIndex => new(new RunningIndex(Index.Expr));
 
-    public NumberExpr RunningIndex => new NumberExpr(new RunningIndex(Index.Expr));
-
-    private RuleBuilder<T, TProp> RuleFor<TProp>(string propertyName)
-    {
-        return new SimpleRuleBuilder<T, TProp>(MakePathExpr(propertyName));
-    }
-
-    protected PathExpr MakePathExpr(string propertyName)
-    {
-        return new PathExpr(
-            JsonNamingPolicy.CamelCase.ConvertName(propertyName).ToExpr(),
-            ParentPath
-        );
-    }
+    
+    // public TypedPathExpr<T, TNext> Prop<TNext>(Expression<Func<T2, TNext?>> prop)
+    //     where TNext : struct
+    // {
+    //     var propName = JsonNamingPolicy.CamelCase.ConvertName(prop.GetPropertyInfo().Name);
+    //     return new TypedWrappedPathExpr<T, TNext>(new CallExpr(InbuiltFunction.Dot, [Expr, propName.ToExpr()]));
+    // }
+    //
+    // public TypedPathExpr<T, TNext> Prop<TNext>(Expression<Func<T2, TNext?>> prop)
+    // {
+    //     var propName = JsonNamingPolicy.CamelCase.ConvertName(prop.GetPropertyInfo().Name);
+    //     return new TypedWrappedPathExpr<T, TNext>(new CallExpr(InbuiltFunction.Dot, [Expr, propName.ToExpr()]));
+    // }
 
     public RuleBuilder<T, TN> RuleFor<TN>(Expression<Func<T2, TN?>> expr)
         where TN : struct
     {
-        var propertyInfo = expr.GetPropertyInfo();
-        return RuleFor<TN>(propertyInfo.Name);
+        return new SimpleRuleBuilder<T, TN>(this.Prop(expr));
     }
 
-    public RuleBuilder<T, TN> RuleFor<TN>(Expression<Func<T2, TN>> expr)
-        where TN : struct
+    public RuleBuilder<T, TN> RuleFor<TN>(Expression<Func<T2, TN?>> expr)
     {
-        var propertyInfo = expr.GetPropertyInfo();
-        return RuleFor<TN>(propertyInfo.Name);
+        return new SimpleRuleBuilder<T, TN>(this.Prop(expr));
     }
 
     public RulesForEach<T> RuleForEach<TC>(
-        Expression<Func<T2, IEnumerable<TC>>> expr,
+        Expression<Func<T2, IEnumerable<TC>?>> expr,
         Func<PropertyValidator<T, TC>, Rule<T>> rules
     )
     {
-        var arrayPath = MakePathExpr(expr.GetPropertyInfo().Name);
-        var indexExpr = IndexExpr.MakeNew();
-        var childProps = new PropertyValidator<T, TC>(new PathExpr(indexExpr, arrayPath));
+        var indexExpr = IndexExpr.MakeNew().AsNumber();
+        var arrayPath = this.Prop(expr);
+        var childProps = new PropertyValidator<T, TC>(arrayPath.Indexed(indexExpr), indexExpr);
         return new RulesForEach<T>(arrayPath, indexExpr, rules(childProps));
     }
 
-    public NumberExpr Sum<TObj>(
-        Expression<Func<T2, IEnumerable<TObj>>> expr,
-        Func<TypedPath<TObj>, NumberExpr> map
-    )
-    {
-        var arrayPath = MakePathExpr(expr.GetPropertyInfo().Name);
-        var indexExpr = IndexExpr.MakeNew();
-        var childProps = new TypedPath<TObj>(new PathExpr(indexExpr, arrayPath));
-        return new NumberExpr(
-            new CallExpr(
-                InbuiltFunction.Sum,
-                [new MapExpr(arrayPath, indexExpr, map(childProps).Expr)]
-            )
-        );
-    }
-
-    public NumberExpr Count<TObj>(Expression<Func<T2, IEnumerable<TObj>>> expr)
-    {
-        var arrayPath = MakePathExpr(expr.GetPropertyInfo().Name);
-        return new NumberExpr(new CallExpr(InbuiltFunction.Count, [new GetData(arrayPath)]));
-    }
-
-    public NumberExpr Get<TN>(Expression<Func<T2, TN?>> expr)
-    {
-        var propertyInfo = expr.GetPropertyInfo();
-        return new NumberExpr(new GetData(MakePathExpr(propertyInfo.Name)));
-    }
+    // public NumberExpr Sum<TObj>(
+    //     Expression<Func<T2, IEnumerable<TObj>>> expr,
+    //     Func<TypedPathExpr<T2, TObj>, NumberExpr> map
+    // )
+    // {
+    //     var arrayPath = MakePathExpr(expr.GetPropertyInfo().Name);
+    //     var indexExpr = IndexExpr.MakeNew();
+    //     var childProps = new TypedPath<TObj>(new PathExpr(indexExpr, arrayPath));
+    //     return new NumberExpr(
+    //         new CallExpr(
+    //             InbuiltFunction.Sum,
+    //             [new MapExpr(arrayPath, indexExpr, map(childProps).Expr)]
+    //         )
+    //     );
+    // }
+    //
+    // public NumberExpr Count<TObj>(Expression<Func<T2, IEnumerable<TObj>>> expr)
+    // {
+    //     var arrayPath = MakePathExpr(expr.GetPropertyInfo().Name);
+    //     return new NumberExpr(new CallExpr(InbuiltFunction.Count, [new GetData(arrayPath)]));
+    // }
+    //
+    // public NumberExpr Get<TN>(Expression<Func<T2, TN?>> expr)
+    // {
+    //     var propertyInfo = expr.GetPropertyInfo();
+    //     return new NumberExpr(new GetData(MakePathExpr(propertyInfo.Name)));
+    // }
+    public Expr Expr => path;
 }

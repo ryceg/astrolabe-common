@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace Astrolabe.Validation;
 
-public class NumberExpr(Expr expr) : WrappedExpr
+public class NumberExpr(Expr expr) : TypedExpr<int>, TypedExpr<double>, TypedExpr<long>
 {
     public Expr Expr { get; } = expr;
 
@@ -10,7 +10,7 @@ public class NumberExpr(Expr expr) : WrappedExpr
     {
         return $"Number({Expr})";
     }
-
+    
     public static implicit operator NumberExpr(int from)
     {
         return new NumberExpr(from.ToExpr());
