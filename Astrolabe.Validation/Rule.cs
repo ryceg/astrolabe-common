@@ -8,13 +8,16 @@ public interface RuleBuilder<T, TProp> : TypedPathExpr<T, TProp>
 {
     Expr Path { get; }
 
+    Expr Props { get; }
+
     Expr? Must { get; }
 }
 
 public record SimpleRuleBuilder<T, TProp>(Expr Path) : RuleBuilder<T, TProp>
 {
-    public Expr? Must => null;
     public Expr Expr => Path;
+    public Expr Props => ExprValue.True;
+    public Expr? Must => null;
 }
 
 public interface Rule<T>;
@@ -36,6 +39,7 @@ public interface PathRule<T> : Rule<T>
 {
     Expr Path { get; }
 
+    Expr Props { get; }
     Expr Must { get; }
 }
 
@@ -44,28 +48,42 @@ public interface RuleAndBuilder<T, TProp> : Rule<T>, RuleBuilder<T, TProp>
     Expr Must { get; }
 }
 
-public record PathRules<T, TProp>(Expr Path, Expr Must) : RuleAndBuilder<T, TProp>, PathRule<T>
+public record PathRules<T, TProp>(Expr Path, Expr Must, Expr Props)
+    : RuleAndBuilder<T, TProp>,
+        PathRule<T>
 {
     public Expr Expr => Path;
 }
 
 public record RulesForEach<T>(Expr Path, Expr Index, Rule<T> Rule) : Rule<T>;
 
-public record ResolvedRule<T>(JsonPathSegments Path, Expr Must);
+public record ResolvedRule<T>(JsonPathSegments Path, Expr Must, Expr Props);
 
 public static class RuleExtensions
 {
+    public static PathRules<T, TN> MapMust<T, TN>(
+        this RuleBuilder<T, TN> ruleFor,
+        Func<Expr?, Expr> apply
+    )
+    {
+        return new PathRules<T, TN>(ruleFor.Path, apply(ruleFor.Must), ruleFor.Props);
+    }
+
+    public static RuleBuilder<T, TN> MapProps<T, TN>(
+        this RuleBuilder<T, TN> ruleFor,
+        Func<Expr, Expr> apply
+    )
+    {
+        return new PathRules<T, TN>(ruleFor.Path, ruleFor.Must!, apply(ruleFor.Props));
+    }
+
     public static PathRules<T, TN> CallInbuilt<T, TN>(
         this RuleBuilder<T, TN> ruleFor,
         InbuiltFunction func,
         Expr arg2
     )
     {
-        var path = ruleFor.Path;
-        return new PathRules<T, TN>(
-            path,
-            ruleFor.Must.AndExpr(new CallExpr(func, [ruleFor.Get(), arg2]))
-        );
+        return ruleFor.MapMust(m => m.AndExpr(new CallExpr(func, [ruleFor.Get(), arg2])));
     }
 
     public static PathRules<T, TN> CallInbuilt<T, TN>(
@@ -75,8 +93,7 @@ public static class RuleExtensions
         Expr arg2
     )
     {
-        var path = ruleFor.Path;
-        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(new CallExpr(func, [arg1, arg2])));
+        return ruleFor.MapMust(m => m.AndExpr(new CallExpr(func, [arg1, arg2])));
     }
 
     public static PathRules<T, TN> Must<T, TN>(
@@ -85,13 +102,12 @@ public static class RuleExtensions
     )
     {
         var path = ruleFor.Path;
-        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must(ruleFor.Get()).Expr));
+        return ruleFor.MapMust(m => m.AndExpr(must(ruleFor.Get()).Expr));
     }
 
     public static PathRules<T, TN> MustExpr<T, TN>(this RuleBuilder<T, TN> ruleFor, Expr must)
     {
-        var path = ruleFor.Path;
-        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must));
+        return ruleFor.MapMust(m => m.AndExpr(must));
     }
 
     public static PathRules<T, TN> Must<T, TN>(
@@ -100,11 +116,7 @@ public static class RuleExtensions
     )
         where TN : struct, ISignedNumber<TN>
     {
-        var path = ruleFor.Path;
-        return new PathRules<T, TN>(
-            path,
-            ruleFor.Must.AndExpr(must(new NumberExpr(ruleFor.Get())).Expr)
-        );
+        return ruleFor.MapMust(m => m.AndExpr(must(new NumberExpr(ruleFor.Get())).Expr));
     }
 
     public static PathRules<T, bool> Must<T>(
@@ -112,22 +124,24 @@ public static class RuleExtensions
         Func<BoolExpr, BoolExpr> must
     )
     {
-        var path = ruleFor.Path;
-        return new PathRules<T, bool>(
-            path,
-            ruleFor.Must.AndExpr(must(new BoolExpr(ruleFor.Get())).Expr)
-        );
+        return ruleFor.MapMust(m => m.AndExpr(must(new BoolExpr(ruleFor.Get())).Expr));
     }
 
-    public static PathRules<T, TN> WithMessage<T, TN>(
-        this RuleAndBuilder<T, TN> ruleFor,
+    public static RuleBuilder<T, TN> WithMessage<T, TN>(
+        this RuleBuilder<T, TN> ruleFor,
         string message
     )
     {
-        return new PathRules<T, TN>(
-            ruleFor.Path,
-            new CallExpr(InbuiltFunction.WithMessage, [ruleFor.Must, message.ToExpr()])
-        );
+        return ruleFor.MapProps(x => x.WrapWithMessage(message.ToExpr()));
+    }
+
+    public static RuleBuilder<T, TN> WithProperty<T, TN>(
+        this RuleBuilder<T, TN> ruleFor,
+        string key,
+        object? value
+    )
+    {
+        return ruleFor.MapProps(x => x.WrapWithProperty(key.ToExpr(), value.ToExpr()));
     }
 
     public static PathRules<T, TN> Min<T, TN>(
@@ -136,9 +150,8 @@ public static class RuleExtensions
         bool exclusive = false
     )
     {
-        return new PathRules<T, TN>(
-            ruleFor.Path,
-            ruleFor.Must.AndExpr(
+        return ruleFor.MapMust(m =>
+            m.AndExpr(
                 new CallExpr(
                     exclusive ? InbuiltFunction.Gt : InbuiltFunction.GtEq,
                     [ruleFor.Get(), value.ToExpr()]
@@ -154,9 +167,8 @@ public static class RuleExtensions
         Func<RuleBuilder<T, TN>, PathRule<T>> falseExpr
     )
     {
-        return new PathRules<T, TN>(
-            ruleFor.Path,
-            ruleFor.Must.AndExpr(
+        return ruleFor.MapMust(m =>
+            m.AndExpr(
                 new CallExpr(
                     InbuiltFunction.IfElse,
                     [ifExpr.Expr, trueExpr(ruleFor).Must, falseExpr(ruleFor).Must]
@@ -167,24 +179,18 @@ public static class RuleExtensions
 
     public static PathRules<T, TN> When<T, TN>(this RuleBuilder<T, TN> ruleFor, BoolExpr ifExpr)
     {
-        return new PathRules<T, TN>(
-            ruleFor.Path,
-            new CallExpr(
-                InbuiltFunction.IfElse,
-                [ifExpr.Expr, ruleFor.Must ?? true.ToExpr(), ExprValue.Null]
-            )
-        );
+        return ruleFor.MapMust(m => new CallExpr(
+            InbuiltFunction.IfElse,
+            [ifExpr.Expr, m ?? true.ToExpr(), ExprValue.Null]
+        ));
     }
 
     public static PathRules<T, TN> WhenExpr<T, TN>(this RuleBuilder<T, TN> ruleFor, Expr ifExpr)
     {
-        return new PathRules<T, TN>(
-            ruleFor.Path,
-            new CallExpr(
-                InbuiltFunction.IfElse,
-                [ifExpr, ruleFor.Must ?? true.ToExpr(), ExprValue.Null]
-            )
-        );
+        return ruleFor.MapMust(m => new CallExpr(
+            InbuiltFunction.IfElse,
+            [ifExpr, m ?? true.ToExpr(), ExprValue.Null]
+        ));
     }
 
     public static PathRules<T, TN> Max<T, TN>(
@@ -193,9 +199,8 @@ public static class RuleExtensions
         bool exclusive = false
     )
     {
-        return new PathRules<T, TN>(
-            ruleFor.Path,
-            ruleFor.Must.AndExpr(
+        return ruleFor.MapMust(m =>
+            m.AndExpr(
                 new CallExpr(
                     exclusive ? InbuiltFunction.Lt : InbuiltFunction.LtEq,
                     [ruleFor.Get(), value.ToExpr()]

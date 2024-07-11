@@ -8,27 +8,63 @@ using EvaluatedExpr = EvaluatedResult<ExprValue>;
 
 public record EvalEnvironment(
     JsonObject Data,
-    Failure? Failure,
-    IEnumerable<(string, ExprValue)> RuleProperties,
-    ImmutableDictionary<Expr, ExprValue> Evaluated
+    IEnumerable<Failure> Failures,
+    ExprValue Message,
+    ImmutableDictionary<string, object?> Properties,
+    ImmutableDictionary<Expr, ExprValue> Replacements
 )
 {
-    public EvalEnvironment WithExprValue(Expr expr, ExprValue value)
+    public EvalEnvironment AddFailureIf(
+        bool? result,
+        InbuiltFunction function,
+        ExprValue actual,
+        ExprValue expected
+    )
     {
-        return this with { Evaluated = Evaluated.SetItem(expr, value) };
+        if (result == false)
+        {
+            return this with
+            {
+                Failures = Failures.Append(new Failure(function, actual, expected))
+            };
+        }
+        return this;
+    }
+
+    public EvalEnvironment WithProperty(string key, object? value)
+    {
+        return this with { Properties = Properties.SetItem(key, value) };
+    }
+
+    public EvalEnvironment WithReplacement(Expr expr, ExprValue value)
+    {
+        return this with { Replacements = Replacements.SetItem(expr, value) };
+    }
+
+    public EvalEnvironment WithMessage(ExprValue message)
+    {
+        return this with { Message = message };
     }
 
     public static EvalEnvironment FromData(JsonObject data)
     {
-        return new EvalEnvironment(data, null, [], ImmutableDictionary<Expr, ExprValue>.Empty);
+        return new EvalEnvironment(
+            data,
+            [],
+            ExprValue.Null,
+            ImmutableDictionary<string, object?>.Empty,
+            ImmutableDictionary<Expr, ExprValue>.Empty
+        );
     }
 }
 
-public record Failure(
-    ExprValue Message,
-    InbuiltFunction Function,
-    ExprValue Actual,
-    ExprValue Expected
+public record Failure(InbuiltFunction Function, ExprValue Actual, ExprValue Expected);
+
+public record RuleFailure<T>(
+    IEnumerable<Failure> Failures,
+    string? Message,
+    ResolvedRule<T> Rule,
+    ImmutableDictionary<string, object?> Properties
 );
 
 public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
@@ -42,22 +78,26 @@ public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
     {
         return Env.WithResult(select(Result));
     }
-
-    public EvaluatedResult<IEnumerable<T>> Single()
-    {
-        return Env.WithResult<IEnumerable<T>>([Result]);
-    }
 }
 
 public static class EvalEnvironmentExtensions
 {
-    public static EvaluatedResult<T> WithExprValue<T>(
+    public static EvaluatedResult<IEnumerable<T>> SingleOrEmpty<T>(
+        this EvaluatedResult<T?> evalResult
+    )
+    {
+        return evalResult.Env.WithResult<IEnumerable<T>>(
+            evalResult.Result != null ? [evalResult.Result] : []
+        );
+    }
+
+    public static EvaluatedResult<T> WithReplacement<T>(
         this EvaluatedResult<T> evalExpr,
         Expr expr,
         ExprValue value
     )
     {
-        return evalExpr with { Env = evalExpr.Env.WithExprValue(expr, value) };
+        return evalExpr with { Env = evalExpr.Env.WithReplacement(expr, value) };
     }
 
     public static EvaluatedResult<IEnumerable<object?>> Singleton(this EvaluatedExpr evalExpr)
@@ -104,17 +144,19 @@ public static class EvalEnvironmentExtensions
         return new EvaluatedResult<IEnumerable<T>>(env, []);
     }
 
-    public static EvaluatedExpr WithValue(this EvalEnvironment env, ExprValue value)
+    public static EvaluatedExpr WithExprValue(this EvalEnvironment env, ExprValue value)
     {
         return new EvaluatedExpr(env, value);
     }
 
-    public static EvaluatedExpr ToValue<T>(
-        this EvaluatedResult<T> envResult,
-        Func<T, ExprValue> mapValue
-    )
+    public static EvaluatedExpr WithNull(this EvalEnvironment env)
     {
-        return envResult.Env.WithValue(mapValue(envResult.Result));
+        return env.WithValue(null);
+    }
+
+    public static EvaluatedExpr WithValue(this EvalEnvironment env, object? value)
+    {
+        return new EvaluatedExpr(env, value.ToExpr());
     }
 
     public static EvaluatedResult<IEnumerable<T>> AppendTo<T>(

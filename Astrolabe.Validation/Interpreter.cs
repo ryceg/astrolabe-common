@@ -11,7 +11,7 @@ public static class Interpreter
 {
     public static Expr ResolveExpr(Expr expr, EvalEnvironment environment)
     {
-        if (environment.Evaluated.TryGetValue(expr, out var already))
+        if (environment.Replacements.TryGetValue(expr, out var already))
             return already;
         return expr switch
         {
@@ -26,21 +26,30 @@ public static class Interpreter
         };
     }
 
-    public static EvaluatedResult<IEnumerable<(ResolvedRule<T>, Failure?)>> EvaluateFailures<T>(
+    public static EvaluatedResult<RuleFailure<T>?> EvaluateFailures<T>(
         this EvalEnvironment environment,
         ResolvedRule<T> rule
     )
     {
-        return environment
-            .Evaluate(rule.Must)
-            .Map<IEnumerable<(ResolvedRule<T>, Failure?)>>(
-                (x, ev) => x.IsFalse() ? [(rule, ev.Failure)] : []
+        var propsEnv = environment.Evaluate(rule.Props);
+        return propsEnv
+            .Env.Evaluate(rule.Must)
+            .Map(
+                (x, ev) =>
+                    x.IsFalse()
+                        ? new RuleFailure<T>(
+                            ev.Failures,
+                            ev.Message.AsString(),
+                            rule,
+                            ev.Properties
+                        )
+                        : null
             );
     }
 
     public static EvaluatedExpr Evaluate(this EvalEnvironment environment, Expr expr)
     {
-        if (environment.Evaluated.TryGetValue(expr, out var already))
+        if (environment.Replacements.TryGetValue(expr, out var already))
             return environment.WithResult(already);
         return expr switch
         {
@@ -48,10 +57,10 @@ public static class Interpreter
             ArrayExpr arrayExpr
                 => arrayExpr
                     .ValueExpr.Aggregate(
-                        environment.WithResult(Enumerable.Empty<ExprValue>()),
+                        environment.WithEmpty<ExprValue>(),
                         (acc, e) => acc.Env.Evaluate(e).AppendTo(acc)
                     )
-                    .ToValue(x => x.Select(v => v.Value).ToExpr()),
+                    .Map(x => x.Select(v => v.Value).ToExpr()),
             ExprValue v => environment.WithResult(v),
             _ => throw new ArgumentOutOfRangeException(expr.ToString())
         };
@@ -62,6 +71,11 @@ public static class Interpreter
             if (argsList.Count == 2)
             {
                 var (env1, v1) = environment.Evaluate(argsList[0]);
+                if (callExpr.Function == InbuiltFunction.WithMessage)
+                {
+                    return env1.WithMessage(v1).Evaluate(argsList[1]);
+                }
+
                 var (env2, v2) = env1.Evaluate(argsList[1]);
                 return callExpr.Function switch
                 {
@@ -81,8 +95,7 @@ public static class Interpreter
                     or InbuiltFunction.Lt
                     or InbuiltFunction.GtEq
                     or InbuiltFunction.LtEq
-                        => ApplyDefaultMessage(DoCompare(callExpr.Function, v1, v2), v1, v2),
-                    InbuiltFunction.WithMessage => DoWithMessage(),
+                        => CheckFailure(DoCompare(callExpr.Function, v1, v2), v1, v2),
                     _
                         => throw new ArgumentException(
                             $"Unknown InbuiltFunction: {callExpr.Function}"
@@ -92,90 +105,40 @@ public static class Interpreter
                 EvaluatedExpr DoDot()
                 {
                     var basePath = v1.AsPath();
-                    return env2.WithValue(
-                        (
-                            v2 switch
-                            {
-                                { Value: string s } => basePath.Field(s),
-                                _ => basePath.Index((int)v2.Value!)
-                            }
-                        ).ToExpr()
-                    );
+                    return env2.WithValue(ValueExtensions.ApplyDot(basePath, v2));
                 }
 
                 EvaluatedExpr DoAnd()
                 {
                     if (v1.IsEitherNull(v2))
-                        return env2.WithValue(ExprValue.Null);
-                    if (!v1.AsBool())
-                        return new EvaluatedExpr(
-                            env2 with
-                            {
-                                Failure = env1.Failure
-                            },
-                            false.ToExpr()
-                        );
-                    return new EvaluatedExpr(env2, v2);
+                        return env2.WithNull();
+                    return !v1.AsBool()
+                        ? new EvaluatedExpr(env2, false.ToExpr())
+                        : new EvaluatedExpr(env2, v2);
                 }
 
                 EvaluatedExpr DoOr()
                 {
-                    if (v1.IsEitherNull(v2))
-                        return env2.WithValue(ExprValue.Null);
-                    return new EvaluatedExpr(
-                        env2 with
-                        {
-                            Failure = env2.Failure ?? env1.Failure
-                        },
-                        (v1.AsBool() || v2.AsBool()).ToExpr()
-                    );
-                }
-
-                EvaluatedExpr DoWithMessage()
-                {
-                    return v1.AsBool()
-                        ? new EvaluatedExpr(env2, v1)
-                        : new EvaluatedExpr(
-                            env2 with
-                            {
-                                Failure = env2.Failure! with { Message = v2 }
-                            },
-                            v1
-                        );
+                    return v1.IsEitherNull(v2)
+                        ? env2.WithNull()
+                        : env2.WithValue(v1.AsBool() || v2.AsBool());
                 }
 
                 EvaluatedExpr DoEquality(bool not)
                 {
                     return v1.IsEitherNull(v2)
-                        ? env2.WithValue(ExprValue.Null)
-                        : ApplyDefaultMessage(
+                        ? env2.WithNull()
+                        : CheckFailure(
                             v1.AsEqualityCheck()!.Equals(v2.AsEqualityCheck()) ^ not,
                             v1,
                             v2
                         );
                 }
 
-                EvaluatedExpr ApplyDefaultMessage(
-                    bool? boolResult,
-                    ExprValue actual,
-                    ExprValue failValue
-                )
+                EvaluatedExpr CheckFailure(bool? boolResult, ExprValue actual, ExprValue failValue)
                 {
-                    return new EvaluatedExpr(
-                        env2 with
-                        {
-                            Failure =
-                                boolResult == false
-                                    ? env2.Failure
-                                    : new Failure(
-                                        ExprValue.Null,
-                                        callExpr.Function,
-                                        actual,
-                                        failValue
-                                    )
-                        },
-                        boolResult.ToExpr()
-                    );
+                    return env2.AddFailureIf(boolResult, callExpr.Function, actual, failValue)
+                        .WithValue(boolResult);
                 }
             }
 
@@ -194,7 +157,7 @@ public static class Interpreter
                 EvaluatedExpr DoAggregate<T>(Func<IEnumerable<object?>, T> aggFunc)
                 {
                     var asList = v1.AsEnumerable().ToList();
-                    return env1.WithValue(
+                    return env1.WithExprValue(
                         asList.Any(x => x == null) ? ExprValue.Null : aggFunc(asList).ToExpr()
                     );
                 }
@@ -203,7 +166,7 @@ public static class Interpreter
                 {
                     var segments = v1.AsPath();
                     var outNode = segments.Traverse(env1.Data);
-                    return env1.WithValue(ToValue(outNode).WithPath(segments));
+                    return env1.WithExprValue(ToValue(outNode).WithPath(segments));
                 }
             }
 
@@ -213,8 +176,18 @@ public static class Interpreter
                 {
                     InbuiltFunction.IfElse
                         => environment.Evaluate(argsList[0]).IfElse(argsList[1], argsList[2]),
-                    InbuiltFunction.Map => DoMap()
+                    InbuiltFunction.Map => DoMap(),
+                    InbuiltFunction.WithProperty => DoProperty()
                 };
+
+                EvaluatedExpr DoProperty()
+                {
+                    var keyResult = environment.Evaluate(argsList[0]);
+                    var valueResult = keyResult.Env.Evaluate(argsList[1]);
+                    return valueResult
+                        .Env.WithProperty(keyResult.Result.AsString(), valueResult.Result.Value)
+                        .Evaluate(argsList[2]);
+                }
 
                 EvaluatedExpr DoMap()
                 {
@@ -226,32 +199,12 @@ public static class Interpreter
                         arrayValue,
                         (e, v) =>
                             (e with { Data = v })
-                                .WithExprValue(argsList[1], JsonPathSegments.Empty.ToExpr())
+                                .WithReplacement(argsList[1], JsonPathSegments.Empty.ToExpr())
                                 .Evaluate(argsList[2])
                                 .Singleton()
                     );
 
-                    return arrayEnv.Env.WithValue(results.Result.ToExpr());
-
-                    // var (nextEnv, collectionSeg) = EvalPath(
-                    //     arrayValue.Env.WithExprValue(argsList[1], ),
-                    //     mapExpr.Path,
-                    //     JsonPathSegments.Empty
-                    // );
-                    // var dataCollection = collectionSeg.Traverse(environment.Data);
-                    // return dataCollection switch
-                    // {
-                    //     JsonArray array
-                    //         => new ArrayExpr(
-                    //             Enumerable
-                    //                 .Range(0, array.Count)
-                    //                 .Select(i =>
-                    //                 {
-                    //                     var indexedEnv = nextEnv.WithExprValue(mapExpr.Index, i.ToExpr());
-                    //                     return ResolveExpr(mapExpr.Value, indexedEnv);
-                    //                 })
-                    //         )
-                    // };
+                    return arrayEnv.Env.WithValue(results.Result);
                 }
             }
 
@@ -338,7 +291,13 @@ public static class Interpreter
             var (nextEnv, segments) = EvalPath(environment, pathRule.Path);
             return new EvaluatedResult<IEnumerable<ResolvedRule<T>>>(
                 nextEnv,
-                [new ResolvedRule<T>(segments, ResolveExpr(pathRule.Must, environment))]
+                [
+                    new ResolvedRule<T>(
+                        segments,
+                        ResolveExpr(pathRule.Must, nextEnv),
+                        ResolveExpr(pathRule.Props, nextEnv)
+                    )
+                ]
             );
         }
 
@@ -346,13 +305,13 @@ public static class Interpreter
         {
             var (pathEnv, collectionSeg) = EvalPath(environment, rules.Path);
             var runningIndexExpr = new RunningIndex(rules.Index);
-            var runningIndexOffset = pathEnv.Evaluated.TryGetValue(
+            var runningIndexOffset = pathEnv.Replacements.TryGetValue(
                 runningIndexExpr,
                 out var current
             )
                 ? current.AsInt()
                 : 0;
-            var nextEnv = pathEnv.WithExprValue(runningIndexExpr, runningIndexOffset.ToExpr());
+            var nextEnv = pathEnv.WithReplacement(runningIndexExpr, runningIndexOffset.ToExpr());
 
             var dataCollection = collectionSeg.Traverse(environment.Data);
             if (dataCollection is JsonArray array)
@@ -361,10 +320,10 @@ public static class Interpreter
                     Enumerable.Range(0, array.Count),
                     (env, index) =>
                     {
-                        var envWithIndex = env.WithExprValue(rules.Index, index.ToExpr());
+                        var envWithIndex = env.WithReplacement(rules.Index, index.ToExpr());
                         return envWithIndex
                             .EvaluateRule(rules.Rule)
-                            .WithExprValue(
+                            .WithReplacement(
                                 runningIndexExpr,
                                 (runningIndexOffset + index + 1).ToExpr()
                             );

@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Astrolabe.Common;
 using Astrolabe.JSON;
 
@@ -83,33 +82,18 @@ public record CallExpr(InbuiltFunction Function, ICollection<Expr> Args) : Expr
     }
 }
 
-public record IndexExpr(int IndexId) : Expr
+public record VarExpr(string Name, int IndexId) : Expr
 {
     private static int _indexCount;
 
     public override string ToString()
     {
-        return $"[i{IndexId}]";
+        return $"${Name}{IndexId}]";
     }
 
-    public static IndexExpr MakeNew()
+    public static VarExpr MakeNew(string name)
     {
-        return new IndexExpr(++_indexCount);
-    }
-}
-
-public record VarExpr(int IndexId) : Expr
-{
-    private static int _indexCount;
-
-    public override string ToString()
-    {
-        return $"[v{IndexId}]";
-    }
-
-    public static VarExpr MakeNew()
-    {
-        return new VarExpr(++_indexCount);
+        return new VarExpr(name, ++_indexCount);
     }
 }
 
@@ -203,6 +187,34 @@ public static class ValueExtensions
     {
         return expr == null ? other : new CallExpr(InbuiltFunction.And, [expr, other]);
     }
+
+    public static Expr DotExpr(this Expr expr, Expr other)
+    {
+        return (expr, other) switch
+        {
+            (ExprValue { Value: JsonPathSegments ps }, ExprValue v) => ApplyDot(ps, v).ToExpr(),
+            _ => new CallExpr(InbuiltFunction.Dot, [expr, other])
+        };
+    }
+
+    public static Expr WrapWithProperty(this Expr expr, Expr key, Expr value)
+    {
+        return new CallExpr(InbuiltFunction.WithProperty, [key, value, expr]);
+    }
+
+    public static Expr WrapWithMessage(this Expr expr, Expr message)
+    {
+        return new CallExpr(InbuiltFunction.WithMessage, [message, expr]);
+    }
+
+    public static JsonPathSegments ApplyDot(JsonPathSegments basePath, ExprValue segment)
+    {
+        return segment switch
+        {
+            { Value: string s } => basePath.Field(s),
+            _ => basePath.Index(segment.AsInt())
+        };
+    }
 }
 
 public static class TypedExprExtensions
@@ -252,8 +264,7 @@ public static class TypedExprExtensions
         Func<TypedPathExpr<TRoot, TCurrent>, TypedExpr<TOut>> mapFunc
     )
     {
-        var current = VarExpr.MakeNew();
-        ;
+        var current = VarExpr.MakeNew("i");
         return new CallExpr(
             InbuiltFunction.Map,
             [
@@ -289,6 +300,6 @@ public interface TypedPathExpr<TRoot, TCurrent> : WrappedExpr
     internal Expr UnsafeProp<TNext>(Expression<Func<TCurrent, TNext>> prop)
     {
         var propName = JsonNamingPolicy.CamelCase.ConvertName(prop.GetPropertyInfo().Name);
-        return new CallExpr(InbuiltFunction.Dot, [Expr, propName.ToExpr()]);
+        return Expr.DotExpr(propName.ToExpr());
     }
 }
