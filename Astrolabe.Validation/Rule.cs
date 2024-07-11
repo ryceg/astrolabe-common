@@ -62,7 +62,10 @@ public static class RuleExtensions
     )
     {
         var path = ruleFor.Path;
-        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(new CallExpr(func, [ruleFor.Get(), arg2])));
+        return new PathRules<T, TN>(
+            path,
+            ruleFor.Must.AndExpr(new CallExpr(func, [ruleFor.Get(), arg2]))
+        );
     }
 
     public static PathRules<T, TN> CallInbuilt<T, TN>(
@@ -98,7 +101,10 @@ public static class RuleExtensions
         where TN : struct, ISignedNumber<TN>
     {
         var path = ruleFor.Path;
-        return new PathRules<T, TN>(path, ruleFor.Must.AndExpr(must(new NumberExpr(ruleFor.Get())).Expr));
+        return new PathRules<T, TN>(
+            path,
+            ruleFor.Must.AndExpr(must(new NumberExpr(ruleFor.Get())).Expr)
+        );
     }
 
     public static PathRules<T, bool> Must<T>(
@@ -120,7 +126,7 @@ public static class RuleExtensions
     {
         return new PathRules<T, TN>(
             ruleFor.Path,
-            new CallExpr(InbuiltFunction.WithMessage, [ruleFor.Must, new StringValue(message)])
+            new CallExpr(InbuiltFunction.WithMessage, [ruleFor.Must, message.ToExpr()])
         );
     }
 

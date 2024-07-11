@@ -1,4 +1,5 @@
 using System.Runtime.Intrinsics;
+using Astrolabe.JSON;
 
 namespace Astrolabe.Validation;
 
@@ -9,14 +10,21 @@ public static class PrintExpr
         return expr switch
         {
             WrappedExpr wrapped => wrapped.Expr.Print(),
-            PathValue { Path.Segments.IsEmpty: true } => "$",
-            PathValue pathValue => pathValue.Path.ToString(),
-            ArrayExpr arrayExpr => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
-            ArrayValue arrayValue => $"[{string.Join(", ", arrayValue.Values.Select(x => x.Print()))}]",
-            CallExpr {Function:InbuiltFunction.Get, Args: var a} => a.First().Print(),
-            CallExpr {Function:InbuiltFunction.IfElse, Args:var a} when a.ToList() is [var ifE, var t, var f]  => $"{ifE.Print()} ? {t.Print()} : {f.Print()}",
-            CallExpr callExpr when InfixFunc(callExpr.Function) is {} op && callExpr.Args.ToList() is [var v1, var  v2] => $"{v1.Print()}{op}{v2.Print()}",
-            CallExpr callExpr => $"{callExpr.Function}({string.Join(", ", callExpr.Args.Select(x => x.Print()))})",
+            ExprValue { Value: null } => "null",
+            ExprValue { Value: JsonPathSegments { Segments.IsEmpty: true } } => "$",
+            ArrayExpr arrayExpr
+                => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
+            ExprValue { Value: var v } => $"{v}",
+            CallExpr { Function: InbuiltFunction.Get, Args: var a } => a.First().Print(),
+            CallExpr { Function: InbuiltFunction.IfElse, Args: var a }
+                when a.ToList() is [var ifE, var t, var f]
+                => $"{ifE.Print()} ? {t.Print()} : {f.Print()}",
+            CallExpr callExpr
+                when InfixFunc(callExpr.Function) is { } op
+                    && callExpr.Args.ToList() is [var v1, var v2]
+                => $"{v1.Print()}{op}{v2.Print()}",
+            CallExpr callExpr
+                => $"{callExpr.Function}({string.Join(", ", callExpr.Args.Select(x => x.Print()))})",
             _ => expr.ToString()!,
         };
     }
@@ -51,11 +59,12 @@ public static class PrintExpr
     {
         return rule switch
         {
-            MultiRule<T> multiRule => $"[\n{string.Join("\n", multiRule.Rules.Select(x => x.Print()))}\n]",
+            MultiRule<T> multiRule
+                => $"[\n{string.Join("\n", multiRule.Rules.Select(x => x.Print()))}\n]",
             PathRule<T> pathRule => $"Rule {pathRule.Path.Print()}: {pathRule.Must.Print()}",
-            RulesForEach<T> rulesForEach => $"RulesForEach {rulesForEach.Path.Print()} {rulesForEach.Index.Print()} {rulesForEach.Rule.Print()}",
+            RulesForEach<T> rulesForEach
+                => $"RulesForEach {rulesForEach.Path.Print()} {rulesForEach.Index.Print()} {rulesForEach.Rule.Print()}",
             _ => throw new ArgumentOutOfRangeException(nameof(rule))
         };
     }
-
 }

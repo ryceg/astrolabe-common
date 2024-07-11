@@ -44,55 +44,26 @@ public interface TypedExpr<T> : WrappedExpr;
 
 public record TypedWrappedExpr<T>(Expr Expr) : TypedExpr<T>;
 
-public interface ExprValue : Expr
+public record ExprValue(object? Value, JsonPathSegments? FromPath) : Expr
 {
-    public static readonly NullValue Null = new();
-}
+    public static ExprValue Null => new(null, null);
+    public static ExprValue False => new(false, null);
+    public static ExprValue True => new(false, null);
 
-public record NullValue : ExprValue
-{
-    public override string ToString()
+    public ExprValue WithPath(JsonPathSegments segents)
     {
-        return "null";
-    }
-}
-
-public record BoolValue(bool Value) : ExprValue
-{
-    public override string ToString()
-    {
-        return Value.ToString();
-    }
-}
-
-public record NumberValue(long? LongValue, double? DoubleValue) : ExprValue
-{
-    public override string ToString()
-    {
-        return (LongValue ?? DoubleValue).ToString()!;
+        return this with { FromPath = segents };
     }
 
-    public long ToTruncated()
+    public static double AsDouble(object? v)
     {
-        return LongValue ?? (long)DoubleValue!;
-    }
-
-    public double AsDouble()
-    {
-        return DoubleValue ?? LongValue!.Value;
-    }
-
-    public static implicit operator NumberValue(long l)
-    {
-        return new NumberValue(l, null);
-    }
-}
-
-public record StringValue(string Value) : ExprValue
-{
-    public override string ToString()
-    {
-        return Value;
+        return v switch
+        {
+            int i => i,
+            long l => l,
+            double d => d,
+            _ => throw new ArgumentException("Value is not a number: " + (v ?? "null"))
+        };
     }
 }
 
@@ -103,18 +74,6 @@ public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr
         return $"[{string.Join(", ", ValueExpr)}]";
     }
 }
-
-public record ArrayValue(IEnumerable<ExprValue> Values) : ExprValue
-{
-    public override string ToString()
-    {
-        return $"[{string.Join(", ", Values)}]";
-    }
-}
-
-public record ObjectValue(JsonObject JsonObject) : ExprValue;
-
-public record PathValue(JsonPathSegments Path) : ExprValue;
 
 public record CallExpr(InbuiltFunction Function, ICollection<Expr> Args) : Expr
 {
@@ -158,54 +117,86 @@ public record RunningIndex(Expr CountExpr) : Expr;
 
 public static class ValueExtensions
 {
-    public static ExprValue ToExpr(this object? v)
+    public static ExprValue ToExpr(this object? v, JsonPathSegments? from = null)
     {
-        return v switch
-        {
-            null => ExprValue.Null,
-            bool b => new BoolValue(b),
-            string s => new StringValue(s),
-            int i => new NumberValue(i, null),
-            long l => new NumberValue(l, null),
-            double d => new NumberValue(null, d),
-        };
+        if (v is ExprValue)
+            throw new AggregateException("Already an expr");
+        return new ExprValue(v, from);
+    }
+
+    public static IEnumerable<object?> AsEnumerable(this ExprValue v)
+    {
+        return (v.Value as IEnumerable)!.Cast<object?>();
+    }
+
+    public static IEnumerable<T> AsEnumerable<T>(this ExprValue v)
+    {
+        return (v.Value as IEnumerable)!.OfType<T>();
     }
 
     public static bool AsBool(this ExprValue v)
     {
-        return ((BoolValue)v).Value;
+        return (bool)v.Value!;
+    }
+
+    public static int AsInt(this ExprValue v)
+    {
+        return (int)v.Value!;
+    }
+
+    public static object AsEqualityCheck(this ExprValue v)
+    {
+        return v.Value switch
+        {
+            int i => (double)i,
+            long l => (double)l,
+            { } o => o,
+            _ => throw new ArgumentException("Cannot be compared: " + v)
+        };
+    }
+
+    public static long? MaybeLong(this ExprValue v)
+    {
+        return v.Value switch
+        {
+            int or long => (long)v.Value,
+            _ => null
+        };
+    }
+
+    public static bool IsEitherNull(this ExprValue v, ExprValue other)
+    {
+        return v.IsNull() || other.IsNull();
+    }
+
+    public static double AsDouble(this ExprValue v)
+    {
+        return ExprValue.AsDouble(v.Value);
+    }
+
+    public static JsonPathSegments AsPath(this ExprValue v)
+    {
+        return (JsonPathSegments)v.Value!;
     }
 
     public static bool IsNull(this ExprValue v)
     {
-        return v switch
-        {
-            NullValue => true,
-            _ => false
-        };
+        return v.Value == null;
     }
 
     public static bool IsTrue(this ExprValue v)
     {
-        return v switch
-        {
-            BoolValue bv => bv.Value,
-            _ => false
-        };
+        return v.Value is true;
     }
 
     public static bool IsFalse(this ExprValue v)
     {
-        return v switch
-        {
-            BoolValue bv => !bv.Value,
-            _ => false
-        };
+        return v.Value is false;
     }
 
     public static string AsString(this ExprValue v)
     {
-        return ((StringValue)v).Value;
+        return (string)v.Value!;
     }
 
     public static Expr AndExpr(this Expr? expr, Expr other)
@@ -225,52 +216,63 @@ public static class TypedExprExtensions
     {
         return new TypedWrappedExpr<T>(expr);
     }
-    
+
     public static TypedPathExpr<T, T2> ToTypedPath<T, T2>(this Expr expr)
     {
         return new TypedWrappedPathExpr<T, T2>(expr);
     }
 
     public static TypedPathExpr<TRoot, TNext> Prop<TRoot, TCurrent, TNext>(
-        this TypedPathExpr<TRoot, TCurrent> expr, Expression<Func<TCurrent, TNext?>> prop)
+        this TypedPathExpr<TRoot, TCurrent> expr,
+        Expression<Func<TCurrent, TNext?>> prop
+    )
         where TNext : struct
     {
         return expr.UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
     }
 
     public static TypedPathExpr<TRoot, TNext> Prop<TRoot, TCurrent, TNext>(
-        this TypedPathExpr<TRoot, TCurrent> expr, Expression<Func<TCurrent, TNext?>> prop)
+        this TypedPathExpr<TRoot, TCurrent> expr,
+        Expression<Func<TCurrent, TNext?>> prop
+    )
     {
         return expr.UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
     }
 
     public static TypedPathExpr<TRoot, TCurrent> Indexed<TRoot, TCurrent>(
-        this TypedPathExpr<TRoot, IEnumerable<TCurrent>> expr, TypedExpr<int> index)
+        this TypedPathExpr<TRoot, IEnumerable<TCurrent>> expr,
+        TypedExpr<int> index
+    )
     {
         return new CallExpr(InbuiltFunction.Dot, [expr.Expr, index]).ToTypedPath<TRoot, TCurrent>();
     }
 
     public static TypedExpr<IEnumerable<TOut>> Map<TRoot, TCurrent, TOut>(
-        this TypedPathExpr<TRoot, ICollection<TCurrent>> arrayPath, 
-        Func<TypedPathExpr<TRoot, TCurrent>, TypedExpr<TOut>> mapFunc)
+        this TypedPathExpr<TRoot, ICollection<TCurrent>> arrayPath,
+        Func<TypedPathExpr<TRoot, TCurrent>, TypedExpr<TOut>> mapFunc
+    )
     {
-        var current = VarExpr.MakeNew();;
-        return new CallExpr(InbuiltFunction.Map, [arrayPath.Get(), current,
-            mapFunc(new PropertyValidator<TRoot, TCurrent>(
-                current, null))]).ToTyped<IEnumerable<TOut>>();
+        var current = VarExpr.MakeNew();
+        ;
+        return new CallExpr(
+            InbuiltFunction.Map,
+            [
+                arrayPath.Get(),
+                current,
+                mapFunc(new PropertyValidator<TRoot, TCurrent>(current, null))
+            ]
+        ).ToTyped<IEnumerable<TOut>>();
     }
 
-    public static TypedExpr<TCurrent> Sum<TCurrent>(
-        this TypedExpr<IEnumerable<TCurrent>> arrayExpr)
-    where TCurrent : INumber<TCurrent>
+    public static TypedExpr<TCurrent> Sum<TCurrent>(this TypedExpr<IEnumerable<TCurrent>> arrayExpr)
+        where TCurrent : INumber<TCurrent>
     {
         return new CallExpr(InbuiltFunction.Sum, [arrayExpr.Expr]).ToTyped<TCurrent>();
     }
-
 }
 
 public record TypedWrappedPathExpr<TRoot, TCurrent>(Expr Expr) : TypedPathExpr<TRoot, TCurrent>;
-    
+
 public interface TypedPathExpr<TRoot, TCurrent> : WrappedExpr
 {
     public TypedExpr<TCurrent> Get()
@@ -289,16 +291,4 @@ public interface TypedPathExpr<TRoot, TCurrent> : WrappedExpr
         var propName = JsonNamingPolicy.CamelCase.ConvertName(prop.GetPropertyInfo().Name);
         return new CallExpr(InbuiltFunction.Dot, [Expr, propName.ToExpr()]);
     }
-    
-    // public TypedPathExpr<TRoot, TNext> Prop<TNext>(Expression<Func<TCurrent, TNext?>> prop)
-    //     where TNext : struct
-    // {
-    //     return UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
-    // }
-    //
-    // public TypedPathExpr<TRoot, TNext> Prop<TNext>(Expression<Func<TCurrent, TNext?>> prop)
-    // {
-    //     return UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
-    // }
-
 }

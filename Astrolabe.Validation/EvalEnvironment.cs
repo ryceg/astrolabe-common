@@ -37,7 +37,7 @@ public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
     {
         return Env.WithResult(select(Result, Env));
     }
-    
+
     public EvaluatedResult<T2> Map<T2>(Func<T, T2> select)
     {
         return Env.WithResult(select(Result));
@@ -47,7 +47,6 @@ public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
     {
         return Env.WithResult<IEnumerable<T>>([Result]);
     }
-
 }
 
 public static class EvalEnvironmentExtensions
@@ -59,6 +58,11 @@ public static class EvalEnvironmentExtensions
     )
     {
         return evalExpr with { Env = evalExpr.Env.WithExprValue(expr, value) };
+    }
+
+    public static EvaluatedResult<IEnumerable<object?>> Singleton(this EvaluatedExpr evalExpr)
+    {
+        return evalExpr.Map<IEnumerable<object?>>(x => [x.Value]);
     }
 
     public static EvaluatedExpr IfElse(this EvaluatedExpr evalExpr, Expr trueExpr, Expr falseExpr)
