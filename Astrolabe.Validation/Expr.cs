@@ -103,7 +103,7 @@ public record RunningIndex(Expr CountExpr) : Expr;
 
 public static class ValueExtensions
 {
-    public static ExprValue AsValue(Expr expr)
+    public static ExprValue AsValue(this Expr expr)
     {
         return (ExprValue)expr;
     }

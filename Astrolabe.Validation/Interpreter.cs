@@ -306,7 +306,7 @@ public static class Interpreter
         {
             var (pathEnv, segments) = environment.ResolveExpr(pathRule.Path);
             var (mustEnv, must) = pathEnv.ResolveExpr(pathRule.Must);
-            var (propsEnv, props) = mustEnv.ResolveExpr(pathRule.Must);
+            var (propsEnv, props) = mustEnv.ResolveExpr(pathRule.Props);
             return propsEnv
                 .WithResult(new ResolvedRule<T>(((ExprValue)segments).AsPath(), must, props))
                 .Single();
@@ -314,8 +314,9 @@ public static class Interpreter
 
         EvaluatedResult<IEnumerable<ResolvedRule<T>>> DoRulesForEach(RulesForEach<T> rules)
         {
-            var (pathEnv, collectionSeg) = environment.ResolveExpr(rules.Path);
-            var runningIndexExpr = new RunningIndex(rules.Index);
+            var (afterPathEnv, collectionSeg) = environment.ResolveExpr(rules.Path);
+            var (pathEnv, indexExpr) = afterPathEnv.ResolveExpr(rules.Index);
+            var runningIndexExpr = new RunningIndex(indexExpr);
             var runningIndexOffset = pathEnv.Replacements.TryGetValue(
                 runningIndexExpr,
                 out var current
@@ -324,14 +325,14 @@ public static class Interpreter
                 : 0;
             var nextEnv = pathEnv.WithReplacement(runningIndexExpr, runningIndexOffset.ToExpr());
 
-            var dataCollection = collectionSeg.AsValue().As Traverse(environment.Data);
+            var dataCollection = collectionSeg.AsValue().AsPath().Traverse(environment.Data);
             if (dataCollection is JsonArray array)
             {
                 return nextEnv.EvaluateAll(
                     Enumerable.Range(0, array.Count),
                     (env, index) =>
                     {
-                        var envWithIndex = env.WithReplacement(rules.Index, index.ToExpr());
+                        var envWithIndex = env.WithReplacement(indexExpr, index.ToExpr());
                         return envWithIndex
                             .EvaluateRule(rules.Rule)
                             .WithReplacement(
@@ -344,11 +345,6 @@ public static class Interpreter
 
             throw new ArgumentException($"Not an array: {dataCollection?.GetType()}");
         }
-    }
-
-    private static EvaluatedResult<JsonPathSegments> EvalPath(EvalEnvironment env, Expr pathExpr)
-    {
-        return env.Evaluate(ResolveExpr(pathExpr, env)).Map(x => x.AsPath());
     }
 
     public static ExprValue ToValue(JsonNode? node, JsonPathSegments from)
