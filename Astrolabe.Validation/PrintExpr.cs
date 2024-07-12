@@ -10,12 +10,12 @@ public static class PrintExpr
         return expr switch
         {
             WrappedExpr wrapped => wrapped.Expr.Print(),
+            GetExpr { Path: var path } => path.Print(),
             ExprValue { Value: null } => "null",
             ExprValue { Value: JsonPathSegments { Segments.IsEmpty: true } } => "$",
             ArrayExpr arrayExpr
                 => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
             ExprValue { Value: var v } => $"{v}",
-            CallExpr { Function: InbuiltFunction.Get, Args: var a } => a.First().Print(),
             CallExpr { Function: InbuiltFunction.IfElse, Args: var a }
                 when a.ToList() is [var ifE, var t, var f]
                 => $"{ifE.Print()} ? {t.Print()} : {f.Print()}",
@@ -45,7 +45,6 @@ public static class PrintExpr
             InbuiltFunction.Minus => " - ",
             InbuiltFunction.Multiply => " * ",
             InbuiltFunction.Divide => " / ",
-            InbuiltFunction.Dot => ".",
             _ => null
         };
     }

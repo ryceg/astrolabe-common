@@ -25,14 +25,16 @@ public enum InbuiltFunction
     WithMessage,
     WithProperty,
     IfElse,
-    Get,
-    Dot,
     Map,
     Sum,
     Count
 }
 
 public interface Expr;
+
+public record GetExpr(Expr Path) : Expr;
+
+public record DotExpr(Expr Base, Expr Segment) : Expr;
 
 public interface WrappedExpr : Expr
 {
@@ -101,6 +103,11 @@ public record RunningIndex(Expr CountExpr) : Expr;
 
 public static class ValueExtensions
 {
+    public static ExprValue AsValue(Expr expr)
+    {
+        return (ExprValue)expr;
+    }
+
     public static ExprValue ToExpr(this object? v, JsonPathSegments? from = null)
     {
         if (v is ExprValue)
@@ -108,14 +115,9 @@ public static class ValueExtensions
         return new ExprValue(v, from);
     }
 
-    public static IEnumerable<object?> AsEnumerable(this ExprValue v)
+    public static IEnumerable<ExprValue> AsEnumerable(this ExprValue v)
     {
-        return (v.Value as IEnumerable)!.Cast<object?>();
-    }
-
-    public static IEnumerable<T> AsEnumerable<T>(this ExprValue v)
-    {
-        return (v.Value as IEnumerable)!.OfType<T>();
+        return (v.Value as IEnumerable<ExprValue>)!;
     }
 
     public static bool AsBool(this ExprValue v)
@@ -193,7 +195,7 @@ public static class ValueExtensions
         return (expr, other) switch
         {
             (ExprValue { Value: JsonPathSegments ps }, ExprValue v) => ApplyDot(ps, v).ToExpr(),
-            _ => new CallExpr(InbuiltFunction.Dot, [expr, other])
+            _ => new DotExpr(expr, other)
         };
     }
 
@@ -256,7 +258,7 @@ public static class TypedExprExtensions
         TypedExpr<int> index
     )
     {
-        return new CallExpr(InbuiltFunction.Dot, [expr.Expr, index]).ToTypedPath<TRoot, TCurrent>();
+        return expr.Expr.DotExpr(index).ToTypedPath<TRoot, TCurrent>();
     }
 
     public static TypedExpr<IEnumerable<TOut>> Map<TRoot, TCurrent, TOut>(
@@ -288,7 +290,7 @@ public interface TypedPathExpr<TRoot, TCurrent> : WrappedExpr
 {
     public TypedExpr<TCurrent> Get()
     {
-        return new CallExpr(InbuiltFunction.Get, [Expr]).ToTyped<TCurrent>();
+        return new GetExpr(Expr).ToTyped<TCurrent>();
     }
 
     public TypedExpr<TN> Get<TN>(Expression<Func<TCurrent, TN?>> expr)

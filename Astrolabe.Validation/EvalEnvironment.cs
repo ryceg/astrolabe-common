@@ -69,6 +69,11 @@ public record RuleFailure<T>(
 
 public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
 {
+    public ExprValue AsValue()
+    {
+        return (ExprValue)(object)Result!;
+    }
+
     public EvaluatedResult<T2> Map<T2>(Func<T, EvalEnvironment, T2> select)
     {
         return Env.WithResult(select(Result, Env));
@@ -77,6 +82,11 @@ public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
     public EvaluatedResult<T2> Map<T2>(Func<T, T2> select)
     {
         return Env.WithResult(select(Result));
+    }
+
+    public EvaluatedResult<IEnumerable<T>> Single()
+    {
+        return Env.WithResult<IEnumerable<T>>([Result]);
     }
 }
 
@@ -147,6 +157,11 @@ public static class EvalEnvironmentExtensions
     public static EvaluatedExpr WithExprValue(this EvalEnvironment env, ExprValue value)
     {
         return new EvaluatedExpr(env, value);
+    }
+
+    public static EvaluatedResult<Expr> WithExpr(this EvalEnvironment env, Expr value)
+    {
+        return new EvaluatedResult<Expr>(env, value);
     }
 
     public static EvaluatedExpr WithNull(this EvalEnvironment env)
