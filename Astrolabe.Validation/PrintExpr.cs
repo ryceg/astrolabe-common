@@ -13,6 +13,7 @@ public static class PrintExpr
             ExprValue { Value: DataPath dp } => dp.ToPathString(),
             ArrayExpr arrayExpr
                 => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
+            ExprValue { Value: var v, FromPath: FieldPath fp } => $"({fp.Field}:{v})",
             ExprValue { Value: var v } => $"{v}",
             CallExpr { Function: InbuiltFunction.IfElse, Args: var a }
                 when a.ToList() is [var ifE, var t, var f]

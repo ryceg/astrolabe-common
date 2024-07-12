@@ -10,6 +10,7 @@ public record EvalEnvironment(
     Func<DataPath, ExprValue> GetData,
     IEnumerable<Failure> Failures,
     ExprValue Message,
+    ImmutableHashSet<DataPath> FailedData,
     ImmutableDictionary<string, object?> Properties,
     ImmutableDictionary<Expr, ExprValue> Replacements
 )
@@ -58,9 +59,15 @@ public record EvalEnvironment(
             data,
             [],
             ExprValue.Null,
+            ImmutableHashSet<DataPath>.Empty,
             ImmutableDictionary<string, object?>.Empty,
             ImmutableDictionary<Expr, ExprValue>.Empty
         );
+    }
+
+    public EvalEnvironment WithFailedPath(DataPath rulePath)
+    {
+        return this with { FailedData = FailedData.Add(rulePath) };
     }
 }
 
@@ -123,7 +130,9 @@ public static class EvalEnvironmentExtensions
 
     public static EvaluatedExpr IfElse(this EvaluatedExpr evalExpr, Expr trueExpr, Expr falseExpr)
     {
-        return evalExpr.Env.Evaluate(evalExpr.Result.AsBool() ? trueExpr : falseExpr);
+        return evalExpr.Result.IsNull()
+            ? evalExpr
+            : evalExpr.Env.Evaluate(evalExpr.Result.AsBool() ? trueExpr : falseExpr);
     }
 
     public static EvaluatedResult<IEnumerable<ExprValue>> AppendTo(

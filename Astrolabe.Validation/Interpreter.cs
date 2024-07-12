@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Immutable;
 
 namespace Astrolabe.Validation;
 
@@ -72,19 +73,26 @@ public static class Interpreter
     )
     {
         var propsEnv = environment.Evaluate(rule.Props);
-        return propsEnv
-            .Env.Evaluate(rule.Must)
-            .Map(
-                (x, ev) =>
-                    x.IsFalse()
-                        ? new RuleFailure<T>(
-                            ev.Failures,
-                            ev.Message.AsString(),
-                            rule,
-                            ev.Properties
-                        )
-                        : null
+        var (outEnv, result) = propsEnv.Env.Evaluate(rule.Must);
+        RuleFailure<T>? failure = null;
+        if (result.IsFalse())
+        {
+            failure = new RuleFailure<T>(
+                outEnv.Failures,
+                outEnv.Message.AsString(),
+                rule,
+                outEnv.Properties
             );
+        }
+
+        var resetEnv = outEnv with
+        {
+            Properties = ImmutableDictionary<string, object?>.Empty,
+            Message = ExprValue.Null,
+            Failures = [],
+            FailedData = result.IsFalse() ? outEnv.FailedData.Add(rule.Path) : outEnv.FailedData
+        };
+        return resetEnv.WithResult(failure);
     }
 
     public static EvaluatedExpr Evaluate(this EvalEnvironment environment, Expr expr)
@@ -93,6 +101,8 @@ public static class Interpreter
             return environment.WithResult(already);
         return expr switch
         {
+            ExprValue { FromPath: { } fp } when environment.FailedData.Contains(fp)
+                => environment.WithResult(ExprValue.Null),
             CallExpr callExpr => EvalCallExpr(callExpr),
             ArrayExpr arrayExpr
                 => arrayExpr
