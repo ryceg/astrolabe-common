@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Numerics;
 using System.Text.Json;
 using Astrolabe.Common;
-using Astrolabe.JSON;
 
 namespace Astrolabe.Validation;
 
@@ -25,7 +23,6 @@ public enum InbuiltFunction
     WithMessage,
     WithProperty,
     IfElse,
-    Map,
     Sum,
     Count
 }
@@ -36,6 +33,8 @@ public record GetExpr(Expr Path) : Expr;
 
 public record DotExpr(Expr Base, Expr Segment) : Expr;
 
+public record MapExpr(Expr Array, Expr ElemPath, Expr MapTo) : Expr;
+
 public interface WrappedExpr : Expr
 {
     Expr Expr { get; }
@@ -45,15 +44,15 @@ public interface TypedExpr<T> : WrappedExpr;
 
 public record TypedWrappedExpr<T>(Expr Expr) : TypedExpr<T>;
 
-public record ExprValue(object? Value, JsonPathSegments? FromPath) : Expr
+public record ExprValue(object? Value, DataPath? FromPath) : Expr
 {
     public static ExprValue Null => new(null, null);
     public static ExprValue False => new(false, null);
     public static ExprValue True => new(false, null);
 
-    public ExprValue WithPath(JsonPathSegments segents)
+    public ExprValue WithPath(DataPath segments)
     {
-        return this with { FromPath = segents };
+        return this with { FromPath = segments };
     }
 
     public static double AsDouble(object? v)
@@ -90,7 +89,7 @@ public record VarExpr(string Name, int IndexId) : Expr
 
     public override string ToString()
     {
-        return $"${Name}{IndexId}]";
+        return $"${Name}{IndexId}";
     }
 
     public static VarExpr MakeNew(string name)
@@ -108,7 +107,7 @@ public static class ValueExtensions
         return (ExprValue)expr;
     }
 
-    public static ExprValue ToExpr(this object? v, JsonPathSegments? from = null)
+    public static ExprValue ToExpr(this object? v, DataPath? from = null)
     {
         if (v is ExprValue)
             throw new AggregateException("Already an expr");
@@ -160,9 +159,9 @@ public static class ValueExtensions
         return ExprValue.AsDouble(v.Value);
     }
 
-    public static JsonPathSegments AsPath(this ExprValue v)
+    public static DataPath AsPath(this ExprValue v)
     {
-        return (JsonPathSegments)v.Value!;
+        return (DataPath)v.Value!;
     }
 
     public static bool IsNull(this ExprValue v)
@@ -194,9 +193,14 @@ public static class ValueExtensions
     {
         return (expr, other) switch
         {
-            (ExprValue { Value: JsonPathSegments ps }, ExprValue v) => ApplyDot(ps, v).ToExpr(),
+            (ExprValue { Value: DataPath ps }, ExprValue v) => ApplyDot(ps, v).ToExpr(),
             _ => new DotExpr(expr, other)
         };
+    }
+
+    public static Expr Unwrap(this Expr e)
+    {
+        return e is WrappedExpr we ? we.Expr.Unwrap() : e;
     }
 
     public static Expr WrapWithProperty(this Expr expr, Expr key, Expr value)
@@ -209,12 +213,12 @@ public static class ValueExtensions
         return new CallExpr(InbuiltFunction.WithMessage, [message, expr]);
     }
 
-    public static JsonPathSegments ApplyDot(JsonPathSegments basePath, ExprValue segment)
+    public static DataPath ApplyDot(DataPath basePath, ExprValue segment)
     {
         return segment switch
         {
-            { Value: string s } => basePath.Field(s),
-            _ => basePath.Index(segment.AsInt())
+            { Value: string s } => new FieldPath(s, basePath),
+            _ => new IndexPath(segment.AsInt(), basePath)
         };
     }
 }
@@ -266,14 +270,11 @@ public static class TypedExprExtensions
         Func<TypedPathExpr<TRoot, TCurrent>, TypedExpr<TOut>> mapFunc
     )
     {
-        var current = VarExpr.MakeNew("i");
-        return new CallExpr(
-            InbuiltFunction.Map,
-            [
-                arrayPath.Get(),
-                current,
-                mapFunc(new PropertyValidator<TRoot, TCurrent>(current, null))
-            ]
+        var current = VarExpr.MakeNew("elem");
+        return new MapExpr(
+            arrayPath.Get(),
+            current,
+            mapFunc(new PropertyValidator<TRoot, TCurrent>(current, null))
         ).ToTyped<IEnumerable<TOut>>();
     }
 

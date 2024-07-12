@@ -1,6 +1,3 @@
-using System.Runtime.Intrinsics;
-using Astrolabe.JSON;
-
 namespace Astrolabe.Validation;
 
 public static class PrintExpr
@@ -12,7 +9,8 @@ public static class PrintExpr
             WrappedExpr wrapped => wrapped.Expr.Print(),
             GetExpr { Path: var path } => path.Print(),
             ExprValue { Value: null } => "null",
-            ExprValue { Value: JsonPathSegments { Segments.IsEmpty: true } } => "$",
+            ExprValue { Value: EmptyPath } => "$",
+            ExprValue { Value: DataPath dp } => dp.ToPathString(),
             ArrayExpr arrayExpr
                 => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
             ExprValue { Value: var v } => $"{v}",

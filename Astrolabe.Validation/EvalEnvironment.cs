@@ -7,7 +7,7 @@ namespace Astrolabe.Validation;
 using EvaluatedExpr = EvaluatedResult<ExprValue>;
 
 public record EvalEnvironment(
-    JsonObject Data,
+    Func<DataPath, ExprValue> GetData,
     IEnumerable<Failure> Failures,
     ExprValue Message,
     ImmutableDictionary<string, object?> Properties,
@@ -38,6 +38,12 @@ public record EvalEnvironment(
 
     public EvalEnvironment WithReplacement(Expr expr, ExprValue value)
     {
+        var _ = expr switch
+        {
+            VarExpr ve => true,
+            RunningIndex ri => false,
+            _ => throw new ArgumentException("Can't replace that")
+        };
         return this with { Replacements = Replacements.SetItem(expr, value) };
     }
 
@@ -46,7 +52,7 @@ public record EvalEnvironment(
         return this with { Message = message };
     }
 
-    public static EvalEnvironment FromData(JsonObject data)
+    public static EvalEnvironment FromData(Func<DataPath, ExprValue> data)
     {
         return new EvalEnvironment(
             data,

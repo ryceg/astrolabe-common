@@ -1,6 +1,4 @@
 using System.Numerics;
-using System.Runtime.InteropServices;
-using Astrolabe.JSON;
 
 namespace Astrolabe.Validation;
 
@@ -57,7 +55,7 @@ public record PathRules<T, TProp>(Expr Path, Expr Must, Expr Props)
 
 public record RulesForEach<T>(Expr Path, Expr Index, Rule<T> Rule) : Rule<T>;
 
-public record ResolvedRule<T>(JsonPathSegments Path, Expr Must, Expr Props);
+public record ResolvedRule<T>(DataPath Path, Expr Must, Expr Props);
 
 public static class RuleExtensions
 {

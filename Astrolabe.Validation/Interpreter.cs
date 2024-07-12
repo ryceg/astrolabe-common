@@ -1,7 +1,4 @@
 using System.Collections;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using Astrolabe.JSON;
 
 namespace Astrolabe.Validation;
 
@@ -15,13 +12,33 @@ public static class Interpreter
             return environment.WithExpr(already);
         return expr switch
         {
+            WrappedExpr we => environment.ResolveExpr(we.Expr),
             ExprValue v => environment.WithExpr(v),
             VarExpr v => environment.WithExpr(v),
-            DotExpr { Base: var basePath, Segment: var segment } => DoDot(basePath, segment),
-            GetExpr { Path: var p } => DoGet(p),
-            WrappedExpr we => environment.ResolveExpr(we.Expr),
-            CallExpr callExpr => DoCall(callExpr)
+            DotExpr dotExpr => DoDot(dotExpr),
+            GetExpr getExpr => DoGet(getExpr),
+            CallExpr callExpr => DoCall(callExpr),
+            MapExpr mapExpr => DoMap(mapExpr)
         };
+
+        EvaluatedResult<Expr> DoMap(MapExpr mapExpr)
+        {
+            var (arrayEnv, arrayExpr) = environment.ResolveExpr(mapExpr.Array);
+            var arrayVal = arrayExpr.AsValue();
+            if (arrayVal.IsNull())
+                return arrayEnv.WithExpr(ExprValue.Null);
+            var arrayValue = arrayVal.AsEnumerable();
+            var elemVar = mapExpr.ElemPath.Unwrap();
+            var results = arrayEnv.EvaluateAll(
+                arrayValue,
+                (e, v) =>
+                    e.WithReplacement(elemVar, v.FromPath!.ToExpr())
+                        .ResolveExpr(mapExpr.MapTo)
+                        .Single()
+            );
+
+            return arrayEnv.WithExpr(new ArrayExpr(results.Result));
+        }
 
         EvaluatedResult<Expr> DoCall(CallExpr callExpr)
         {
@@ -32,22 +49,20 @@ public static class Interpreter
             return allArgs.Env.WithExpr(callExpr with { Args = allArgs.Result.ToList() });
         }
 
-        EvaluatedResult<Expr> DoGet(Expr p)
+        EvaluatedResult<Expr> DoGet(GetExpr p)
         {
-            var v1 = environment.ResolveExpr(p).Map(x => (ExprValue)x);
-            var segments = v1.Result.AsPath();
-            var outNode = segments.Traverse(environment.Data);
-            return v1.Env.WithExpr(ToValue(outNode, segments));
+            var v1 = environment.ResolveExpr(p.Path);
+            var segments = v1.Result.AsValue().AsPath();
+            return v1.Env.WithExpr(v1.Env.GetData(segments));
         }
 
-        EvaluatedResult<Expr> DoDot(Expr basePathExpr, Expr segment)
+        EvaluatedResult<Expr> DoDot(DotExpr dotExpr)
         {
-            var pathValue = environment.ResolveExpr(basePathExpr);
-            var segValue = pathValue.Env.ResolveExpr(segment);
+            var (pathEnv, pathValue) = environment.ResolveExpr(dotExpr.Base);
+            var (segEnv, segValue) = pathEnv.ResolveExpr(dotExpr.Segment);
             var basePath = pathValue.AsValue().AsPath();
-            return segValue.Env.WithExpr(
-                ValueExtensions.ApplyDot(basePath, segValue.AsValue()).ToExpr()
-            );
+            var resolved = ValueExtensions.ApplyDot(basePath, segValue.AsValue()).ToExpr();
+            return segEnv.WithExpr(resolved);
         }
     }
 
@@ -85,7 +100,7 @@ public static class Interpreter
                         environment.WithEmpty<ExprValue>(),
                         (acc, e) => acc.Env.Evaluate(e).AppendTo(acc)
                     )
-                    .Map(x => x.Select(v => v.Value).ToExpr()),
+                    .Map(x => x.ToExpr()),
             ExprValue v => environment.WithResult(v),
             _ => throw new ArgumentOutOfRangeException(expr.ToString())
         };
@@ -172,16 +187,16 @@ public static class Interpreter
                 return callExpr.Function switch
                 {
                     InbuiltFunction.Count => DoAggregate(x => x.Count()),
-                    InbuiltFunction.Sum => DoAggregate(x => x.Sum(ExprValue.AsDouble)),
+                    InbuiltFunction.Sum => DoAggregate(x => x.Sum(v => v.AsDouble())),
                     InbuiltFunction.Not when v1.AsBool() is var b
                         => new EvaluatedExpr(env1, (!b).ToExpr())
                 };
 
-                EvaluatedExpr DoAggregate<T>(Func<IEnumerable<object?>, T> aggFunc)
+                EvaluatedExpr DoAggregate<T>(Func<IEnumerable<ExprValue>, T> aggFunc)
                 {
                     var asList = v1.AsEnumerable().ToList();
                     return env1.WithExprValue(
-                        asList.Any(x => x == null) ? ExprValue.Null : aggFunc(asList).ToExpr()
+                        asList.Any(x => x.IsNull()) ? ExprValue.Null : aggFunc(asList).ToExpr()
                     );
                 }
             }
@@ -192,7 +207,6 @@ public static class Interpreter
                 {
                     InbuiltFunction.IfElse
                         => environment.Evaluate(argsList[0]).IfElse(argsList[1], argsList[2]),
-                    InbuiltFunction.Map => DoMap(),
                     InbuiltFunction.WithProperty => DoProperty()
                 };
 
@@ -203,24 +217,6 @@ public static class Interpreter
                     return valueResult
                         .Env.WithProperty(keyResult.Result.AsString(), valueResult.Result.Value)
                         .Evaluate(argsList[2]);
-                }
-
-                EvaluatedExpr DoMap()
-                {
-                    var arrayEnv = environment.Evaluate(argsList[0]);
-                    if (arrayEnv.Result.IsNull())
-                        return arrayEnv.Map(_ => ExprValue.Null);
-                    var arrayValue = arrayEnv.Result.AsEnumerable().Select(x => x.Value);
-                    var results = arrayEnv.Env.EvaluateAll(
-                        arrayValue,
-                        (e, v) =>
-                            (e with { Data = (JsonObject)v! })
-                                .WithReplacement(argsList[1], JsonPathSegments.Empty.ToExpr())
-                                .Evaluate(argsList[2])
-                                .Singleton()
-                    );
-
-                    return arrayEnv.Env.WithValue(results.Result);
                 }
             }
 
@@ -314,8 +310,8 @@ public static class Interpreter
 
         EvaluatedResult<IEnumerable<ResolvedRule<T>>> DoRulesForEach(RulesForEach<T> rules)
         {
-            var (afterPathEnv, collectionSeg) = environment.ResolveExpr(rules.Path);
-            var (pathEnv, indexExpr) = afterPathEnv.ResolveExpr(rules.Index);
+            var (pathEnv, collectionSeg) = environment.ResolveExpr(rules.Path);
+            var indexExpr = rules.Index.Unwrap();
             var runningIndexExpr = new RunningIndex(indexExpr);
             var runningIndexOffset = pathEnv.Replacements.TryGetValue(
                 runningIndexExpr,
@@ -325,11 +321,11 @@ public static class Interpreter
                 : 0;
             var nextEnv = pathEnv.WithReplacement(runningIndexExpr, runningIndexOffset.ToExpr());
 
-            var dataCollection = collectionSeg.AsValue().AsPath().Traverse(environment.Data);
-            if (dataCollection is JsonArray array)
+            var dataCollection = nextEnv.GetData(collectionSeg.AsValue().AsPath());
+            if (dataCollection.Value is IEnumerable array)
             {
                 return nextEnv.EvaluateAll(
-                    Enumerable.Range(0, array.Count),
+                    Enumerable.Range(0, array.Cast<object>().Count()),
                     (env, index) =>
                     {
                         var envWithIndex = env.WithReplacement(indexExpr, index.ToExpr());
@@ -345,34 +341,5 @@ public static class Interpreter
 
             throw new ArgumentException($"Not an array: {dataCollection?.GetType()}");
         }
-    }
-
-    public static ExprValue ToValue(JsonNode? node, JsonPathSegments from)
-    {
-        return node switch
-        {
-            null => ExprValue.Null.WithPath(from),
-            JsonArray ja => ja.Select((v, i) => ToValue(v, from.Index(i))).ToExpr(from),
-            JsonObject jo => jo.ToExpr(from),
-            JsonValue v
-                => v.GetValue<object>() switch
-                {
-                    JsonElement e
-                        => e.ValueKind switch
-                        {
-                            JsonValueKind.False => false.ToExpr(from),
-                            JsonValueKind.True => true.ToExpr(from),
-                            JsonValueKind.String => e.GetString().ToExpr(from),
-                            JsonValueKind.Number
-                                => e.TryGetInt64(out var l)
-                                    ? l.ToExpr(from)
-                                    : e.TryGetDouble(out var d)
-                                        ? d.ToExpr(from)
-                                        : ExprValue.Null.WithPath(from),
-                            _ => throw new ArgumentOutOfRangeException($"{e.ValueKind}-{e}")
-                        },
-                    var objValue => objValue.ToExpr(from)
-                },
-        };
     }
 }
