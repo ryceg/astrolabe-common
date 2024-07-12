@@ -588,8 +588,15 @@ export function defaultDataProps({
     field,
     id: "c" + control.uniqueId,
     options:
-      fieldOptions && allowed.length > 0
-        ? fieldOptions.filter((x) => allowed.includes(x.value))
+      allowed.length > 0
+        ? allowed.map((x) =>
+            typeof x === "object"
+              ? x
+              : fieldOptions?.find((y) => y.value == x) ?? {
+                  name: x.toString(),
+                  value: x,
+                },
+          )
         : fieldOptions,
     readonly: !!formOptions.readonly,
     renderOptions: definition.renderOptions ?? { type: "Standard" },
