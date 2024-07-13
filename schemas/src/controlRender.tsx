@@ -580,7 +580,8 @@ export function defaultDataProps({
   const className = cc(definition.styleClass);
   const required = !!definition.required;
   const fieldOptions = schemaInterface.getOptions(field);
-  const allowed = allowedOptions?.value ?? [];
+  const _allowed = allowedOptions?.value ?? [];
+  const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
   return {
     definition,
     childDefinitions: definition.children ?? [],
