@@ -12,7 +12,7 @@ public enum ValidatorType
     Length
 }
 
-[JsonBaseType("type", typeof(SimpleExpression))]
+[JsonBaseType("type", typeof(SimpleValidator))]
 [JsonSubType("Jsonata", typeof(JsonataValidator))]
 [JsonSubType("Date", typeof(DateValidator))]
 [JsonSubType("Length", typeof(LengthValidator))]
