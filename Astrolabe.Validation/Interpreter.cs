@@ -72,17 +72,11 @@ public static class Interpreter
         ResolvedRule<T> rule
     )
     {
-        var propsEnv = environment.Evaluate(rule.Props);
-        var (outEnv, result) = propsEnv.Env.Evaluate(rule.Must);
+        var (outEnv, result) = environment.Evaluate(rule.Must);
         RuleFailure<T>? failure = null;
         if (result.IsFalse())
         {
-            failure = new RuleFailure<T>(
-                outEnv.Failures,
-                outEnv.Message.AsString(),
-                rule,
-                outEnv.Properties
-            );
+            failure = new RuleFailure<T>(outEnv.Failures, outEnv.Message.AsString(), rule);
         }
 
         var resetEnv = outEnv with
@@ -313,8 +307,15 @@ public static class Interpreter
             var (pathEnv, segments) = environment.ResolveExpr(pathRule.Path);
             var (mustEnv, must) = pathEnv.ResolveExpr(pathRule.Must);
             var (propsEnv, props) = mustEnv.ResolveExpr(pathRule.Props);
+            var propsResult = propsEnv.Evaluate(props);
             return propsEnv
-                .WithResult(new ResolvedRule<T>(((ExprValue)segments).AsPath(), must, props))
+                .WithResult(
+                    new ResolvedRule<T>(
+                        ((ExprValue)segments).AsPath(),
+                        must,
+                        propsResult.Env.Properties
+                    )
+                )
                 .Single();
         }
 

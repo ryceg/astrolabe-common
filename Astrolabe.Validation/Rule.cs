@@ -55,7 +55,7 @@ public record PathRules<T, TProp>(Expr Path, Expr Must, Expr Props)
 
 public record RulesForEach<T>(Expr Path, Expr Index, Rule<T> Rule) : Rule<T>;
 
-public record ResolvedRule<T>(DataPath Path, Expr Must, Expr Props);
+public record ResolvedRule<T>(DataPath Path, Expr Must, IDictionary<string, object?> Properties);
 
 public static class RuleExtensions
 {
@@ -73,6 +73,49 @@ public static class RuleExtensions
     )
     {
         return new PathRules<T, TN>(ruleFor.Path, ruleFor.Must!, apply(ruleFor.Props));
+    }
+
+    public static List<DataPath> GetDataOrder<T>(this IEnumerable<ResolvedRule<T>> rules)
+    {
+        var dataOrder = new List<DataPath>();
+        var processed = new HashSet<DataPath>();
+
+        var ruleList = rules.ToList();
+        var ruleLookup = ruleList.ToLookup(x => x.Path);
+        ruleLookup.ToList().ForEach(x => AddRules(x.Key, x));
+        return dataOrder;
+
+        void AddRules(DataPath path, IEnumerable<ResolvedRule<T>> pathRules)
+        {
+            if (!processed.Add(path))
+                return;
+            pathRules.ToList().ForEach(x => AddExprPaths(x.Must));
+            dataOrder.Add(path);
+        }
+
+        void AddPath(DataPath path)
+        {
+            if (!processed.Contains(path))
+            {
+                dataOrder.Add(path);
+            }
+        }
+
+        void AddExprPaths(Expr e)
+        {
+            switch (e)
+            {
+                case ExprValue { FromPath: { } fp }:
+                    AddRules(fp, ruleLookup[fp]);
+                    break;
+                case CallExpr { Args: var args }:
+                    foreach (var expr in args)
+                    {
+                        AddExprPaths(expr);
+                    }
+                    break;
+            }
+        }
     }
 
     public static PathRules<T, TN> CallInbuilt<T, TN>(

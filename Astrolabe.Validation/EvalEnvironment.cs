@@ -73,12 +73,7 @@ public record EvalEnvironment(
 
 public record Failure(InbuiltFunction Function, ExprValue Actual, ExprValue Expected);
 
-public record RuleFailure<T>(
-    IEnumerable<Failure> Failures,
-    string? Message,
-    ResolvedRule<T> Rule,
-    ImmutableDictionary<string, object?> Properties
-);
+public record RuleFailure<T>(IEnumerable<Failure> Failures, string? Message, ResolvedRule<T> Rule);
 
 public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
 {
