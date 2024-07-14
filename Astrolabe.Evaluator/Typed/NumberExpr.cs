@@ -1,8 +1,13 @@
-namespace Astrolabe.Validation.Typed;
+namespace Astrolabe.Evaluator.Typed;
 
 public class NumberExpr(Expr expr) : TypedExpr<int>, TypedExpr<double>, TypedExpr<long>
 {
     public Expr Wrapped => expr;
+
+    public NumberExpr Resolve()
+    {
+        return new NumberExpr(new ResolveEval(expr));
+    }
 
     public override string ToString()
     {

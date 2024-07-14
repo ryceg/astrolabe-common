@@ -1,4 +1,4 @@
-namespace Astrolabe.Validation.Typed;
+namespace Astrolabe.Evaluator.Typed;
 
 public class BoolExpr(Expr expr) : TypedExpr<bool>
 {

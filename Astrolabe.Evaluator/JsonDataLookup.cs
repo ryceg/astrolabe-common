@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Astrolabe.Validation;
+namespace Astrolabe.Evaluator;
 
 public class JsonDataLookup
 {

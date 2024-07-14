@@ -1,5 +1,6 @@
 using System.Numerics;
 using Astrolabe.Annotation;
+using Astrolabe.Evaluator;
 
 namespace Astrolabe.Validation;
 
@@ -20,10 +21,7 @@ public record SingleRule(Expr Path, Expr Props, Expr Must) : Rule(RuleType.Singl
 {
     public SingleRule WithProp(Expr key, Expr value)
     {
-        return this with
-        {
-            Props = new CallExpr(InbuiltFunction.WithProperty, [key, value, Props])
-        };
+        return this with { Props = new CallEnvExpr("WithProperty", [key, value, Props]) };
     }
 
     public SingleRule AndMust(Expr andMust)
@@ -41,7 +39,7 @@ public record SingleRule(Expr Path, Expr Props, Expr Must) : Rule(RuleType.Singl
 
     public SingleRule WithMessage(Expr message)
     {
-        return this with { Props = new CallExpr(InbuiltFunction.WithMessage, [message, Props]) };
+        return this with { Props = new CallEnvExpr("WithMessage", [message, Props]) };
     }
 }
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using Astrolabe.Annotation;
 
-namespace Astrolabe.Validation;
+namespace Astrolabe.Evaluator;
 
 [JsonString]
 public enum InbuiltFunction
@@ -19,8 +19,6 @@ public enum InbuiltFunction
     Minus,
     Multiply,
     Divide,
-    WithMessage,
-    WithProperty,
     IfElse,
     Sum,
     Count
@@ -31,6 +29,8 @@ public interface Expr;
 public record DotExpr(Expr Base, Expr Segment) : Expr;
 
 public record MapExpr(Expr Array, Expr ElemPath, Expr MapTo) : Expr;
+
+public record ResolveEval(Expr Expr) : Expr;
 
 public record ExprValue(object? Value) : Expr
 {
@@ -95,7 +95,15 @@ public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr
     }
 }
 
-public record CallExpr(InbuiltFunction Function, ICollection<Expr> Args) : Expr
+public record CallExpr(InbuiltFunction Function, IList<Expr> Args) : Expr
+{
+    public override string ToString()
+    {
+        return $"{Function}({string.Join(", ", Args)})";
+    }
+}
+
+public record CallEnvExpr(string Function, IList<Expr> Args) : Expr
 {
     public override string ToString()
     {
@@ -134,6 +142,11 @@ public record ArrayValue(int Count, IEnumerable Values)
 
 public static class ValueExtensions
 {
+    public static bool IsDataPath(this Expr expr, DataPath dataPath)
+    {
+        return expr is ExprValue { Value: DataPath dp } && dp.Equals(dataPath);
+    }
+
     public static ExprValue AsValue(this Expr expr)
     {
         return (ExprValue)expr;
@@ -230,16 +243,6 @@ public static class ValueExtensions
             (ExprValue { Value: DataPath ps }, ExprValue v) => ExprValue.From(ApplyDot(ps, v)),
             _ => new DotExpr(expr, other)
         };
-    }
-
-    public static Expr WrapWithProperty(this Expr expr, Expr key, Expr value)
-    {
-        return new CallExpr(InbuiltFunction.WithProperty, [key, value, expr]);
-    }
-
-    public static Expr WrapWithMessage(this Expr expr, Expr message)
-    {
-        return new CallExpr(InbuiltFunction.WithMessage, [message, expr]);
     }
 
     public static DataPath ApplyDot(DataPath basePath, ExprValue segment)

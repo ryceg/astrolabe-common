@@ -1,4 +1,4 @@
-namespace Astrolabe.Validation;
+namespace Astrolabe.Evaluator;
 
 public interface DataPath
 {

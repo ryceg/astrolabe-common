@@ -1,0 +1,144 @@
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+
+namespace Astrolabe.Evaluator;
+
+using EvaluatedExpr = EnvironmentValue<ExprValue>;
+
+public interface EvalEnvironment
+{
+    EvaluatedExpr EvaluateData(DataPath dataPath);
+
+    bool TryGetReplacement(Expr expr, [MaybeNullWhen(false)] out EnvironmentValue<Expr> value);
+    EvalEnvironment WithReplacement(Expr expr, Expr value);
+
+    EnvironmentValue<Expr> EvaluateCall(CallEnvExpr callEnvExpr);
+
+    EvaluatedExpr BooleanResult(
+        bool? result,
+        CallExpr callExpr,
+        IEnumerable<ExprValue> evaluatedArgs
+    );
+}
+
+public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
+{
+    public ExprValue AsValue()
+    {
+        return (ExprValue)(object)Value!;
+    }
+
+    public EnvironmentValue<T2> Map<T2>(Func<T, EvalEnvironment, T2> select)
+    {
+        return Env.WithValue(select(Value, Env));
+    }
+
+    public EnvironmentValue<T2> Map<T2>(Func<T, T2> select)
+    {
+        return Env.WithValue(select(Value));
+    }
+
+    public EnvironmentValue<IEnumerable<T>> Single()
+    {
+        return Env.WithValue<IEnumerable<T>>([Value]);
+    }
+}
+
+public static class EvalEnvironmentExtensions
+{
+    public static EnvironmentValue<IEnumerable<T>> SingleOrEmpty<T>(
+        this EnvironmentValue<T?> evalResult
+    )
+    {
+        return evalResult.Env.WithValue<IEnumerable<T>>(
+            evalResult.Value != null ? [evalResult.Value] : []
+        );
+    }
+
+    public static EnvironmentValue<T> WithReplacement<T>(
+        this EnvironmentValue<T> evalExpr,
+        Expr expr,
+        ExprValue value
+    )
+    {
+        return evalExpr with { Env = evalExpr.Env.WithReplacement(expr, value) };
+    }
+
+    public static EnvironmentValue<IEnumerable<object?>> Singleton(this EvaluatedExpr evalExpr)
+    {
+        return evalExpr.Map<IEnumerable<object?>>(x => [x.Value]);
+    }
+
+    public static EvaluatedExpr IfElse(this EvaluatedExpr evalExpr, Expr trueExpr, Expr falseExpr)
+    {
+        return evalExpr.Value.IsNull()
+            ? evalExpr
+            : evalExpr.Env.Evaluate(evalExpr.Value.AsBool() ? trueExpr : falseExpr);
+    }
+
+    public static EnvironmentValue<IEnumerable<ExprValue>> AppendTo(
+        this EvaluatedExpr acc,
+        EnvironmentValue<IEnumerable<ExprValue>> other
+    )
+    {
+        return acc.Env.WithValue(other.Value.Append(acc.Value));
+    }
+
+    public static EnvironmentValue<List<ExprValue>> EvaluateAllExpr(
+        this EvalEnvironment env,
+        IEnumerable<Expr> evalList
+    )
+    {
+        return env.EvaluateAll(evalList, (env2, e) => env2.Evaluate(e).Single())
+            .Map(x => x.ToList());
+    }
+
+    public static EnvironmentValue<IEnumerable<TResult>> EvaluateAll<T, TResult>(
+        this EvalEnvironment env,
+        IEnumerable<T> evalList,
+        Func<EvalEnvironment, T, EnvironmentValue<IEnumerable<TResult>>> evalFunc
+    )
+    {
+        return evalList.Aggregate(
+            env.WithEmpty<TResult>(),
+            (allResults, r) =>
+            {
+                var result = evalFunc(allResults.Env, r);
+                return result.AppendTo(allResults);
+            }
+        );
+    }
+
+    public static EnvironmentValue<T> WithValue<T>(this EvalEnvironment env, T result)
+    {
+        return new EnvironmentValue<T>(env, result);
+    }
+
+    public static EnvironmentValue<IEnumerable<T>> WithEmpty<T>(this EvalEnvironment env)
+    {
+        return new EnvironmentValue<IEnumerable<T>>(env, []);
+    }
+
+    public static EvaluatedExpr WithExprValue(this EvalEnvironment env, ExprValue value)
+    {
+        return new EvaluatedExpr(env, value);
+    }
+
+    public static EnvironmentValue<Expr> WithExpr(this EvalEnvironment env, Expr value)
+    {
+        return new EnvironmentValue<Expr>(env, value);
+    }
+
+    public static EvaluatedExpr WithNull(this EvalEnvironment env)
+    {
+        return new EvaluatedExpr(env, ExprValue.Null);
+    }
+
+    public static EnvironmentValue<IEnumerable<T>> AppendTo<T>(
+        this EnvironmentValue<IEnumerable<T>> envResult,
+        EnvironmentValue<IEnumerable<T>> other
+    )
+    {
+        return envResult with { Value = other.Value.Concat(envResult.Value) };
+    }
+}

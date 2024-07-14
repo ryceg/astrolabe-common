@@ -1,3 +1,7 @@
+using System.Linq.Expressions;
+using Astrolabe.Evaluator;
+using Astrolabe.Evaluator.Typed;
+
 namespace Astrolabe.Validation.Typed;
 
 public interface TypedRuleWrapper
@@ -59,6 +63,24 @@ public record TypedForEachRule<T>(ForEachRule ForEach) : TypedRule<T>
 
 public static class TypedRuleExtensions
 {
+    public static TypedRule<T> RuleForEach<T, T2>(
+        this TypedExpr<T> expr,
+        Expression<Func<T, IEnumerable<T2>>> getArray,
+        Func<TypedElementExpr<T2>, TypedRuleWrapper> makeRule
+    )
+    {
+        var typedArray = expr.ArrayProp(getArray);
+        var indexed = typedArray.WithIndex();
+        return new TypedForEachRule<T>(
+            new ForEachRule(typedArray.Wrapped, indexed.Index.Wrapped, makeRule(indexed).ToRule())
+        );
+    }
+
+    public static TypedPathRule<T> RuleFor<T>(this TypedExpr<T> expr)
+    {
+        return new TypedPathRule<T>(new SingleRule(expr.Wrapped, ExprValue.True, ExprValue.True));
+    }
+
     // public static PathRules<T, TN> CallInbuilt<T, TN>(
     //     this RuleBuilder<T, TN> ruleFor,
     //     InbuiltFunction func,

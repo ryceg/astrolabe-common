@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using Astrolabe.Common;
 
-namespace Astrolabe.Validation.Typed;
+namespace Astrolabe.Evaluator.Typed;
 
 public interface WrappedExpr
 {
@@ -11,6 +11,11 @@ public interface WrappedExpr
 
 public interface TypedExpr<T> : WrappedExpr
 {
+    public TypedExpr<T> Resolve()
+    {
+        return new SimpleTypedExpr<T>(new ResolveEval(Wrapped));
+    }
+
     public TypedExpr<T2> Prop<T2>(Expression<Func<T, T2?>> getter)
         where T2 : struct
     {
@@ -25,23 +30,6 @@ public interface TypedExpr<T> : WrappedExpr
     public TypedArrayExpr<T2> ArrayProp<T2>(Expression<Func<T, IEnumerable<T2>>> getter)
     {
         return new SimpleTypedExpr<T2>(new DotExpr(Wrapped, TypedExprExtensions.FieldName(getter)));
-    }
-
-    public TypedRule<T> RuleForEach<T2>(
-        Expression<Func<T, IEnumerable<T2>>> getArray,
-        Func<TypedElementExpr<T2>, TypedRuleWrapper> makeRule
-    )
-    {
-        var typedArray = ArrayProp(getArray);
-        var indexed = typedArray.WithIndex();
-        return new TypedForEachRule<T>(
-            new ForEachRule(typedArray.Wrapped, indexed.Index.Wrapped, makeRule(indexed).ToRule())
-        );
-    }
-
-    public TypedPathRule<T> RuleFor()
-    {
-        return new TypedPathRule<T>(new SingleRule(Wrapped, ExprValue.True, ExprValue.True));
     }
 }
 
