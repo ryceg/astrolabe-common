@@ -6,14 +6,11 @@ public static class PrintExpr
     {
         return expr switch
         {
-            WrappedExpr wrapped => wrapped.Expr.Print(),
-            GetExpr { Path: var path } => path.Print(),
             ExprValue { Value: null } => "null",
             ExprValue { Value: EmptyPath } => "$",
             ExprValue { Value: DataPath dp } => dp.ToPathString(),
             ArrayExpr arrayExpr
                 => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
-            ExprValue { Value: var v, FromPath: FieldPath fp } => $"({fp.Field}:{v})",
             ExprValue { Value: var v } => $"{v}",
             CallExpr { Function: InbuiltFunction.IfElse, Args: var a }
                 when a.ToList() is [var ifE, var t, var f]
@@ -48,20 +45,20 @@ public static class PrintExpr
         };
     }
 
-    public static string Print<T>(this ResolvedRule<T> rule)
+    public static string Print(this ResolvedRule rule)
     {
         return $"ResolvedRule " + rule.Path + " " + rule.Must.Print();
     }
 
-    public static string Print<T>(this Rule<T> rule)
+    public static string Print(this Rule rule)
     {
         return rule switch
         {
-            MultiRule<T> multiRule
+            MultiRule multiRule
                 => $"[\n{string.Join("\n", multiRule.Rules.Select(x => x.Print()))}\n]",
-            PathRule<T> pathRule => $"Rule {pathRule.Path.Print()}: {pathRule.Must.Print()}",
-            RulesForEach<T> rulesForEach
-                => $"RulesForEach {rulesForEach.Path.Print()} {rulesForEach.Index.Print()} {rulesForEach.Rule.Print()}",
+            SingleRule pathRule => $"Rule {pathRule.Path.Print()}: {pathRule.Must.Print()}",
+            ForEachRule rulesForEach
+                => $"ForEachRule {rulesForEach.Path.Print()} {rulesForEach.Index.Print()} {rulesForEach.Rule.Print()}",
             _ => throw new ArgumentOutOfRangeException(nameof(rule))
         };
     }

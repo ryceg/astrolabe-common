@@ -5,11 +5,11 @@ namespace Astrolabe.Validation;
 
 public class JsonDataLookup
 {
-    public static Func<DataPath, ExprValue> FromObject(JsonNode? data)
+    public static Func<DataPath, object?> FromObject(JsonNode? data)
     {
         Dictionary<DataPath, JsonNode?> cache = new();
 
-        return path => ToValue(GetNode(path), path);
+        return path => ToValue(GetNode(path));
 
         JsonNode? GetNode(DataPath dp)
         {
@@ -37,31 +37,30 @@ public class JsonDataLookup
         }
     }
 
-    private static ExprValue ToValue(JsonNode? node, DataPath from)
+    private static object? ToValue(JsonNode? node)
     {
         return node switch
         {
-            null => ExprValue.Null.WithPath(from),
-            JsonArray ja => ja.Select((v, i) => ToValue(v, new IndexPath(i, from))).ToExpr(from),
-            JsonObject jo => jo.ToExpr(from),
+            JsonArray ja => new ArrayValue(ja.Count, ja),
+            null or JsonObject => node,
             JsonValue v
                 => v.GetValue<object>() switch
                 {
                     JsonElement e
                         => e.ValueKind switch
                         {
-                            JsonValueKind.False => false.ToExpr(from),
-                            JsonValueKind.True => true.ToExpr(from),
-                            JsonValueKind.String => e.GetString().ToExpr(from),
+                            JsonValueKind.False => false,
+                            JsonValueKind.True => true,
+                            JsonValueKind.String => e.GetString(),
                             JsonValueKind.Number
                                 => e.TryGetInt64(out var l)
-                                    ? l.ToExpr(from)
+                                    ? l
                                     : e.TryGetDouble(out var d)
-                                        ? d.ToExpr(from)
-                                        : ExprValue.Null.WithPath(from),
+                                        ? d
+                                        : null,
                             _ => throw new ArgumentOutOfRangeException($"{e.ValueKind}-{e}")
                         },
-                    var objValue => objValue.ToExpr(from)
+                    var objValue => objValue
                 },
         };
     }

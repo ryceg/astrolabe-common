@@ -1,24 +1,19 @@
-using System.Linq.Expressions;
-using System.Numerics;
-using System.Text.Json;
-using Astrolabe.Common;
-
-namespace Astrolabe.Validation;
+namespace Astrolabe.Validation.Typed;
 
 public class BoolExpr(Expr expr) : TypedExpr<bool>
 {
-    public Expr Expr { get; } = expr;
+    public Expr Wrapped => expr;
 
     public override string ToString()
     {
-        return $"Bool({Expr})";
+        return $"Bool({Wrapped})";
     }
-    
+
     public static BoolExpr BinOp(InbuiltFunction func, BoolExpr e1, BoolExpr e2)
     {
-        return new BoolExpr(new CallExpr(func, [e1.Expr, e2.Expr]));
+        return new BoolExpr(new CallExpr(func, [e1.Wrapped, e2.Wrapped]));
     }
-    
+
     public static BoolExpr operator &(BoolExpr e1, BoolExpr e2)
     {
         return BinOp(InbuiltFunction.And, e1, e2);
@@ -31,7 +26,7 @@ public class BoolExpr(Expr expr) : TypedExpr<bool>
 
     public static BoolExpr operator !(BoolExpr e1)
     {
-        return new BoolExpr(new CallExpr(InbuiltFunction.Not, [e1.Expr]));
+        return new BoolExpr(new CallExpr(InbuiltFunction.Not, [e1.Wrapped]));
     }
 
     public static BoolExpr operator ==(BoolExpr e1, BoolExpr e2)
@@ -46,6 +41,6 @@ public class BoolExpr(Expr expr) : TypedExpr<bool>
 
     public static implicit operator BoolExpr(bool b)
     {
-        return new BoolExpr(b.ToExpr());
+        return new BoolExpr(ExprValue.From(b));
     }
 }

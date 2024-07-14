@@ -1,10 +1,9 @@
-﻿using System.Linq.Expressions;
-using System.Numerics;
-using System.Text.Json;
-using Astrolabe.Common;
+﻿using System.Collections;
+using Astrolabe.Annotation;
 
 namespace Astrolabe.Validation;
 
+[JsonString]
 public enum InbuiltFunction
 {
     Eq,
@@ -29,31 +28,17 @@ public enum InbuiltFunction
 
 public interface Expr;
 
-public record GetExpr(Expr Path) : Expr;
-
 public record DotExpr(Expr Base, Expr Segment) : Expr;
 
 public record MapExpr(Expr Array, Expr ElemPath, Expr MapTo) : Expr;
 
-public interface WrappedExpr : Expr
+public record ExprValue(object? Value) : Expr
 {
-    Expr Expr { get; }
-}
+    public static ExprValue Null => new((object?)null);
+    public static ExprValue False => new(false);
+    public static ExprValue True => new(true);
 
-public interface TypedExpr<T> : WrappedExpr;
-
-public record TypedWrappedExpr<T>(Expr Expr) : TypedExpr<T>;
-
-public record ExprValue(object? Value, DataPath? FromPath) : Expr
-{
-    public static ExprValue Null => new(null, null);
-    public static ExprValue False => new(false, null);
-    public static ExprValue True => new(false, null);
-
-    public ExprValue WithPath(DataPath segments)
-    {
-        return this with { FromPath = segments };
-    }
+    public static ExprValue EmptyPath => new(DataPath.Empty);
 
     public static double AsDouble(object? v)
     {
@@ -64,6 +49,41 @@ public record ExprValue(object? Value, DataPath? FromPath) : Expr
             double d => d,
             _ => throw new ArgumentException("Value is not a number: " + (v ?? "null"))
         };
+    }
+
+    public static ExprValue From(bool? v)
+    {
+        return new ExprValue(v);
+    }
+
+    public static ExprValue From(string? v)
+    {
+        return new ExprValue(v);
+    }
+
+    public static ExprValue From(ArrayValue? v)
+    {
+        return new ExprValue(v);
+    }
+
+    public static ExprValue From(int? v)
+    {
+        return new ExprValue(v);
+    }
+
+    public static ExprValue From(double? v)
+    {
+        return new ExprValue(v);
+    }
+
+    public static ExprValue From(long? v)
+    {
+        return new ExprValue(v);
+    }
+
+    public static ExprValue From(DataPath? v)
+    {
+        return new ExprValue(v);
     }
 }
 
@@ -96,9 +116,21 @@ public record VarExpr(string Name, int IndexId) : Expr
     {
         return new VarExpr(name, ++_indexCount);
     }
+
+    public VarExpr Prepend(string extra)
+    {
+        return new VarExpr(extra + Name, IndexId);
+    }
 }
 
-public record RunningIndex(Expr CountExpr) : Expr;
+public record ArrayValue(int Count, IEnumerable Values)
+{
+    public static ArrayValue From<T>(IEnumerable<T> enumerable)
+    {
+        var l = enumerable.ToList();
+        return new ArrayValue(l.Count, l);
+    }
+}
 
 public static class ValueExtensions
 {
@@ -107,16 +139,14 @@ public static class ValueExtensions
         return (ExprValue)expr;
     }
 
-    public static ExprValue ToExpr(this object? v, DataPath? from = null)
+    public static VarExpr AsVar(this Expr expr)
     {
-        if (v is ExprValue)
-            throw new AggregateException("Already an expr");
-        return new ExprValue(v, from);
+        return (VarExpr)expr;
     }
 
-    public static IEnumerable<ExprValue> AsEnumerable(this ExprValue v)
+    public static ArrayValue AsArray(this ExprValue v)
     {
-        return (v.Value as IEnumerable<ExprValue>)!;
+        return (v.Value as ArrayValue)!;
     }
 
     public static bool AsBool(this ExprValue v)
@@ -184,23 +214,22 @@ public static class ValueExtensions
         return (string)v.Value!;
     }
 
-    public static Expr AndExpr(this Expr? expr, Expr other)
+    public static Expr AndExpr(this Expr expr, Expr other)
     {
-        return expr == null ? other : new CallExpr(InbuiltFunction.And, [expr, other]);
+        return expr is ExprValue(bool b)
+            ? b
+                ? other
+                : expr
+            : new CallExpr(InbuiltFunction.And, [expr, other]);
     }
 
     public static Expr DotExpr(this Expr expr, Expr other)
     {
         return (expr, other) switch
         {
-            (ExprValue { Value: DataPath ps }, ExprValue v) => ApplyDot(ps, v).ToExpr(),
+            (ExprValue { Value: DataPath ps }, ExprValue v) => ExprValue.From(ApplyDot(ps, v)),
             _ => new DotExpr(expr, other)
         };
-    }
-
-    public static Expr Unwrap(this Expr e)
-    {
-        return e is WrappedExpr we ? we.Expr.Unwrap() : e;
     }
 
     public static Expr WrapWithProperty(this Expr expr, Expr key, Expr value)
@@ -220,89 +249,5 @@ public static class ValueExtensions
             { Value: string s } => new FieldPath(s, basePath),
             _ => new IndexPath(segment.AsInt(), basePath)
         };
-    }
-}
-
-public static class TypedExprExtensions
-{
-    public static NumberExpr AsNumber(this Expr expr)
-    {
-        return new NumberExpr(expr);
-    }
-
-    public static TypedExpr<T> ToTyped<T>(this Expr expr)
-    {
-        return new TypedWrappedExpr<T>(expr);
-    }
-
-    public static TypedPathExpr<T, T2> ToTypedPath<T, T2>(this Expr expr)
-    {
-        return new TypedWrappedPathExpr<T, T2>(expr);
-    }
-
-    public static TypedPathExpr<TRoot, TNext> Prop<TRoot, TCurrent, TNext>(
-        this TypedPathExpr<TRoot, TCurrent> expr,
-        Expression<Func<TCurrent, TNext?>> prop
-    )
-        where TNext : struct
-    {
-        return expr.UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
-    }
-
-    public static TypedPathExpr<TRoot, TNext> Prop<TRoot, TCurrent, TNext>(
-        this TypedPathExpr<TRoot, TCurrent> expr,
-        Expression<Func<TCurrent, TNext?>> prop
-    )
-    {
-        return expr.UnsafeProp(prop).ToTypedPath<TRoot, TNext>();
-    }
-
-    public static TypedPathExpr<TRoot, TCurrent> Indexed<TRoot, TCurrent>(
-        this TypedPathExpr<TRoot, IEnumerable<TCurrent>> expr,
-        TypedExpr<int> index
-    )
-    {
-        return expr.Expr.DotExpr(index).ToTypedPath<TRoot, TCurrent>();
-    }
-
-    public static TypedExpr<IEnumerable<TOut>> Map<TRoot, TCurrent, TOut>(
-        this TypedPathExpr<TRoot, ICollection<TCurrent>> arrayPath,
-        Func<TypedPathExpr<TRoot, TCurrent>, TypedExpr<TOut>> mapFunc
-    )
-    {
-        var current = VarExpr.MakeNew("elem");
-        return new MapExpr(
-            arrayPath.Get(),
-            current,
-            mapFunc(new PropertyValidator<TRoot, TCurrent>(current, null))
-        ).ToTyped<IEnumerable<TOut>>();
-    }
-
-    public static TypedExpr<TCurrent> Sum<TCurrent>(this TypedExpr<IEnumerable<TCurrent>> arrayExpr)
-        where TCurrent : INumber<TCurrent>
-    {
-        return new CallExpr(InbuiltFunction.Sum, [arrayExpr.Expr]).ToTyped<TCurrent>();
-    }
-}
-
-public record TypedWrappedPathExpr<TRoot, TCurrent>(Expr Expr) : TypedPathExpr<TRoot, TCurrent>;
-
-public interface TypedPathExpr<TRoot, TCurrent> : WrappedExpr
-{
-    public TypedExpr<TCurrent> Get()
-    {
-        return new GetExpr(Expr).ToTyped<TCurrent>();
-    }
-
-    public TypedExpr<TN> Get<TN>(Expression<Func<TCurrent, TN?>> expr)
-        where TN : struct
-    {
-        return this.Prop(expr).Get();
-    }
-
-    internal Expr UnsafeProp<TNext>(Expression<Func<TCurrent, TNext>> prop)
-    {
-        var propName = JsonNamingPolicy.CamelCase.ConvertName(prop.GetPropertyInfo().Name);
-        return Expr.DotExpr(propName.ToExpr());
     }
 }

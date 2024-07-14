@@ -1,81 +1,59 @@
 using System.Numerics;
+using Astrolabe.Annotation;
 
 namespace Astrolabe.Validation;
 
-public interface RuleBuilder<T, TProp> : TypedPathExpr<T, TProp>
+[JsonString]
+public enum RuleType
 {
-    Expr Path { get; }
-
-    Expr Props { get; }
-
-    Expr? Must { get; }
+    Single,
+    Multi,
+    ForEach
 }
 
-public record SimpleRuleBuilder<T, TProp>(Expr Path) : RuleBuilder<T, TProp>
-{
-    public Expr Expr => Path;
-    public Expr Props => ExprValue.True;
-    public Expr? Must => null;
-}
+[JsonBaseType("type", typeof(SingleRule))]
+[JsonSubType("Rule", typeof(SingleRule))]
+[JsonSubType("Rules", typeof(MultiRule))]
+public abstract record Rule(RuleType Type);
 
-public interface Rule<T>;
-
-public record MultiRule<T>(IEnumerable<Rule<T>> Rules) : Rule<T>
+public record SingleRule(Expr Path, Expr Props, Expr Must) : Rule(RuleType.Single)
 {
-    public MultiRule<T> AddRule(Rule<T> rule)
+    public SingleRule WithProp(Expr key, Expr value)
     {
-        return new MultiRule<T>(Rules.Append(rule));
+        return this with
+        {
+            Props = new CallExpr(InbuiltFunction.WithProperty, [key, value, Props])
+        };
     }
 
-    public override string ToString()
+    public SingleRule AndMust(Expr andMust)
     {
-        return $"[\n{string.Join("\n", Rules)}\n]";
+        return this with { Must = Must.AndExpr(andMust) };
+    }
+
+    public SingleRule When(Expr whenExpr)
+    {
+        return this with
+        {
+            Must = new CallExpr(InbuiltFunction.IfElse, [whenExpr, Must, ExprValue.Null,])
+        };
+    }
+
+    public SingleRule WithMessage(Expr message)
+    {
+        return this with { Props = new CallExpr(InbuiltFunction.WithMessage, [message, Props]) };
     }
 }
 
-public interface PathRule<T> : Rule<T>
-{
-    Expr Path { get; }
+public record MultiRule(IEnumerable<Rule> Rules) : Rule(RuleType.Multi);
 
-    Expr Props { get; }
-    Expr Must { get; }
-}
+public record ForEachRule(Expr Path, Expr Index, Rule Rule) : Rule(RuleType.ForEach);
 
-public interface RuleAndBuilder<T, TProp> : Rule<T>, RuleBuilder<T, TProp>
-{
-    Expr Must { get; }
-}
-
-public record PathRules<T, TProp>(Expr Path, Expr Must, Expr Props)
-    : RuleAndBuilder<T, TProp>,
-        PathRule<T>
-{
-    public Expr Expr => Path;
-}
-
-public record RulesForEach<T>(Expr Path, Expr Index, Rule<T> Rule) : Rule<T>;
-
-public record ResolvedRule<T>(DataPath Path, Expr Must, IDictionary<string, object?> Properties);
+public record ResolvedRule(DataPath Path, Expr Must, IDictionary<string, object?> Properties);
 
 public static class RuleExtensions
 {
-    public static PathRules<T, TN> MapMust<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        Func<Expr?, Expr> apply
-    )
-    {
-        return new PathRules<T, TN>(ruleFor.Path, apply(ruleFor.Must), ruleFor.Props);
-    }
-
-    public static RuleBuilder<T, TN> MapProps<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        Func<Expr, Expr> apply
-    )
-    {
-        return new PathRules<T, TN>(ruleFor.Path, ruleFor.Must!, apply(ruleFor.Props));
-    }
-
-    public static List<DataPath> GetDataOrder<T>(this IEnumerable<ResolvedRule<T>> rules)
+    public static List<DataPath> GetDataOrder(this IEnumerable<ResolvedRule> rules)
     {
         var dataOrder = new List<DataPath>();
         var processed = new HashSet<DataPath>();
@@ -85,7 +63,7 @@ public static class RuleExtensions
         ruleLookup.ToList().ForEach(x => AddRules(x.Key, x));
         return dataOrder;
 
-        void AddRules(DataPath path, IEnumerable<ResolvedRule<T>> pathRules)
+        void AddRules(DataPath path, IEnumerable<ResolvedRule> pathRules)
         {
             if (!processed.Add(path))
                 return;
@@ -105,7 +83,7 @@ public static class RuleExtensions
         {
             switch (e)
             {
-                case ExprValue { FromPath: { } fp }:
+                case ExprValue { Value: DataPath fp }:
                     AddRules(fp, ruleLookup[fp]);
                     break;
                 case CallExpr { Args: var args }:
@@ -116,137 +94,5 @@ public static class RuleExtensions
                     break;
             }
         }
-    }
-
-    public static PathRules<T, TN> CallInbuilt<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        InbuiltFunction func,
-        Expr arg2
-    )
-    {
-        return ruleFor.MapMust(m => m.AndExpr(new CallExpr(func, [ruleFor.Get(), arg2])));
-    }
-
-    public static PathRules<T, TN> CallInbuilt<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        InbuiltFunction func,
-        Expr arg1,
-        Expr arg2
-    )
-    {
-        return ruleFor.MapMust(m => m.AndExpr(new CallExpr(func, [arg1, arg2])));
-    }
-
-    public static PathRules<T, TN> Must<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        Func<Expr, BoolExpr> must
-    )
-    {
-        var path = ruleFor.Path;
-        return ruleFor.MapMust(m => m.AndExpr(must(ruleFor.Get()).Expr));
-    }
-
-    public static PathRules<T, TN> MustExpr<T, TN>(this RuleBuilder<T, TN> ruleFor, Expr must)
-    {
-        return ruleFor.MapMust(m => m.AndExpr(must));
-    }
-
-    public static PathRules<T, TN> Must<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        Func<NumberExpr, BoolExpr> must
-    )
-        where TN : struct, ISignedNumber<TN>
-    {
-        return ruleFor.MapMust(m => m.AndExpr(must(new NumberExpr(ruleFor.Get())).Expr));
-    }
-
-    public static PathRules<T, bool> Must<T>(
-        this RuleBuilder<T, bool> ruleFor,
-        Func<BoolExpr, BoolExpr> must
-    )
-    {
-        return ruleFor.MapMust(m => m.AndExpr(must(new BoolExpr(ruleFor.Get())).Expr));
-    }
-
-    public static RuleBuilder<T, TN> WithMessage<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        string message
-    )
-    {
-        return ruleFor.MapProps(x => x.WrapWithMessage(message.ToExpr()));
-    }
-
-    public static RuleBuilder<T, TN> WithProperty<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        string key,
-        object? value
-    )
-    {
-        return ruleFor.MapProps(x => x.WrapWithProperty(key.ToExpr(), value.ToExpr()));
-    }
-
-    public static PathRules<T, TN> Min<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        TN value,
-        bool exclusive = false
-    )
-    {
-        return ruleFor.MapMust(m =>
-            m.AndExpr(
-                new CallExpr(
-                    exclusive ? InbuiltFunction.Gt : InbuiltFunction.GtEq,
-                    [ruleFor.Get(), value.ToExpr()]
-                )
-            )
-        );
-    }
-
-    public static PathRules<T, TN> IfElse<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        BoolExpr ifExpr,
-        Func<RuleBuilder<T, TN>, PathRule<T>> trueExpr,
-        Func<RuleBuilder<T, TN>, PathRule<T>> falseExpr
-    )
-    {
-        return ruleFor.MapMust(m =>
-            m.AndExpr(
-                new CallExpr(
-                    InbuiltFunction.IfElse,
-                    [ifExpr.Expr, trueExpr(ruleFor).Must, falseExpr(ruleFor).Must]
-                )
-            )
-        );
-    }
-
-    public static PathRules<T, TN> When<T, TN>(this RuleBuilder<T, TN> ruleFor, BoolExpr ifExpr)
-    {
-        return ruleFor.MapMust(m => new CallExpr(
-            InbuiltFunction.IfElse,
-            [ifExpr.Expr, m ?? true.ToExpr(), ExprValue.Null]
-        ));
-    }
-
-    public static PathRules<T, TN> WhenExpr<T, TN>(this RuleBuilder<T, TN> ruleFor, Expr ifExpr)
-    {
-        return ruleFor.MapMust(m => new CallExpr(
-            InbuiltFunction.IfElse,
-            [ifExpr, m ?? true.ToExpr(), ExprValue.Null]
-        ));
-    }
-
-    public static PathRules<T, TN> Max<T, TN>(
-        this RuleBuilder<T, TN> ruleFor,
-        TN value,
-        bool exclusive = false
-    )
-    {
-        return ruleFor.MapMust(m =>
-            m.AndExpr(
-                new CallExpr(
-                    exclusive ? InbuiltFunction.Lt : InbuiltFunction.LtEq,
-                    [ruleFor.Get(), value.ToExpr()]
-                )
-            )
-        );
     }
 }

@@ -7,7 +7,7 @@ namespace Astrolabe.Validation;
 using EvaluatedExpr = EvaluatedResult<ExprValue>;
 
 public record EvalEnvironment(
-    Func<DataPath, ExprValue> GetData,
+    Func<DataPath, object?> GetData,
     IEnumerable<Failure> Failures,
     ExprValue Message,
     ImmutableHashSet<DataPath> FailedData,
@@ -42,7 +42,6 @@ public record EvalEnvironment(
         var _ = expr switch
         {
             VarExpr ve => true,
-            RunningIndex ri => false,
             _ => throw new ArgumentException("Can't replace that")
         };
         return this with { Replacements = Replacements.SetItem(expr, value) };
@@ -53,7 +52,7 @@ public record EvalEnvironment(
         return this with { Message = message };
     }
 
-    public static EvalEnvironment FromData(Func<DataPath, ExprValue> data)
+    public static EvalEnvironment FromData(Func<DataPath, object?> data)
     {
         return new EvalEnvironment(
             data,
@@ -73,7 +72,7 @@ public record EvalEnvironment(
 
 public record Failure(InbuiltFunction Function, ExprValue Actual, ExprValue Expected);
 
-public record RuleFailure<T>(IEnumerable<Failure> Failures, string? Message, ResolvedRule<T> Rule);
+public record RuleFailure(IEnumerable<Failure> Failures, string? Message, ResolvedRule Rule);
 
 public record EvaluatedResult<T>(EvalEnvironment Env, T Result)
 {
@@ -176,12 +175,7 @@ public static class EvalEnvironmentExtensions
 
     public static EvaluatedExpr WithNull(this EvalEnvironment env)
     {
-        return env.WithValue(null);
-    }
-
-    public static EvaluatedExpr WithValue(this EvalEnvironment env, object? value)
-    {
-        return new EvaluatedExpr(env, value.ToExpr());
+        return new EvaluatedExpr(env, ExprValue.Null);
     }
 
     public static EvaluatedResult<IEnumerable<T>> AppendTo<T>(

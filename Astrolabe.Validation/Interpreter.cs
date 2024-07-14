@@ -13,27 +13,27 @@ public static class Interpreter
             return environment.WithExpr(already);
         return expr switch
         {
-            WrappedExpr we => environment.ResolveExpr(we.Expr),
             ExprValue v => environment.WithExpr(v),
             VarExpr v => environment.WithExpr(v),
             DotExpr dotExpr => DoDot(dotExpr),
-            GetExpr getExpr => DoGet(getExpr),
             CallExpr callExpr => DoCall(callExpr),
             MapExpr mapExpr => DoMap(mapExpr)
         };
 
         EvaluatedResult<Expr> DoMap(MapExpr mapExpr)
         {
-            var (arrayEnv, arrayExpr) = environment.ResolveExpr(mapExpr.Array);
+            var (arrayEnv, arrayPath) = environment.ResolveExpr(mapExpr.Array);
+            var arrayExpr = arrayEnv.Evaluate(arrayPath).Result;
             var arrayVal = arrayExpr.AsValue();
             if (arrayVal.IsNull())
                 return arrayEnv.WithExpr(ExprValue.Null);
-            var arrayValue = arrayVal.AsEnumerable();
-            var elemVar = mapExpr.ElemPath.Unwrap();
+            var arrayValue = arrayVal.AsArray();
+            var elemVar = mapExpr.ElemPath;
+            var arrayBasePath = arrayPath.AsValue().AsPath();
             var results = arrayEnv.EvaluateAll(
-                arrayValue,
+                Enumerable.Range(0, arrayValue.Count),
                 (e, v) =>
-                    e.WithReplacement(elemVar, v.FromPath!.ToExpr())
+                    e.WithReplacement(elemVar, new ExprValue(new IndexPath(v, arrayBasePath)))
                         .ResolveExpr(mapExpr.MapTo)
                         .Single()
             );
@@ -50,33 +50,26 @@ public static class Interpreter
             return allArgs.Env.WithExpr(callExpr with { Args = allArgs.Result.ToList() });
         }
 
-        EvaluatedResult<Expr> DoGet(GetExpr p)
-        {
-            var v1 = environment.ResolveExpr(p.Path);
-            var segments = v1.Result.AsValue().AsPath();
-            return v1.Env.WithExpr(v1.Env.GetData(segments));
-        }
-
         EvaluatedResult<Expr> DoDot(DotExpr dotExpr)
         {
             var (pathEnv, pathValue) = environment.ResolveExpr(dotExpr.Base);
             var (segEnv, segValue) = pathEnv.ResolveExpr(dotExpr.Segment);
             var basePath = pathValue.AsValue().AsPath();
-            var resolved = ValueExtensions.ApplyDot(basePath, segValue.AsValue()).ToExpr();
+            var resolved = ExprValue.From(ValueExtensions.ApplyDot(basePath, segValue.AsValue()));
             return segEnv.WithExpr(resolved);
         }
     }
 
-    public static EvaluatedResult<RuleFailure<T>?> EvaluateFailures<T>(
+    public static EvaluatedResult<RuleFailure?> EvaluateFailures(
         this EvalEnvironment environment,
-        ResolvedRule<T> rule
+        ResolvedRule rule
     )
     {
         var (outEnv, result) = environment.Evaluate(rule.Must);
-        RuleFailure<T>? failure = null;
+        RuleFailure? failure = null;
         if (result.IsFalse())
         {
-            failure = new RuleFailure<T>(outEnv.Failures, outEnv.Message.AsString(), rule);
+            failure = new RuleFailure(outEnv.Failures, outEnv.Message.AsString(), rule);
         }
 
         var resetEnv = outEnv with
@@ -89,14 +82,21 @@ public static class Interpreter
         return resetEnv.WithResult(failure);
     }
 
+    public static EvaluatedExpr Evaluate(this EvaluatedResult<Expr> envExpr)
+    {
+        return envExpr.Env.Evaluate(envExpr.Result);
+    }
+
     public static EvaluatedExpr Evaluate(this EvalEnvironment environment, Expr expr)
     {
         if (environment.Replacements.TryGetValue(expr, out var already))
             return environment.WithResult(already);
         return expr switch
         {
-            ExprValue { FromPath: { } fp } when environment.FailedData.Contains(fp)
-                => environment.WithResult(ExprValue.Null),
+            ExprValue { Value: DataPath dp }
+                => environment.FailedData.Contains(dp)
+                    ? environment.WithResult(ExprValue.Null)
+                    : environment.WithExprValue(new ExprValue(environment.GetData(dp))),
             CallExpr callExpr => EvalCallExpr(callExpr),
             ArrayExpr arrayExpr
                 => arrayExpr
@@ -104,7 +104,7 @@ public static class Interpreter
                         environment.WithEmpty<ExprValue>(),
                         (acc, e) => acc.Env.Evaluate(e).AppendTo(acc)
                     )
-                    .Map(x => x.ToExpr()),
+                    .Map(x => ExprValue.From(ArrayValue.From(x.Select(v => v.AsValue().Value)))),
             ExprValue v => environment.WithResult(v),
             _ => throw new ArgumentOutOfRangeException(expr.ToString())
         };
@@ -145,18 +145,12 @@ public static class Interpreter
                         )
                 };
 
-                EvaluatedExpr DoDot()
-                {
-                    var basePath = v1.AsPath();
-                    return env2.WithValue(ValueExtensions.ApplyDot(basePath, v2));
-                }
-
                 EvaluatedExpr DoAnd()
                 {
                     if (v1.IsEitherNull(v2))
                         return env2.WithNull();
                     return !v1.AsBool()
-                        ? new EvaluatedExpr(env2, false.ToExpr())
+                        ? new EvaluatedExpr(env2, ExprValue.False)
                         : new EvaluatedExpr(env2, v2);
                 }
 
@@ -164,7 +158,7 @@ public static class Interpreter
                 {
                     return v1.IsEitherNull(v2)
                         ? env2.WithNull()
-                        : env2.WithValue(v1.AsBool() || v2.AsBool());
+                        : env2.WithResult(ExprValue.From(v1.AsBool() || v2.AsBool()));
                 }
 
                 EvaluatedExpr DoEquality(bool not)
@@ -181,7 +175,7 @@ public static class Interpreter
                 EvaluatedExpr CheckFailure(bool? boolResult, ExprValue actual, ExprValue failValue)
                 {
                     return env2.AddFailureIf(boolResult, callExpr.Function, actual, failValue)
-                        .WithValue(boolResult);
+                        .WithResult(ExprValue.From(boolResult));
                 }
             }
 
@@ -191,16 +185,16 @@ public static class Interpreter
                 return callExpr.Function switch
                 {
                     InbuiltFunction.Count => DoAggregate(x => x.Count()),
-                    InbuiltFunction.Sum => DoAggregate(x => x.Sum(v => v.AsDouble())),
+                    InbuiltFunction.Sum => DoAggregate(x => x.Sum(ExprValue.AsDouble)),
                     InbuiltFunction.Not when v1.AsBool() is var b
-                        => new EvaluatedExpr(env1, (!b).ToExpr())
+                        => new EvaluatedExpr(env1, ExprValue.From(!b))
                 };
 
-                EvaluatedExpr DoAggregate<T>(Func<IEnumerable<ExprValue>, T> aggFunc)
+                EvaluatedExpr DoAggregate<T>(Func<IEnumerable<object?>, T> aggFunc)
                 {
-                    var asList = v1.AsEnumerable().ToList();
+                    var asList = v1.AsArray().Values.Cast<object?>().ToList();
                     return env1.WithExprValue(
-                        asList.Any(x => x.IsNull()) ? ExprValue.Null : aggFunc(asList).ToExpr()
+                        asList.Any(x => x == null) ? ExprValue.Null : new ExprValue(aggFunc(asList))
                     );
                 }
             }
@@ -261,7 +255,7 @@ public static class Interpreter
             return ExprValue.Null;
         if ((o1.MaybeLong(), o2.MaybeLong()) is ({ } l1, { } l2))
         {
-            return (
+            return ExprValue.From(
                 op switch
                 {
                     InbuiltFunction.Add => l1 + l2,
@@ -269,12 +263,12 @@ public static class Interpreter
                     InbuiltFunction.Multiply => l1 * l2,
                     InbuiltFunction.Divide => (double)l1 / l2,
                 }
-            ).ToExpr();
+            );
         }
 
         var d1 = o1.AsDouble();
         var d2 = o2.AsDouble();
-        return (
+        return ExprValue.From(
             op switch
             {
                 InbuiltFunction.Add => d1 + d2,
@@ -282,27 +276,27 @@ public static class Interpreter
                 InbuiltFunction.Multiply => d1 * d2,
                 InbuiltFunction.Divide => d1 / d2,
             }
-        ).ToExpr();
+        );
     }
 
-    public static EvaluatedResult<IEnumerable<ResolvedRule<T>>> EvaluateRule<T>(
+    public static EvaluatedResult<IEnumerable<ResolvedRule>> EvaluateRule(
         this EvalEnvironment environment,
-        Rule<T> rule
+        Rule rule
     )
     {
         return rule switch
         {
-            RulesForEach<T> rulesForEach => DoRulesForEach(rulesForEach),
-            PathRule<T> pathRule => DoPathRule(pathRule),
-            MultiRule<T> multi => DoMultiRule(multi)
+            ForEachRule rulesForEach => DoRulesForEach(rulesForEach),
+            SingleRule pathRule => DoPathRule(pathRule),
+            MultiRule multi => DoMultiRule(multi)
         };
 
-        EvaluatedResult<IEnumerable<ResolvedRule<T>>> DoMultiRule(MultiRule<T> multiRule)
+        EvaluatedResult<IEnumerable<ResolvedRule>> DoMultiRule(MultiRule multiRule)
         {
             return environment.EvaluateAll(multiRule.Rules, EvaluateRule);
         }
 
-        EvaluatedResult<IEnumerable<ResolvedRule<T>>> DoPathRule(PathRule<T> pathRule)
+        EvaluatedResult<IEnumerable<ResolvedRule>> DoPathRule(SingleRule pathRule)
         {
             var (pathEnv, segments) = environment.ResolveExpr(pathRule.Path);
             var (mustEnv, must) = pathEnv.ResolveExpr(pathRule.Must);
@@ -310,7 +304,7 @@ public static class Interpreter
             var propsResult = propsEnv.Evaluate(props);
             return propsEnv
                 .WithResult(
-                    new ResolvedRule<T>(
+                    new ResolvedRule(
                         ((ExprValue)segments).AsPath(),
                         must,
                         propsResult.Env.Properties
@@ -319,32 +313,35 @@ public static class Interpreter
                 .Single();
         }
 
-        EvaluatedResult<IEnumerable<ResolvedRule<T>>> DoRulesForEach(RulesForEach<T> rules)
+        EvaluatedResult<IEnumerable<ResolvedRule>> DoRulesForEach(ForEachRule rules)
         {
             var (pathEnv, collectionSeg) = environment.ResolveExpr(rules.Path);
-            var indexExpr = rules.Index.Unwrap();
-            var runningIndexExpr = new RunningIndex(indexExpr);
+            var indexExpr = rules.Index;
+            var runningIndexExpr = indexExpr.AsVar().Prepend("Total");
             var runningIndexOffset = pathEnv.Replacements.TryGetValue(
                 runningIndexExpr,
                 out var current
             )
                 ? current.AsInt()
                 : 0;
-            var nextEnv = pathEnv.WithReplacement(runningIndexExpr, runningIndexOffset.ToExpr());
+            var nextEnv = pathEnv.WithReplacement(
+                runningIndexExpr,
+                ExprValue.From(runningIndexOffset)
+            );
 
             var dataCollection = nextEnv.GetData(collectionSeg.AsValue().AsPath());
-            if (dataCollection.Value is IEnumerable array)
+            if (dataCollection is ArrayValue array)
             {
                 return nextEnv.EvaluateAll(
-                    Enumerable.Range(0, array.Cast<object>().Count()),
+                    Enumerable.Range(0, array.Count),
                     (env, index) =>
                     {
-                        var envWithIndex = env.WithReplacement(indexExpr, index.ToExpr());
+                        var envWithIndex = env.WithReplacement(indexExpr, ExprValue.From(index));
                         return envWithIndex
                             .EvaluateRule(rules.Rule)
                             .WithReplacement(
                                 runningIndexExpr,
-                                (runningIndexOffset + index + 1).ToExpr()
+                                ExprValue.From(runningIndexOffset + index + 1)
                             );
                     }
                 );
