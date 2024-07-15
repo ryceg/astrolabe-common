@@ -20,6 +20,7 @@ import {
   FieldType,
   intField,
   makeScalarField,
+  stringField,
   timeField,
   visitControlData,
 } from "@react-typed-forms/schemas";
@@ -67,12 +68,14 @@ interface TestSchema {
   date: string;
   dateTime: string;
   time: string;
+  lengthTest: string;
 }
 
 const TestSchema = buildSchema<TestSchema>({
   dateTime: dateTimeField("Date and Time"),
   date: dateField("Date Only"),
   time: timeField("Time only"),
+  lengthTest: stringField("Min and max"),
   things: compoundField(
     "Things",
 

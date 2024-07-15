@@ -41,6 +41,7 @@ import {
 import {
   applyLengthRestrictions,
   ControlDataContext,
+  DynamicHookGenerator,
   elementValueForField,
   fieldDisplayName,
   findFieldPath,
@@ -255,6 +256,7 @@ export type CreateDataProps = (
 export interface ControlRenderOptions extends FormContextOptions {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   actionOnClick?: (actionId: string, actionData: any) => () => void;
+  useValidationHook?: DynamicHookGenerator<void, void>;
   useEvalExpressionHook?: UseEvalExpressionHook;
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
@@ -273,6 +275,8 @@ export function useControlRenderer(
 
   const fieldPath = lookupSchemaField(definition, fields);
   const schemaField = fieldPath?.at(-1);
+  const useValidationHook =
+    options.useValidationHook ?? (definition, schemaField);
   const dynamicHooks = useDynamicHooks({
     defaultValueControl: useEvalDefaultValueHook(
       useExpr,
