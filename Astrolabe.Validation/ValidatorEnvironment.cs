@@ -61,7 +61,45 @@ public record ValidatorEnvironment(
         return this with { Replacements = Replacements.SetItem(expr, value) };
     }
 
-    public EnvironmentValue<Expr> EvaluateCall(CallEnvExpr callEnvExpr)
+    public EnvironmentValue<ExprValue> EvaluateCall(CallableExpr callExpr)
+    {
+        if (callExpr is CallEnvExpr callEnvExpr)
+            return EvaluateValCall(callEnvExpr);
+        if (callExpr is not CallExpr ce)
+            return this.WithNull();
+        var evalArgs = this.EvaluateAll(ce.Args, (ee, e) => ee.Evaluate(e).Single())
+            .Map(x => x.ToList());
+        var result = DefaultFunctions.FunctionHandlers[ce.Function].Evaluate(evalArgs.Value);
+        if (
+            result.IsFalse()
+            && ce.Function
+                is InbuiltFunction.Eq
+                    or InbuiltFunction.Ne
+                    or InbuiltFunction.Gt
+                    or InbuiltFunction.Lt
+                    or InbuiltFunction.GtEq
+                    or InbuiltFunction.LtEq
+        )
+        {
+            return (
+                FromEnv(evalArgs.Env) with
+                {
+                    Failures = Failures.Append(new Failure(ce, evalArgs.Value))
+                }
+            ).WithExprValue(ExprValue.False);
+        }
+        return evalArgs.Env.WithValue(result);
+    }
+
+    public EnvironmentValue<Expr> ResolveCall(CallableExpr callEnvExpr)
+    {
+        if (callEnvExpr is not CallExpr ce)
+            return this.WithExpr(callEnvExpr);
+        var result = DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callEnvExpr.Args);
+        return this.WithExpr(result ?? ce);
+    }
+
+    public EnvironmentValue<ExprValue> EvaluateValCall(CallEnvExpr callEnvExpr)
     {
         var args = callEnvExpr.Args;
         return callEnvExpr.Function switch
@@ -70,14 +108,14 @@ public record ValidatorEnvironment(
             "WithMessage" => DoMessage()
         };
 
-        EnvironmentValue<Expr> DoMessage()
+        EnvironmentValue<ExprValue> DoMessage()
         {
             var (msgEnv, msg) = this.Evaluate(callEnvExpr.Args[0]);
             var valEnv = FromEnv(msgEnv);
-            return (valEnv with { Message = msg }).WithValue(callEnvExpr.Args[1]);
+            return (valEnv with { Message = msg }).Evaluate(callEnvExpr.Args[1]);
         }
 
-        EnvironmentValue<Expr> DoProp()
+        EnvironmentValue<ExprValue> DoProp()
         {
             var (evalEnvironment, argList) = this.EvaluateAllExpr(
                 [callEnvExpr.Args[0], callEnvExpr.Args[1]]
@@ -88,26 +126,8 @@ public record ValidatorEnvironment(
                 {
                     Properties = valEnv.Properties.SetItem(argList[0].AsString(), argList[1].Value)
                 }
-            ).WithValue(callEnvExpr.Args[2]);
+            ).Evaluate(callEnvExpr.Args[2]);
         }
-    }
-
-    public EnvironmentValue<ExprValue> BooleanResult(
-        bool? result,
-        CallExpr callExpr,
-        IEnumerable<ExprValue> evaluatedArgs
-    )
-    {
-        if (result == false)
-        {
-            return (
-                this with
-                {
-                    Failures = Failures.Append(new Failure(callExpr, evaluatedArgs.ToList()))
-                }
-            ).WithExprValue(ExprValue.False);
-        }
-        return this.WithExprValue(ExprValue.From(result));
     }
 }
 

@@ -49,14 +49,34 @@ public record MultiRule(IEnumerable<Rule> Rules) : Rule(RuleType.Multi)
     {
         return new MultiRule(rules);
     }
+
+    public static Rule Concat(Rule rule1, Rule rule2)
+    {
+        return new MultiRule(rule1.GetRules().Concat(rule2.GetRules()));
+    }
 }
 
-public record ForEachRule(Expr Path, Expr Index, Rule Rule) : Rule(RuleType.ForEach);
+public record ForEachRule(Expr Path, Expr Index, Rule Rule) : Rule(RuleType.ForEach)
+{
+    public ForEachRule AddRule(Rule rule)
+    {
+        return this with { Rule = MultiRule.Concat(Rule, rule) };
+    }
+}
 
 public record ResolvedRule(DataPath Path, Expr Must, IDictionary<string, object?> Properties);
 
 public static class RuleExtensions
 {
+    public static IEnumerable<Rule> GetRules(this Rule rule)
+    {
+        return rule switch
+        {
+            MultiRule multiRule => multiRule.Rules,
+            _ => [rule]
+        };
+    }
+
     public static List<DataPath> GetDataOrder(this IEnumerable<ResolvedRule> rules)
     {
         var dataOrder = new List<DataPath>();

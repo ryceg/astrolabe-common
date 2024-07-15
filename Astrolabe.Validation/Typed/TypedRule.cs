@@ -61,9 +61,9 @@ public record TypedPathRule<T>(SingleRule Single) : TypedRule<T>
 
 public static class TypedRuleExtensions
 {
-    public static Rule RuleForEach<T>(this TypedElementExpr<T> expr, TypedRule<T> rule)
+    public static ForEachRule RuleForEach<T>(this TypedElementExpr<T> expr, Rule rule)
     {
-        return new ForEachRule(expr.Array.Wrapped, expr.Index.Wrapped, rule.ToRule());
+        return new ForEachRule(expr.Array.Wrapped, expr.Index.Wrapped, rule);
     }
 
     public static TypedPathRule<T> RuleFor<T>(this TypedExpr<T> expr)

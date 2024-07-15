@@ -12,13 +12,9 @@ public interface EvalEnvironment
     bool TryGetReplacement(Expr expr, [MaybeNullWhen(false)] out EnvironmentValue<Expr> value);
     EvalEnvironment WithReplacement(Expr expr, Expr value);
 
-    EnvironmentValue<Expr> EvaluateCall(CallEnvExpr callEnvExpr);
+    EnvironmentValue<ExprValue> EvaluateCall(CallableExpr callEnvExpr);
 
-    EvaluatedExpr BooleanResult(
-        bool? result,
-        CallExpr callExpr,
-        IEnumerable<ExprValue> evaluatedArgs
-    );
+    EnvironmentValue<Expr> ResolveCall(CallableExpr callEnvExpr);
 }
 
 public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
@@ -46,6 +42,12 @@ public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
 
 public static class EvalEnvironmentExtensions
 {
+    public static EnvironmentValue<Expr> AsExpr<T>(this EnvironmentValue<T> ev)
+        where T : Expr
+    {
+        return ev.Map(x => (Expr)x);
+    }
+
     public static EnvironmentValue<IEnumerable<T>> SingleOrEmpty<T>(
         this EnvironmentValue<T?> evalResult
     )

@@ -95,19 +95,36 @@ public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr
     }
 }
 
-public record CallExpr(InbuiltFunction Function, IList<Expr> Args) : Expr
+public interface CallableExpr : Expr
+{
+    IList<Expr> Args { get; }
+
+    CallableExpr WithArgs(IEnumerable<Expr> args);
+}
+
+public record CallExpr(InbuiltFunction Function, IList<Expr> Args) : CallableExpr
 {
     public override string ToString()
     {
         return $"{Function}({string.Join(", ", Args)})";
     }
+
+    public CallableExpr WithArgs(IEnumerable<Expr> args)
+    {
+        return this with { Args = args.ToList() };
+    }
 }
 
-public record CallEnvExpr(string Function, IList<Expr> Args) : Expr
+public record CallEnvExpr(string Function, IList<Expr> Args) : CallableExpr
 {
     public override string ToString()
     {
         return $"{Function}({string.Join(", ", Args)})";
+    }
+
+    public CallableExpr WithArgs(IEnumerable<Expr> args)
+    {
+        return this with { Args = args.ToList() };
     }
 }
 
@@ -142,6 +159,21 @@ public record ArrayValue(int Count, IEnumerable Values)
 
 public static class ValueExtensions
 {
+    public static bool IsData(this Expr expr)
+    {
+        return expr is ExprValue { Value: DataPath dp };
+    }
+
+    public static bool IsValue(this Expr expr)
+    {
+        return expr is ExprValue;
+    }
+
+    public static bool IsNull(this Expr expr)
+    {
+        return expr is ExprValue { Value: null };
+    }
+
     public static bool IsDataPath(this Expr expr, DataPath dataPath)
     {
         return expr is ExprValue { Value: DataPath dp } && dp.Equals(dataPath);
@@ -192,7 +224,7 @@ public static class ValueExtensions
         };
     }
 
-    public static bool IsEitherNull(this ExprValue v, ExprValue other)
+    public static bool IsEitherNull(this Expr v, Expr other)
     {
         return v.IsNull() || other.IsNull();
     }
