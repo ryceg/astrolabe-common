@@ -43,7 +43,13 @@ public record SingleRule(Expr Path, Expr Props, Expr Must) : Rule(RuleType.Singl
     }
 }
 
-public record MultiRule(IEnumerable<Rule> Rules) : Rule(RuleType.Multi);
+public record MultiRule(IEnumerable<Rule> Rules) : Rule(RuleType.Multi)
+{
+    public static MultiRule For(params Rule[] rules)
+    {
+        return new MultiRule(rules);
+    }
+}
 
 public record ForEachRule(Expr Path, Expr Index, Rule Rule) : Rule(RuleType.ForEach);
 

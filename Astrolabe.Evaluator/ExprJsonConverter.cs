@@ -41,6 +41,12 @@ public class ExprJsonConverter : JsonConverter<Expr>
             case CallExpr { Function: var f, Args: var a }:
                 JsonSerializer.Serialize(writer, new { Call = f.ToString(), Args = a }, options);
                 break;
+            case CallEnvExpr { Function: var f, Args: var a }:
+                JsonSerializer.Serialize(writer, new { Call = f, Args = a }, options);
+                break;
+            case ResolveEval { Expr: var e }:
+                JsonSerializer.Serialize(writer, new { Resolve = e }, options);
+                break;
             default:
                 throw new NotImplementedException();
         }
