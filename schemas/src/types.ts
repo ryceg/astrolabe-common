@@ -60,6 +60,11 @@ export type AnyControlDefinition =
   | ActionControlDefinition
   | DisplayControlDefinition;
 
+export enum ValidationMessageType {
+  NotEmpty = "NotEmpty",
+  MinLength = "MinLength",
+  MaxLength = "MaxLength",
+}
 export interface SchemaInterface {
   isEmptyValue(field: SchemaField, value: any): boolean;
   textValue(
@@ -70,6 +75,13 @@ export interface SchemaInterface {
   controlLength(field: SchemaField, control: Control<any>): number;
   valueLength(field: SchemaField, value: any): number;
   getOptions(field: SchemaField): FieldOption[] | undefined | null;
+  parseToMillis(field: SchemaField, v: string): number;
+  validationMessageText(
+    field: SchemaField,
+    messageType: ValidationMessageType,
+    actual: any,
+    expected: any,
+  ): string;
 }
 export interface ControlDefinition {
   type: string;

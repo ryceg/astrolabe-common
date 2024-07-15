@@ -7,160 +7,190 @@ import {
   JsonataValidator,
   LengthValidator,
   SchemaField,
-  SchemaInterface,
+  SchemaValidator,
+  ValidationMessageType,
   ValidatorType,
 } from "./types";
 import {
   Control,
-  ControlChange,
-  trackControlChange,
-  useControlEffect,
   useValidator,
   useValueChangeEffect,
 } from "@react-typed-forms/core";
 import { useCallback } from "react";
-import {
-  ControlDataContext,
-  DynamicHookGenerator,
-  makeHook,
-  useUpdatedRef,
-} from "./util";
+import { ControlDataContext, makeHookDepString, useUpdatedRef } from "./util";
 import { useJsonataExpression } from "./hooks";
 
-export interface ValidationContext {
-  control: Control<any>;
-  hidden: Control<boolean>;
+interface ValidationHookContext {
+  hiddenControl: Control<boolean | null | undefined>;
   dataContext: ControlDataContext;
+  control: Control<any>;
 }
 
-export function useDefaultValidation(
-  ctx: ValidationContext,
-  state: { definition },
-);
+export interface ValidationContext extends ValidationHookContext {
+  definition: DataControlDefinition;
+  field: SchemaField;
+  index: number;
+}
 
-export function useControlValidation(
+export function useMakeValidationHook(
   definition: ControlDefinition,
   field: SchemaField | undefined,
-): DynamicHookGenerator<void, ValidationContext> {
-  const dd = isDataControlDefinition(definition) ? definition : undefined;
-  return makeHook(
-    doValidation,
-    { definition, field },
-    dd?.validators?.map((x) => x.type).join("_") ?? undefined,
+  useValidatorFor: (
+    validator: SchemaValidator,
+    ctx: ValidationContext,
+  ) => void = useDefaultValidator,
+): (ctx: ValidationHookContext) => void {
+  const dd =
+    field && isDataControlDefinition(definition) ? definition : undefined;
+  const refData = useUpdatedRef({ dd, field, useValidatorFor });
+  const depString = makeHookDepString(dd?.validators ?? [], (x) => x.type);
+  return useCallback(
+    (ctx) => {
+      const { dd, field } = refData.current;
+      if (!dd || !field) return;
+      const {
+        control,
+        hiddenControl,
+        dataContext: { schemaInterface },
+      } = ctx;
+
+      useValueChangeEffect(control, () => control.setError("default", ""));
+      useValidator(
+        control,
+        (v) =>
+          !hiddenControl.value &&
+          dd.required &&
+          schemaInterface.isEmptyValue(field, v)
+            ? schemaInterface.validationMessageText(
+                field,
+                ValidationMessageType.NotEmpty,
+                false,
+                true,
+              )
+            : null,
+        "required",
+        undefined,
+        [dd.required],
+      );
+      dd.validators?.forEach((v, i) =>
+        useValidatorFor(v, { ...ctx, index: i, field, definition: dd }),
+      );
+    },
+    [!!dd, depString, useValidatorFor],
   );
-  function doValidation() {}
-  //   const dd = isDataControlDefinition(definition)
-  //     ? { required: definition.required, validators: definition.validators }
-  //     : {};
-  //   const validatorTypes = dd ? dd.validators?.map((x) => x.type) ?? [] : null;
-  //   if (!validatorTypes) return;
-  //
-  //   makeHook(())
-  //   const schemaInterface = dataContext.schemaInterface;
-  //
-  //   useValueChangeEffect(control, () => control.setError("default", ""));
-  //   useValidator(
-  //     control,
-  //     (v) =>
-  //       !hidden && dd.required && field && schemaInterface.isEmptyValue(field, v)
-  //         ? "Please enter a value"
-  //         : null,
-  //     "required",
-  //     undefined,
-  //     [hidden, dd.required, !!field],
-  //   );
-  //   (dd.validators ?? []).forEach((x, i) => {
-  //     switch (x.type) {
-  //       case ValidatorType.Length:
-  //         const lv = x as LengthValidator;
-  //         useControlEffect(
-  //           () => {
-  //             trackControlChange(control, ControlChange.Validate);
-  //             return [
-  //               field ? schemaInterface.controlLength(field, control) : 0,
-  //               hidden,
-  //             ] as const;
-  //           },
-  //           ([len, hidden]) => {
-  //             if (hidden) {
-  //               control.setError("length", undefined);
-  //               return;
-  //             }
-  //             if (lv.min != null && len < lv.min) {
-  //               if (field?.collection) {
-  //                 control.setValue((v) =>
-  //                   Array.isArray(v)
-  //                     ? v.concat(Array.from({ length: lv.min! - v.length }))
-  //                     : Array.from({ length: lv.min! }),
-  //                 );
-  //               } else {
-  //                 control.setError("length", "Length must be at least " + lv.min);
-  //               }
-  //             } else if (lv.max != null && len > lv.max) {
-  //               control.setError("length", "Length must be less than " + lv.max);
-  //             }
-  //           },
-  //           true,
-  //         );
-  //         break;
-  //       case ValidatorType.Jsonata:
-  //         return useJsonataValidator(
-  //           control,
-  //           groupContext,
-  //           x as JsonataValidator,
-  //           hidden,
-  //           i,
-  //         );
-  //       case ValidatorType.Date:
-  //         return useDateValidator(control, x as DateValidator, i);
-  //     }
-  //   });
-  // }
-  //
-  // function useJsonataValidator(
-  //   control: Control<any>,
-  //   context: ControlDataContext,
-  //   expr: JsonataValidator,
-  //   hidden: boolean,
-  //   i: number,
-  // ) {
-  //   const errorMsg = useJsonataExpression(expr.expression, context);
-  //   useValidator(control, () => (!hidden ? errorMsg.value : null), "jsonata" + i);
-  // }
-  //
-  // function useDateValidator(
-  //   control: Control<string | null | undefined>,
-  //   dv: DateValidator,
-  //   i: number,
-  // ) {
-  //   let comparisonDate: number;
-  //   if (dv.fixedDate) {
-  //     comparisonDate = Date.parse(dv.fixedDate);
-  //   } else {
-  //     const nowDate = new Date();
-  //     comparisonDate = Date.UTC(
-  //       nowDate.getFullYear(),
-  //       nowDate.getMonth(),
-  //       nowDate.getDate(),
-  //     );
-  //     if (dv.daysFromCurrent) {
-  //       comparisonDate += dv.daysFromCurrent * 86400000;
-  //     }
-  //   }
-  //   useValidator(
-  //     control,
-  //     (v) => {
-  //       if (v) {
-  //         const selDate = Date.parse(v);
-  //         const notAfter = dv.comparison === DateComparison.NotAfter;
-  //         if (notAfter ? selDate > comparisonDate : selDate < comparisonDate) {
-  //           return `Date must not be ${notAfter ? "after" : "before"} ${new Date(
-  //             comparisonDate,
-  //           ).toDateString()}`;
-  //         }
-  //       }
-  //       return null;
-  //     },
-  //     "date" + i,
-  //   );
+}
+
+function useDefaultValidator(
+  validator: SchemaValidator,
+  ctx: ValidationContext,
+) {
+  switch (validator.type) {
+    case ValidatorType.Length:
+      useLengthValidator(validator as LengthValidator, ctx);
+      break;
+    case ValidatorType.Jsonata:
+      useJsonataValidator(validator as JsonataValidator, ctx);
+      break;
+    case ValidatorType.Date:
+      useDateValidator(validator as DateValidator, ctx);
+      break;
+  }
+}
+
+export function useJsonataValidator(
+  validator: JsonataValidator,
+  ctx: ValidationContext,
+) {
+  const errorMsg = useJsonataExpression(validator.expression, ctx.dataContext);
+  useValidator(
+    ctx.control,
+    () => (!ctx.hiddenControl.value ? errorMsg.value : null),
+    "jsonata" + ctx.index,
+  );
+}
+
+export function useLengthValidator(
+  lv: LengthValidator,
+  ctx: ValidationContext,
+) {
+  const {
+    control,
+    dataContext: { schemaInterface },
+    hiddenControl,
+    field,
+  } = ctx;
+  useValidator(
+    control,
+    (v) => {
+      const len = schemaInterface.controlLength(field, control);
+      const hidden = hiddenControl.value;
+      if (hidden) {
+        return undefined;
+      }
+      if (lv.min != null && len < lv.min) {
+        if (field?.collection) {
+          control.setValue((v) =>
+            Array.isArray(v)
+              ? v.concat(Array.from({ length: lv.min! - v.length }))
+              : Array.from({ length: lv.min! }),
+          );
+        } else {
+          return schemaInterface.validationMessageText(
+            field,
+            ValidationMessageType.MinLength,
+            len,
+            lv.min,
+          );
+        }
+      } else if (lv.max != null && len > lv.max) {
+        return schemaInterface.validationMessageText(
+          field,
+          ValidationMessageType.MaxLength,
+          len,
+          lv.max,
+        );
+      }
+      return undefined;
+    },
+    "length" + ctx.index,
+  );
+}
+
+export function useDateValidator(dv: DateValidator, ctx: ValidationContext) {
+  const {
+    control,
+    field,
+    index,
+    dataContext: { schemaInterface },
+  } = ctx;
+  let comparisonDate: number;
+  if (dv.fixedDate) {
+    comparisonDate = Date.parse(dv.fixedDate);
+  } else {
+    const nowDate = new Date();
+    comparisonDate = Date.UTC(
+      nowDate.getFullYear(),
+      nowDate.getMonth(),
+      nowDate.getDate(),
+    );
+    if (dv.daysFromCurrent) {
+      comparisonDate += dv.daysFromCurrent * 86400000;
+    }
+  }
+  useValidator(
+    control,
+    (v) => {
+      if (v) {
+        const selDate = schemaInterface.parseToMillis(field, v);
+        const notAfter = dv.comparison === DateComparison.NotAfter;
+        if (notAfter ? selDate > comparisonDate : selDate < comparisonDate) {
+          return `Date must not be ${notAfter ? "after" : "before"} ${new Date(
+            comparisonDate,
+          ).toDateString()}`;
+        }
+      }
+      return null;
+    },
+    "date" + index,
+  );
 }

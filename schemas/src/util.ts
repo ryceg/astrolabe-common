@@ -633,6 +633,12 @@ export function makeHook<A, P, S = undefined>(
 export type DynamicHookValue<A> =
   A extends DynamicHookGenerator<infer V, any> ? V : never;
 
+export function makeHookDepString<A>(
+  deps: A[],
+  asHookDep: (a: A) => HookDep,
+): string {
+  return deps.map((x) => toDepString(asHookDep(x))).join(",");
+}
 export function useDynamicHooks<
   P,
   Hooks extends Record<string, DynamicHookGenerator<any, P>>,
@@ -642,7 +648,7 @@ export function useDynamicHooks<
   [K in keyof Hooks]: DynamicHookValue<Hooks[K]>;
 } {
   const hookEntries = Object.entries(hooks);
-  const deps = hookEntries.map(([, x]) => toDepString(x.deps)).join(",");
+  const deps = makeHookDepString(hookEntries, (x) => x[1].deps);
   const ref = useRef<Record<string, any>>({});
   const s = ref.current;
   hookEntries.forEach((x) => (s[x[0]] = x[1].state));

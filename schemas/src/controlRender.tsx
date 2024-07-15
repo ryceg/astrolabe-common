@@ -13,6 +13,7 @@ import {
   Control,
   newControl,
   removeElement,
+  trackedValue,
   useCalculatedControl,
   useComponentTracking,
   useControl,
@@ -36,18 +37,17 @@ import {
   RenderOptions,
   SchemaField,
   SchemaInterface,
+  SchemaValidator,
   ValidatorType,
 } from "./types";
 import {
   applyLengthRestrictions,
   ControlDataContext,
-  DynamicHookGenerator,
   elementValueForField,
   fieldDisplayName,
   findFieldPath,
   isCompoundField,
   JsonPath,
-  lookupChildControlPath,
   useDynamicHooks,
   useUpdatedRef,
 } from "./util";
@@ -66,12 +66,9 @@ import {
   useEvalStyleHook,
   useEvalVisibilityHook,
 } from "./hooks";
-import { useValidationHook } from "./validators";
+import { useMakeValidationHook, ValidationContext } from "./validators";
 import { cc } from "./internal";
-import {
-  DefaultSchemaInterface,
-  defaultSchemaInterface,
-} from "./schemaInterface";
+import { defaultSchemaInterface } from "./schemaInterface";
 
 export interface FormRenderer {
   renderData: (
@@ -256,7 +253,10 @@ export type CreateDataProps = (
 export interface ControlRenderOptions extends FormContextOptions {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   actionOnClick?: (actionId: string, actionData: any) => () => void;
-  useValidationHook?: DynamicHookGenerator<void, void>;
+  useValidationHook?: (
+    validator: SchemaValidator,
+    ctx: ValidationContext,
+  ) => void;
   useEvalExpressionHook?: UseEvalExpressionHook;
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
@@ -275,8 +275,11 @@ export function useControlRenderer(
 
   const fieldPath = lookupSchemaField(definition, fields);
   const schemaField = fieldPath?.at(-1);
-  const useValidationHook =
-    options.useValidationHook ?? (definition, schemaField);
+  const useValidation = useMakeValidationHook(
+    definition,
+    schemaField,
+    options.useValidationHook,
+  );
   const dynamicHooks = useDynamicHooks({
     defaultValueControl: useEvalDefaultValueHook(
       useExpr,
@@ -303,7 +306,6 @@ export function useControlRenderer(
     displayControl: useEvalDisplayHook(useExpr, definition),
   });
 
-  const useValidation = useValidationHook(definition, schemaField);
   const r = useUpdatedRef({
     options,
     definition,
@@ -395,17 +397,19 @@ export function useControlRenderer(
           },
           true,
         );
-        const myOptions = useCalculatedControl<FormContextOptions>(() => ({
-          hidden: options.hidden || !visibility.fields?.showing.value,
-          readonly: options.readonly || readonlyControl.value,
-          disabled: options.disabled || disabledControl.value,
-        })).value;
-        useValidation(
-          control ?? newControl(null),
-          !!myOptions.hidden,
-          parentDataContext,
-          schemaInterface,
+        const myOptionsControl = useCalculatedControl<FormContextOptions>(
+          () => ({
+            hidden: options.hidden || !visibility.fields?.showing.value,
+            readonly: options.readonly || readonlyControl.value,
+            disabled: options.disabled || disabledControl.value,
+          }),
         );
+        const myOptions = trackedValue(myOptionsControl);
+        useValidation({
+          control: control ?? newControl(null),
+          hiddenControl: myOptionsControl.fields.hidden,
+          dataContext: parentDataContext,
+        });
         const childOptions: ControlRenderOptions = {
           ...options,
           ...myOptions,

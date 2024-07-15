@@ -1,8 +1,35 @@
-import { FieldOption, FieldType, SchemaField, SchemaInterface } from "./types";
+import {
+  FieldOption,
+  FieldType,
+  SchemaField,
+  SchemaInterface,
+  ValidationMessageType,
+} from "./types";
 import { Control } from "@react-typed-forms/core";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(protected boolStrings: [string, string] = ["No", "Yes"]) {}
+
+  parseToMillis(field: SchemaField, v: string): number {
+    return Date.parse(v);
+  }
+  validationMessageText(
+    field: SchemaField,
+    messageType: ValidationMessageType,
+    actual: any,
+    expected: any,
+  ): string {
+    switch (messageType) {
+      case ValidationMessageType.NotEmpty:
+        return "Please enter a value";
+      case ValidationMessageType.MinLength:
+        return "Length must be at least " + expected;
+      case ValidationMessageType.MaxLength:
+        return "Length must be less than " + expected;
+      default:
+        return "Unknown error";
+    }
+  }
 
   getOptions({ options }: SchemaField): FieldOption[] | null | undefined {
     return options && options.length > 0 ? options : null;
