@@ -64,6 +64,8 @@ export enum ValidationMessageType {
   NotEmpty = "NotEmpty",
   MinLength = "MinLength",
   MaxLength = "MaxLength",
+  NotAfterDate = "NotAfterDate",
+  NotBeforeDate = "NotBeforeDate",
 }
 export interface SchemaInterface {
   isEmptyValue(field: SchemaField, value: any): boolean;

@@ -26,6 +26,10 @@ export class DefaultSchemaInterface implements SchemaInterface {
         return "Length must be at least " + expected;
       case ValidationMessageType.MaxLength:
         return "Length must be less than " + expected;
+      case ValidationMessageType.NotBeforeDate:
+        return `Date must not be before ${new Date(expected).toDateString()}`;
+      case ValidationMessageType.NotAfterDate:
+        return `Date must not be after ${new Date(expected).toDateString()}`;
       default:
         return "Unknown error";
     }

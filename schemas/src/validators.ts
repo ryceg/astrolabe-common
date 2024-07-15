@@ -165,7 +165,7 @@ export function useDateValidator(dv: DateValidator, ctx: ValidationContext) {
   } = ctx;
   let comparisonDate: number;
   if (dv.fixedDate) {
-    comparisonDate = Date.parse(dv.fixedDate);
+    comparisonDate = schemaInterface.parseToMillis(field, dv.fixedDate);
   } else {
     const nowDate = new Date();
     comparisonDate = Date.UTC(
@@ -184,9 +184,14 @@ export function useDateValidator(dv: DateValidator, ctx: ValidationContext) {
         const selDate = schemaInterface.parseToMillis(field, v);
         const notAfter = dv.comparison === DateComparison.NotAfter;
         if (notAfter ? selDate > comparisonDate : selDate < comparisonDate) {
-          return `Date must not be ${notAfter ? "after" : "before"} ${new Date(
+          return schemaInterface.validationMessageText(
+            field,
+            notAfter
+              ? ValidationMessageType.NotAfterDate
+              : ValidationMessageType.NotBeforeDate,
+            selDate,
             comparisonDate,
-          ).toDateString()}`;
+          );
         }
       }
       return null;
