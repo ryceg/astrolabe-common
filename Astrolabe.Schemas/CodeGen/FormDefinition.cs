@@ -32,14 +32,19 @@ public class FormBuilder<TConfig>
 
 public static class FormDefinition
 {
-    public static TsFile GenerateFormFile<T>(
+    public static TsFile GenerateFormModule<T>(
+        string formsVariable,
         IEnumerable<FormDefinition<T>> definitions,
         string schemaModule,
         string formModuleDir
     )
     {
-        var formVars = definitions.Select(MakeAssignment);
-        return TsFile.FromDeclarations(formVars.Cast<TsDeclaration>().ToList());
+        var formVars = definitions.Select(MakeAssignment).ToList();
+        var formsAssignment = new TsAssignment(
+            formsVariable,
+            new TsObjectExpr(formVars.Select(x => TsObjectField.ForVariable(new TsRawExpr(x.Name))))
+        );
+        return TsFile.FromDeclarations([.. formVars, formsAssignment]);
 
         TsAssignment MakeAssignment(FormDefinition<T> x)
         {
@@ -65,7 +70,12 @@ public static class FormDefinition
                         TsObjectField.NamedField("defaultConfig", new TsConstExpr(x.Config)),
                         TsObjectField.NamedField(
                             "controls",
-                            new TsPropertyExpr(jsonFile, new TsRawExpr("controls"))
+                            new TsAsExpr(
+                                new TsPropertyExpr(jsonFile, new TsRawExpr("controls")),
+                                new TsArrayType(
+                                    SchemaFieldsGenerator.FormLibImport("ControlDefinition").TypeRef
+                                )
+                            )
                         ),
                         TsObjectField.NamedField(
                             "config",

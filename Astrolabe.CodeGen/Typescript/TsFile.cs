@@ -16,7 +16,7 @@ public record TsFile(IEnumerable<TsDeclaration> Declarations)
     }
 }
 
-public interface TsImportable : TsDeclaration
+public interface TsImportable
 {
     IEnumerable<TsImport> AllImports();
 }
@@ -38,13 +38,23 @@ public record TsImport(string File, string Import, bool DefaultImport = false) :
     }
 }
 
-public interface TsDeclaration { }
+public interface TsBase;
 
-public interface TsExpr { }
+public interface TsDeclaration : TsBase;
 
-public interface TsStatement { }
+public interface TsExpr : TsBase;
 
-public record TsImports(IEnumerable<TsImport> Imports) : TsImportable
+public abstract record TsParentExpr(IEnumerable<TsBase> Children) : TsExpr, TsImportable
+{
+    public IEnumerable<TsImport> AllImports()
+    {
+        return Children.SelectMany(x => x.CollectImports());
+    }
+}
+
+public interface TsStatement;
+
+public record TsImports(IEnumerable<TsImport> Imports) : TsDeclaration, TsImportable
 {
     public IEnumerable<TsImport> AllImports()
     {
@@ -74,7 +84,7 @@ public record TsFunctionType(
     bool Nullable = false
 ) : TsType(Undefinable, Nullable);
 
-public record TsType(bool Undefinable, bool Nullable);
+public record TsType(bool Undefinable, bool Nullable) : TsBase;
 
 public record TsTypeRef(
     string Name,
@@ -126,11 +136,18 @@ public record TsObjectField(TsExpr Field, TsExpr Value)
     {
         return new TsObjectField(new TsRawExpr(name), value);
     }
+
+    public static TsObjectField ForVariable(TsExpr varExpr)
+    {
+        return new TsObjectField(varExpr, varExpr);
+    }
 }
+
+public record TsAsExpr(TsExpr Expr, TsType As) : TsParentExpr([Expr, As]);
 
 public record TsArrayExpr(IEnumerable<TsExpr> Elements) : TsExpr;
 
-public record TsPropertyExpr(TsExpr Object, TsExpr Field) : TsExpr;
+public record TsPropertyExpr(TsExpr Object, TsExpr Field) : TsParentExpr([Object, Field]);
 
 public record TsCallExpression(TsExpr Function, IEnumerable<TsExpr> Args) : TsExpr
 {
@@ -306,8 +323,9 @@ public static class TsToSource
     {
         return tsExpr switch
         {
+            TsAsExpr tsAs => $"{tsAs.Expr.ToSource()} as {tsAs.As.ToSource()}",
             TsArrayExpr tsArrayExpr
-                => $"[" + string.Join(", ", tsArrayExpr.Elements.Select(x => x.ToSource())) + "]",
+                => "[" + string.Join(", ", tsArrayExpr.Elements.Select(x => x.ToSource())) + "]",
             TsCallExpression tsCallExpression
                 => $"{tsCallExpression.Function.ToSource()}("
                     + string.Join(", ", tsCallExpression.Args.Select(x => x.ToSource()))
@@ -340,11 +358,8 @@ public static class TsToSource
     {
         return tsExpr switch
         {
+            TsImportable importable => importable.AllImports(),
             TsArrayExpr tsArrayExpr => tsArrayExpr.Elements.SelectMany(x => x.CollectImports()),
-            TsPropertyExpr tsPropertyExpr
-                => tsPropertyExpr
-                    .Object.CollectImports()
-                    .Concat(tsPropertyExpr.Field.CollectImports()),
             TsCallExpression tsCallExpression
                 => tsCallExpression
                     .Args.SelectMany(x => x.CollectImports())
@@ -398,6 +413,17 @@ public static class TsToSource
                     .Args.SelectMany(x => x.CollectImports())
                     .Concat(tsFunction.ReturnType?.CollectImports() ?? Array.Empty<TsImport>())
                     .Concat(tsFunction.Body.SelectMany(x => x.CollectImports())),
+        };
+    }
+
+    public static IEnumerable<TsImport> CollectImports(this TsBase baseNode)
+    {
+        return baseNode switch
+        {
+            TsImportable ts => ts.AllImports(),
+            TsExpr e => e.CollectImports(),
+            TsDeclaration d => d.CollectImports(),
+            TsType t => t.CollectImports()
         };
     }
 }

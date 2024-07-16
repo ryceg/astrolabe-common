@@ -18,16 +18,15 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
     private readonly IEnumerable<TsType> _customFieldTypeParams;
 
     public SchemaFieldsGenerator(string clientPath)
-        : this(new SchemaFieldsGeneratorOptions(clientPath))
-    {
-    }
+        : this(new SchemaFieldsGeneratorOptions(clientPath)) { }
 
     public SchemaFieldsGenerator(SchemaFieldsGeneratorOptions options)
-        : this(options, new MappedTypeVisitor())
-    {
-    }
+        : this(options, new MappedTypeVisitor()) { }
 
-    public SchemaFieldsGenerator(SchemaFieldsGeneratorOptions options, TypeVisitor<SchemaFieldData> typeVisitor)
+    public SchemaFieldsGenerator(
+        SchemaFieldsGeneratorOptions options,
+        TypeVisitor<SchemaFieldData> typeVisitor
+    )
         : base(options, typeVisitor)
     {
         _options = options;
@@ -44,7 +43,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         }
     }
 
-    private static TsImport FormLibImport(string type)
+    public static TsImport FormLibImport(string type)
     {
         return new TsImport("@react-typed-forms/schemas", type);
     }
@@ -162,9 +161,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
     {
         return new TsRawFunction(
             $"function to{FormTypeName(type)}(v: {type.Name}): {FormTypeName(type)} "
-            + "{\n"
-            + $"return applyDefaultValues(v, {SchemaConstName(type)});"
-            + "\n}\n",
+                + "{\n"
+                + $"return applyDefaultValues(v, {SchemaConstName(type)});"
+                + "\n}\n",
             new TsImports(new[] { ClientImport(type), ApplyDefaultValuesImport })
         );
     }
@@ -239,17 +238,17 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                 declarations = declarations.Append(CreateConvertFunction(objectTypeData.Type));
             }
 
-            return deps.Append(new GeneratedSchema(declarations,
-                TsObjectField.NamedField(SchemaRefName(type), new TsRawExpr(tsConstName))));
+            return deps.Append(
+                new GeneratedSchema(
+                    declarations,
+                    TsObjectField.NamedField(SchemaRefName(type), new TsRawExpr(tsConstName))
+                )
+            );
         }
 
         TsFieldType ControlsMember(SchemaFieldMember member)
         {
-            return new TsFieldType(
-                GetFieldName(member),
-                false,
-                FormType(member.Data())
-            );
+            return new TsFieldType(GetFieldName(member), false, FormType(member.Data()));
         }
     }
 
@@ -269,13 +268,18 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         var schemaOptions = member.GetAttribute<SchemaOptionsAttribute>();
         var fieldName = GetFieldName(member);
         var tags = member.GetAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
-        var enumType = member.GetAttribute<SchemaOptionsAttribute>()?.EnumType
-                       ?? GetEnumType(memberData);
+        var enumType =
+            member.GetAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
         var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
-        var (makeField, isScalar) = FieldForType(memberData, parent, member.PropertyMetadata.SelectMany(x => x.Item2).ToList());
+        var (makeField, isScalar) = FieldForType(
+            memberData,
+            parent,
+            member.PropertyMetadata.SelectMany(x => x.Item2).ToList()
+        );
         var defaultValue = ConvertDefaultValue(member.GetAttribute<DefaultValueAttribute>()?.Value);
-        var displayName = member.GetAttribute<DisplayAttribute>()?.Name ??
-                          (_options.DisplayNameFromProperty ?? DefaultDisplayName).Invoke(member.PropertyName);
+        var displayName =
+            member.GetAttribute<DisplayAttribute>()?.Name
+            ?? (_options.DisplayNameFromProperty ?? DefaultDisplayName).Invoke(member.PropertyName);
         var buildFieldCall = SetOptions(
             makeField,
             new Dictionary<string, object?>
@@ -290,11 +294,20 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                 { "defaultValue", defaultValue },
                 { "singularName", schemaOptions?.SingularName },
                 { "requiredText", schemaOptions?.RequiredText },
-                { "displayName",  displayName },
+                { "displayName", displayName },
                 { "tags", tags.Count > 0 ? tags : null },
-                { "options", options != null ? 
-                    new TsConstExpr(options.Select(x => 
-                        new Dictionary<string, object> {{"name", x.Name}, {"value", x.Value}} )) : null }
+                {
+                    "options",
+                    options != null
+                        ? new TsConstExpr(
+                            options.Select(x => new Dictionary<string, object>
+                            {
+                                { "name", x.Name },
+                                { "value", x.Value }
+                            })
+                        )
+                        : null
+                }
             }
         );
         return TsObjectField.NamedField(fieldName, buildFieldCall);
@@ -312,7 +325,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
 
     public static string DefaultDisplayName(string propertyName)
     {
-        var buf = new StringBuilder(propertyName.Length+4);
+        var buf = new StringBuilder(propertyName.Length + 4);
         var uppers = 0;
         var i = 0;
         foreach (var c in propertyName.ToCharArray())
@@ -344,7 +357,6 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                 buf.Append(' ');
             buf.Append(propertyName.AsSpan(i - 1, 1));
         }
-
     }
 
     private static object? ConvertDefaultValue(object? v)
@@ -447,9 +459,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             _ when type == typeof(string) || type == typeof(Guid) => FieldType.String,
             _
                 when type == typeof(int)
-                     || type == typeof(long)
-                     || type == typeof(short)
-                     || type == typeof(ushort)
+                    || type == typeof(long)
+                    || type == typeof(short)
+                    || type == typeof(ushort)
                 => FieldType.Int,
             _ when type == typeof(double) => FieldType.Double,
             _ when type == typeof(bool) => FieldType.Bool,
@@ -458,8 +470,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         };
     }
 
-    private (TsCallExpression, bool) FieldForType(SchemaFieldData simpleType,
-        ObjectData parentObject, ICollection<object> propertyMetadata)
+    private (TsCallExpression, bool) FieldForType(
+        SchemaFieldData simpleType,
+        ObjectData parentObject,
+        ICollection<object> propertyMetadata
+    )
     {
         var fieldType = _options.CustomFieldType?.Invoke(simpleType.Type);
         fieldType ??= propertyMetadata.OfType<SchemaOptionsAttribute>().FirstOrDefault()?.FieldType;
@@ -467,12 +482,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         {
             if (Enum.TryParse(typeof(FieldType), fieldType, true, out var ft))
             {
-                return (MakeScalar(
-                    new TsRawExpr(
-                        "FieldType." + ft,
-                        FieldTypeImport
-                    )
-                ), true);
+                return (MakeScalar(new TsRawExpr("FieldType." + ft, FieldTypeImport)), true);
             }
             return (MakeScalar(new TsConstExpr(fieldType)), true);
         }
@@ -481,7 +491,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             EnumerableData enumerableTypeData
                 => (
                     SetOption(
-                        FieldForType(enumerableTypeData.Element(), parentObject, propertyMetadata).Item1,
+                        FieldForType(
+                            enumerableTypeData.Element(),
+                            parentObject,
+                            propertyMetadata
+                        ).Item1,
                         "collection",
                         true
                     ),
@@ -507,11 +521,16 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                     ? new[] { TsObjectField.NamedField("treeChildren", new TsConstExpr(true)) }
                     :
                     [
-                        TsObjectField.NamedField("children",
+                        TsObjectField.NamedField(
+                            "children",
                             _options.DontResolve
                                 ? new TsConstExpr(Enumerable.Empty<TsRawExpr>())
-                                : ChildSchemaExpr(objectTypeData.Type)),
-                        TsObjectField.NamedField("schemaRef", new TsConstExpr(SchemaRefName(objectTypeData.Type)))
+                                : ChildSchemaExpr(objectTypeData.Type)
+                        ),
+                        TsObjectField.NamedField(
+                            "schemaRef",
+                            new TsConstExpr(SchemaRefName(objectTypeData.Type))
+                        )
                     ];
             return TsCallExpression.Make(MakeCompoundField, TsObjectExpr.Make(fields));
         }
@@ -548,14 +567,14 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         return type.GetFields(BindingFlags.Static | BindingFlags.Public)
             .Select(x =>
                 (
-                        Attribute.GetCustomAttribute(x, typeof(DisplayAttribute)),
-                        Attribute.GetCustomAttribute(x, typeof(XmlEnumAttribute))
-                    ) switch
-                    {
-                        (DisplayAttribute a, _) => new FieldOption(a.Name!, GetValue(x)),
-                        (_, XmlEnumAttribute a) => new FieldOption(a.Name!, GetValue(x)),
-                        _ => new FieldOption(x.Name, GetValue(x))
-                    }
+                    Attribute.GetCustomAttribute(x, typeof(DisplayAttribute)),
+                    Attribute.GetCustomAttribute(x, typeof(XmlEnumAttribute))
+                ) switch
+                {
+                    (DisplayAttribute a, _) => new FieldOption(a.Name!, GetValue(x)),
+                    (_, XmlEnumAttribute a) => new FieldOption(a.Name!, GetValue(x)),
+                    _ => new FieldOption(x.Name, GetValue(x))
+                }
             );
 
         object GetValue(FieldInfo info)
@@ -592,7 +611,7 @@ public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
     public Func<Type, string?>? CustomFieldType { get; set; }
 
     public IEnumerable<string>? CustomFieldTypes { get; set; }
-    
+
     public bool ForEditorLib { get; set; }
 
     public bool DontResolve { get; set; }
@@ -605,11 +624,16 @@ public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
 
 public record GeneratedSchema(IEnumerable<TsDeclaration> Declarations, TsObjectField SchemaEntry)
 {
-    public static IEnumerable<TsDeclaration> ToDeclarations(ICollection<GeneratedSchema> allSchemas,
-        string schemaMapVar)
+    public static IEnumerable<TsDeclaration> ToDeclarations(
+        ICollection<GeneratedSchema> allSchemas,
+        string schemaMapVar
+    )
     {
         var allDeclarations = allSchemas.SelectMany(x => x.Declarations);
-        var schemaMap = new TsAssignment(schemaMapVar, new TsObjectExpr(allSchemas.Select(x => x.SchemaEntry)));
+        var schemaMap = new TsAssignment(
+            schemaMapVar,
+            new TsObjectExpr(allSchemas.Select(x => x.SchemaEntry))
+        );
         return allDeclarations.Append(schemaMap);
     }
 }
