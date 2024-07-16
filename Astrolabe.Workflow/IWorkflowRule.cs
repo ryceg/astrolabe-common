@@ -29,3 +29,15 @@ public static class WorkflowRules
     public static IWorkflowRule<TAction, object> Action<TAction>(TAction action) => new WorkflowAction<TAction>(action);
     public static IWorkflowRule<TAction, T> ActionWhen<TAction, T>(TAction action, Func<T, bool> when) => new WorkflowActionWhen<TAction, T>(action, when);
 }
+
+public record WorkflowRuleList<TAction, T>(IEnumerable<IWorkflowRule<TAction, T>> Rules) where TAction : notnull
+{
+    private IDictionary<TAction, IWorkflowRule<TAction, T>>? _actionMap;
+    
+    public IDictionary<TAction, IWorkflowRule<TAction, T>> ActionMap => _actionMap ??= Rules.ToDictionary(x => x.Action);
+
+    public IEnumerable<TAction> GetMatchingActions(T context)
+    {
+        return Rules.Where(x => x.RuleMatch(context)).Select(x => x.Action);
+    }
+} 
