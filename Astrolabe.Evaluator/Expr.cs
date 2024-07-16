@@ -128,23 +128,23 @@ public record CallEnvExpr(string Function, IList<Expr> Args) : CallableExpr
     }
 }
 
-public record VarExpr(string Name, int IndexId) : Expr
+public record VarExpr(string Name) : Expr
 {
     private static int _indexCount;
 
     public override string ToString()
     {
-        return $"${Name}{IndexId}";
+        return $"${Name}";
     }
 
     public static VarExpr MakeNew(string name)
     {
-        return new VarExpr(name, ++_indexCount);
+        return new VarExpr(name + (++_indexCount));
     }
 
     public VarExpr Prepend(string extra)
     {
-        return new VarExpr(extra + Name, IndexId);
+        return new VarExpr(extra + Name);
     }
 }
 
@@ -201,7 +201,11 @@ public static class ValueExtensions
 
     public static int AsInt(this ExprValue v)
     {
-        return (int)v.Value!;
+        return v.Value switch
+        {
+            double d => (int)d,
+            int i => i
+        };
     }
 
     public static object AsEqualityCheck(this ExprValue v)
@@ -219,7 +223,8 @@ public static class ValueExtensions
     {
         return v.Value switch
         {
-            int or long => (long)v.Value,
+            int i => i,
+            long l => l,
             _ => null
         };
     }

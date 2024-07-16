@@ -52,7 +52,11 @@ public static class Interpreter
         {
             var (pathEnv, pathValue) = environment.ResolveExpr(dotExpr.Base);
             var (segEnv, segValue) = pathEnv.ResolveExpr(dotExpr.Segment);
-            var basePath = pathValue.AsValue().AsPath();
+            var basePath = pathValue.AsValue().Value switch
+            {
+                string baseString => new FieldPath(baseString, DataPath.Empty),
+                DataPath dp => dp
+            };
             var resolved = ExprValue.From(ValueExtensions.ApplyDot(basePath, segValue.AsValue()));
             return segEnv.WithExpr(resolved);
         }
