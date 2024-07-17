@@ -18,7 +18,7 @@ public abstract class BinOp : FunctionHandler
         return a1.IsEitherNull(a2) ? ExprValue.Null : EvalBin(a1, a2);
     }
 
-    protected abstract ExprValue EvalBin(ExprValue a1, ExprValue a2);
+    public abstract ExprValue EvalBin(ExprValue a1, ExprValue a2);
 
     public virtual Expr? Resolve(IList<Expr> args)
     {
@@ -34,7 +34,7 @@ public abstract class BinOp : FunctionHandler
 
 public class EqualityFunc(bool not) : BinOp
 {
-    protected override ExprValue EvalBin(ExprValue a1, ExprValue a2)
+    public override ExprValue EvalBin(ExprValue a1, ExprValue a2)
     {
         return ExprValue.From(not ^ a1.AsEqualityCheck().Equals(a2.AsEqualityCheck()));
     }
@@ -45,9 +45,9 @@ public class NumberOp<TOutD, TOutL>(
     Func<long, long, TOutL> longOp
 ) : BinOp
 {
-    protected override ExprValue EvalBin(ExprValue o1, ExprValue o2)
+    public override ExprValue EvalBin(ExprValue o1, ExprValue o2)
     {
-        if ((o1.MaybeLong(), o2.MaybeLong()) is ({ } l1, { } l2))
+        if ((o1.MaybeInteger(), o2.MaybeInteger()) is ({ } l1, { } l2))
         {
             return new ExprValue(longOp(l1, l2));
         }
@@ -59,7 +59,7 @@ public class NumberOp<TOutD, TOutL>(
 
 public class AndOp : BinOp
 {
-    protected override ExprValue EvalBin(ExprValue a1, ExprValue a2)
+    public override ExprValue EvalBin(ExprValue a1, ExprValue a2)
     {
         return ExprValue.From(a1.AsBool() && a2.AsBool());
     }
@@ -79,7 +79,7 @@ public class AndOp : BinOp
 
 public class OrOp : BinOp
 {
-    protected override ExprValue EvalBin(ExprValue a1, ExprValue a2)
+    public override ExprValue EvalBin(ExprValue a1, ExprValue a2)
     {
         return ExprValue.From(a1.AsBool() || a2.AsBool());
     }
@@ -120,15 +120,36 @@ public class IfElseOp : FunctionHandler
     }
 }
 
+public class AggregateNumberOp(NumberOp<double, long> aggregate) : FunctionHandler
+{
+    public ExprValue Evaluate(IList<ExprValue> args)
+    {
+        return args[0]
+            .AsArray()
+            .Values.Cast<object?>()
+            .Aggregate(ExprValue.From(0d), (a, b) => aggregate.EvalBin(a, new ExprValue(b)));
+    }
+
+    public Expr? Resolve(IList<Expr> args)
+    {
+        if (args[0].MaybeValue() is { Value: ArrayValue } ev)
+        {
+            return Evaluate([ev]);
+        }
+        return null;
+    }
+}
+
 public static class DefaultFunctions
 {
+    private static readonly NumberOp<double, long> AddNumberOp = new NumberOp<double, long>(
+        (d1, d2) => d1 + d2,
+        (l1, l2) => l1 + l2
+    );
     public static readonly Dictionary<InbuiltFunction, FunctionHandler> FunctionHandlers =
         new()
         {
-            {
-                InbuiltFunction.Add,
-                new NumberOp<double, long>((d1, d2) => d1 + d2, (l1, l2) => l1 + l2)
-            },
+            { InbuiltFunction.Add, AddNumberOp },
             {
                 InbuiltFunction.Minus,
                 new NumberOp<double, long>((d1, d2) => d1 - d2, (l1, l2) => l1 - l2)
@@ -151,5 +172,6 @@ public static class DefaultFunctions
             { InbuiltFunction.Or, new OrOp() },
             { InbuiltFunction.Not, new NotOp() },
             { InbuiltFunction.IfElse, new IfElseOp() },
+            { InbuiltFunction.Sum, new AggregateNumberOp(AddNumberOp) }
         };
 }

@@ -175,6 +175,11 @@ public static class ValueExtensions
         return expr is ExprValue;
     }
 
+    public static ExprValue? MaybeValue(this Expr expr)
+    {
+        return expr as ExprValue;
+    }
+
     public static bool IsNull(this Expr expr)
     {
         return expr is ExprValue { Value: null };
@@ -210,6 +215,7 @@ public static class ValueExtensions
         return v.Value switch
         {
             double d => (int)d,
+            long l => (int)l,
             int i => i
         };
     }
@@ -225,13 +231,12 @@ public static class ValueExtensions
         };
     }
 
-    public static long? MaybeLong(this ExprValue v)
+    public static long? MaybeInteger(this ExprValue v)
     {
         return v.Value switch
         {
             int i => i,
             long l => l,
-            double d => (long)d,
             _ => null
         };
     }

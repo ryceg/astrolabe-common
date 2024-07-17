@@ -26,8 +26,8 @@ public static class Interpreter
             var (filterEnv, filterResolved) = arrayEnv.ResolveExpr(filterExpr.Filter);
             return (arrayPath, filterResolved) switch
             {
-                (ExprValue { Value: DataPath dp }, ExprValue index) when index.MaybeLong() is { } i
-                    => filterEnv.WithExpr(ExprValue.From(new IndexPath((int)i, dp))),
+                (ExprValue { Value: DataPath dp }, ExprValue index)
+                    => filterEnv.WithExpr(ExprValue.From(new IndexPath(index.AsInt(), dp))),
                 _ => throw new NotImplementedException($"{arrayPath}[{filterResolved}]")
             };
         }
