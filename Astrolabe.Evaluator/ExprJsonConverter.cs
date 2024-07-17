@@ -32,8 +32,24 @@ public class ExprJsonConverter : JsonConverter<Expr>
             case VarExpr varExpr:
                 JsonSerializer.Serialize(writer, new { Var = varExpr.ToString() }, options);
                 break;
-            case MapExpr mapExpr:
-                JsonSerializer.Serialize(writer, new { Map = mapExpr.Array }, options);
+            case LambdaExpr mapExpr:
+                JsonSerializer.Serialize(
+                    writer,
+                    new { Lambda = mapExpr.Variable.Name, Value = mapExpr.Value },
+                    options
+                );
+                break;
+            case LetExpr mapExpr:
+                JsonSerializer.Serialize(
+                    writer,
+                    new
+                    {
+                        Let = mapExpr.Variable.Name,
+                        Value = mapExpr.Value,
+                        In = mapExpr.In
+                    },
+                    options
+                );
                 break;
             case ArrayExpr arrayExpr:
                 JsonSerializer.Serialize(writer, new { Array = arrayExpr.ValueExpr }, options);

@@ -11,7 +11,7 @@ public record FieldPath(string Field, DataPath Parent) : DataPath
 {
     public override string ToString()
     {
-        return this.ToPathString();
+        return "Path {" + this.ToPathString() + "}";
     }
 }
 
@@ -25,6 +25,16 @@ public record IndexPath(int Index, DataPath Parent) : DataPath
 
 public static class DataPathExtensions
 {
+    public static DataPath Concat(this DataPath dp1, DataPath dp2)
+    {
+        return dp2 switch
+        {
+            EmptyPath => dp1,
+            FieldPath { Field: var f, Parent: var cp } => new FieldPath(f, dp1.Concat(cp)),
+            IndexPath { Index: var i, Parent: var cp } => new IndexPath(i, dp1.Concat(cp)),
+        };
+    }
+
     public static string ToPathString(this DataPath segments)
     {
         return segments switch

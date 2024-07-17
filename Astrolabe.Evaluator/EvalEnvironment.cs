@@ -42,6 +42,11 @@ public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
 
 public static class EvalEnvironmentExtensions
 {
+    public static EvalEnvironment WithReplacement(this EnvironmentValue<Expr> ev, Expr variable)
+    {
+        return ev.Env.WithReplacement(variable, ev.Value);
+    }
+
     public static EnvironmentValue<Expr> AsExpr<T>(this EnvironmentValue<T> ev)
         where T : Expr
     {

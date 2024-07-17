@@ -28,7 +28,11 @@ public interface Expr;
 
 public record DotExpr(Expr Base, Expr Segment) : Expr;
 
-public record MapExpr(Expr Array, Expr ElemPath, Expr MapTo) : Expr;
+public record FilterExpr(Expr Base, Expr Filter) : Expr;
+
+public record LetExpr(VarExpr Variable, Expr Value, Expr In) : Expr;
+
+public record LambdaExpr(VarExpr Variable, Expr Value) : Expr;
 
 public record ResolveEval(Expr Expr) : Expr;
 
@@ -91,7 +95,7 @@ public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr
 {
     public override string ToString()
     {
-        return $"[{string.Join(", ", ValueExpr)}]";
+        return $"ArrayExpr [{string.Join(", ", ValueExpr)}]";
     }
 }
 
@@ -156,6 +160,8 @@ public record ArrayValue(int Count, IEnumerable Values)
         return new ArrayValue(l.Count, l);
     }
 }
+
+public record ObjectValue(object Object);
 
 public static class ValueExtensions
 {

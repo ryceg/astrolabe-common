@@ -41,8 +41,9 @@ public class JsonDataLookup
     {
         return node switch
         {
+            null => node,
             JsonArray ja => new ArrayValue(ja.Count, ja),
-            null or JsonObject => node,
+            JsonObject obj => new ObjectValue(obj),
             JsonValue v
                 => v.GetValue<object>() switch
                 {

@@ -94,7 +94,10 @@ public static class TypedExprExtensions
     {
         var elemPath = VarExpr.MakeNew("e");
         return new SimpleTypedExpr<T2>(
-            new MapExpr(array.Wrapped, elemPath, new DotExpr(elemPath, FieldName(mapTo)))
+            new DotExpr(
+                array.Wrapped,
+                new LambdaExpr(elemPath, new DotExpr(elemPath, FieldName(mapTo)))
+            )
         );
     }
 }
