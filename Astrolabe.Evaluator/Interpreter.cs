@@ -24,34 +24,15 @@ public static class Interpreter
         {
             var (arrayEnv, arrayPath) = environment.ResolveExpr(filterExpr.Base);
             var (filterEnv, filterResolved) = arrayEnv.ResolveExpr(filterExpr.Filter);
-            return (arrayPath, filterResolved) switch
+            var indexFilter = filterResolved.AsValue().AsInt();
+            return arrayPath switch
             {
-                (ExprValue { Value: DataPath dp }, ExprValue index)
-                    => filterEnv.WithExpr(ExprValue.From(new IndexPath(index.AsInt(), dp))),
+                ExprValue { Value: DataPath dp }
+                    => filterEnv.WithExpr(ExprValue.From(new IndexPath(indexFilter, dp))),
+                ArrayExpr ae => filterEnv.WithExpr(ae.ValueExpr.ToList()[indexFilter]),
                 _ => throw new NotImplementedException($"{arrayPath}[{filterResolved}]")
             };
         }
-
-        // EnvironmentValue<Expr> DoMap(MapExpr mapExpr)
-        // {
-        //     var (arrayEnv, arrayPath) = environment.ResolveExpr(mapExpr.Array);
-        //     var arrayExpr = arrayEnv.Evaluate(arrayPath).Value;
-        //     var arrayVal = arrayExpr.AsValue();
-        //     if (arrayVal.IsNull())
-        //         return arrayEnv.WithExpr(ExprValue.Null);
-        //     var arrayValue = arrayVal.AsArray();
-        //     var elemVar = mapExpr.ElemPath;
-        //     var arrayBasePath = arrayPath.AsValue().AsPath();
-        //     var results = arrayEnv.EvaluateAll(
-        //         Enumerable.Range(0, arrayValue.Count),
-        //         (e, v) =>
-        //             e.WithReplacement(elemVar, new ExprValue(new IndexPath(v, arrayBasePath)))
-        //                 .ResolveExpr(mapExpr.MapTo)
-        //                 .Single()
-        //     );
-        //
-        //     return arrayEnv.WithExpr(new ArrayExpr(results.Value));
-        // }
 
         EnvironmentValue<Expr> DoCall(CallableExpr callExpr)
         {
@@ -64,31 +45,63 @@ public static class Interpreter
         EnvironmentValue<Expr> DoDot(DotExpr dotExpr)
         {
             var (pathEnv, pathValue) = environment.ResolveExpr(dotExpr.Base);
-            var (segEnv, segValue) = pathEnv.ResolveExpr(dotExpr.Segment);
-            var resolved = (pathValue, segValue) switch
-            {
-                (ExprValue { Value: DataPath dp }, ExprValue { Value: DataPath dp2 })
-                    => PathAndPath(dp, dp2),
-                _ => throw new NotImplementedException($"{pathValue}.{segValue}")
-            };
-            return resolved;
+            var resolvedMap = pathEnv.ResolveExpr(dotExpr.Segment);
+            var (segEnv, segValue) = resolvedMap;
 
-            EnvironmentValue<Expr> PathAndPath(DataPath dp, DataPath dp2)
+            var lambdaExpr = segValue as LambdaExpr;
+            if (lambdaExpr == null)
+            {
+                var elemVar = VarExpr.MakeNew("_");
+                lambdaExpr = new LambdaExpr(elemVar, new DotExpr(elemVar, segValue));
+            }
+            if (pathValue is ExprValue { Value: DataPath dp })
             {
                 return segEnv.EvaluateData(dp).Value.Value switch
                 {
                     null => segEnv.WithNull().AsExpr(),
-                    ObjectValue _ => segEnv.WithExpr(ExprValue.From(dp.Concat(dp2))),
+                    ObjectValue _ when segValue is ExprValue { Value: DataPath dp2 }
+                        => segEnv.WithExpr(ExprValue.From(dp.Concat(dp2))),
                     ArrayValue av
-                        => segEnv.WithExpr(
-                            new ArrayExpr(
-                                Enumerable
-                                    .Range(0, av.Count)
-                                    .Select(i => ExprValue.From(new IndexPath(i, dp).Concat(dp2)))
-                            )
+                        => MapArray(
+                            av.Count,
+                            resolvedMap,
+                            i => ExprValue.From(new IndexPath(i, dp))
                         )
                 };
             }
+
+            if (pathValue is ArrayExpr ae)
+            {
+                var arrayVals = ae.ValueExpr.ToList();
+                return MapArray(ae.ValueExpr.Count(), resolvedMap, i => arrayVals[i]);
+            }
+
+            EnvironmentValue<Expr> MapArray(
+                int count,
+                EnvironmentValue<Expr> mapEnvValue,
+                Func<int, Expr> elemExpr
+            )
+            {
+                var range = Enumerable.Range(0, count);
+                var (env, mapExpr) = mapEnvValue;
+
+                return env.EvaluateAll(range, (e, i) => MapLambdaElement(lambdaExpr, e, i).Single())
+                    .Map(x => (Expr)new ArrayExpr(x));
+
+                EnvironmentValue<Expr> MapLambdaElement(LambdaExpr lambda, EvalEnvironment e, int i)
+                {
+                    var (varExpr, v) = lambda;
+                    return e.WithReplacement(varExpr, elemExpr(i))
+                        .WithReplacement(new VarExpr(varExpr.Name + "_index"), ExprValue.From(i))
+                        .MapReplacement(
+                            new VarExpr(varExpr.Name + "_count"),
+                            total => ExprValue.From((total?.AsValue().AsInt() ?? 0) + 1)
+                        )
+                        .ResolveExpr(v);
+                }
+            }
+
+            throw new NotImplementedException($"{pathValue}.{segValue}");
         }
     }
 

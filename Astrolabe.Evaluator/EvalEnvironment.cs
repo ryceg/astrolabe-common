@@ -11,6 +11,7 @@ public interface EvalEnvironment
 
     bool TryGetReplacement(Expr expr, [MaybeNullWhen(false)] out EnvironmentValue<Expr> value);
     EvalEnvironment WithReplacement(Expr expr, Expr value);
+    EvalEnvironment MapReplacement(Expr expr, Func<Expr?, Expr> mapValue);
 
     EnvironmentValue<ExprValue> EvaluateCall(CallableExpr callEnvExpr);
 

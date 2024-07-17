@@ -2,18 +2,25 @@ namespace Astrolabe.Evaluator;
 
 public static class PrintExpr
 {
+    public static string PrintValue(object? value)
+    {
+        return value switch
+        {
+            null => "null",
+            EmptyPath => "$",
+            DataPath dp => dp.ToPathString(),
+            ArrayValue av => $"[{string.Join(", ", av.Values.Cast<object?>().Select(PrintValue))}]",
+            _ => $"{value}"
+        };
+    }
+
     public static string Print(this Expr expr)
     {
         return expr switch
         {
-            ExprValue { Value: null } => "null",
-            ExprValue { Value: EmptyPath } => "$",
-            ExprValue { Value: DataPath dp } => dp.ToPathString(),
-            ExprValue { Value: ArrayValue av }
-                => $"[{string.Join(",", av.Values.Cast<object?>().Select(x => x?.ToString() ?? "null"))}]",
+            ExprValue v => PrintValue(v.Value),
             ArrayExpr arrayExpr
                 => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
-            ExprValue { Value: var v } => $"{v}",
             CallExpr { Function: InbuiltFunction.IfElse, Args: var a }
                 when a.ToList() is [var ifE, var t, var f]
                 => $"{ifE.Print()} ? {t.Print()} : {f.Print()}",

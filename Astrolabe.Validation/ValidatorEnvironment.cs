@@ -61,6 +61,19 @@ public record ValidatorEnvironment(
         return this with { Replacements = Replacements.SetItem(expr, value) };
     }
 
+    public EvalEnvironment MapReplacement(Expr expr, Func<Expr?, Expr> mapValue)
+    {
+        return this with
+        {
+            Replacements = Replacements.SetItem(
+                expr,
+                Replacements.TryGetValue(expr, out var existing)
+                    ? mapValue(existing)
+                    : mapValue(null)
+            )
+        };
+    }
+
     public EnvironmentValue<ExprValue> EvaluateCall(CallableExpr callExpr)
     {
         if (callExpr is CallEnvExpr callEnvExpr)
