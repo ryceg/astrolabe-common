@@ -231,6 +231,7 @@ public static class ValueExtensions
         {
             int i => i,
             long l => l,
+            double d => (long)d,
             _ => null
         };
     }
