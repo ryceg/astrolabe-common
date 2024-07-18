@@ -30,7 +30,16 @@ public record DotExpr(Expr Base, Expr Segment) : Expr;
 
 public record FilterExpr(Expr Base, Expr Filter) : Expr;
 
-public record LetExpr(VarExpr Variable, Expr Value, Expr In) : Expr;
+public record LetExpr(IEnumerable<(VarExpr, Expr)> Vars, Expr In) : Expr
+{
+    public static LetExpr AddVar(LetExpr? letExpr, VarExpr varExpr, Expr expr)
+    {
+        var varTuple = (varExpr, expr);
+        if (letExpr == null)
+            return new LetExpr([varTuple], ExprValue.Null);
+        return letExpr with { Vars = letExpr.Vars.Append(varTuple) };
+    }
+}
 
 public record LambdaExpr(VarExpr Variable, Expr Value) : Expr;
 
@@ -52,6 +61,40 @@ public record ExprValue(object? Value) : Expr
             long l => l,
             double d => d,
             _ => throw new ArgumentException("Value is not a number: " + (v ?? "null"))
+        };
+    }
+
+    public DataPath? MaybeDataPath()
+    {
+        return MaybeDataPath(Value);
+    }
+
+    public static DataPath? MaybeDataPath(object? v)
+    {
+        return v switch
+        {
+            DataPath dp => dp,
+            int i => new IndexPath(i, DataPath.Empty),
+            long l => new IndexPath((int)l, DataPath.Empty),
+            double d => new IndexPath((int)d, DataPath.Empty),
+            string s => new FieldPath(s, DataPath.Empty),
+            _ => null
+        };
+    }
+
+    public double? MaybeDouble()
+    {
+        return MaybeDouble(Value);
+    }
+
+    public static double? MaybeDouble(object? v)
+    {
+        return v switch
+        {
+            int i => i,
+            long l => l,
+            double d => d,
+            _ => null
         };
     }
 
@@ -88,6 +131,54 @@ public record ExprValue(object? Value) : Expr
     public static ExprValue From(DataPath? v)
     {
         return new ExprValue(v);
+    }
+
+    public object? ToNative()
+    {
+        return ToNative(Value);
+    }
+
+    public static object? ToNative(object? v)
+    {
+        return v switch
+        {
+            ArrayValue av => av.Values.Cast<object?>().Select(ToNative),
+            ObjectValue ov => ov.Object,
+            _ => v
+        };
+    }
+
+    public object? Flatten()
+    {
+        return Flatten(Value);
+    }
+
+    public static object? Flatten(object? v)
+    {
+        return v switch
+        {
+            ArrayValue av
+                => av
+                    .Values.Cast<object?>()
+                    .SelectMany(v =>
+                        Flatten(v) switch
+                        {
+                            IEnumerable<object?> res => res,
+                            var o => [o]
+                        }
+                    ),
+            ObjectValue ov => ov.Object,
+            _ => v
+        };
+    }
+
+    public static IEnumerable<object?> ToEnumerable(object? value)
+    {
+        return value switch
+        {
+            IEnumerable<object?> v => v,
+            _ => [value]
+        };
     }
 }
 
@@ -149,6 +240,11 @@ public record VarExpr(string Name) : Expr
     public VarExpr Prepend(string extra)
     {
         return new VarExpr(extra + Name);
+    }
+
+    public Expr Append(string append)
+    {
+        return new VarExpr(Name + append);
     }
 }
 

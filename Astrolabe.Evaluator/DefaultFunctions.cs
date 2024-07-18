@@ -51,9 +51,14 @@ public class NumberOp<TOutD, TOutL>(
         {
             return new ExprValue(longOp(l1, l2));
         }
-        var d1 = o1.AsDouble();
-        var d2 = o2.AsDouble();
-        return new ExprValue(doubleOp(d1, d2));
+
+        return new ExprValue(
+            (o1.MaybeDouble(), o2.MaybeDouble()) switch
+            {
+                ({ } d1, { } d2) => doubleOp(d1, d2),
+                _ => null
+            }
+        );
     }
 }
 
@@ -120,15 +125,9 @@ public class IfElseOp : FunctionHandler
     }
 }
 
-public class AggregateNumberOp(NumberOp<double, long> aggregate) : FunctionHandler
+public abstract class ArrayOp : FunctionHandler
 {
-    public ExprValue Evaluate(IList<ExprValue> args)
-    {
-        return args[0]
-            .AsArray()
-            .Values.Cast<object?>()
-            .Aggregate(ExprValue.From(0d), (a, b) => aggregate.EvalBin(a, new ExprValue(b)));
-    }
+    public abstract ExprValue Evaluate(IList<ExprValue> args);
 
     public Expr? Resolve(IList<Expr> args)
     {
@@ -137,6 +136,26 @@ public class AggregateNumberOp(NumberOp<double, long> aggregate) : FunctionHandl
             return Evaluate([ev]);
         }
         return null;
+    }
+}
+
+public class AggregateNumberOp(NumberOp<double, long> aggregate) : ArrayOp
+{
+    public override ExprValue Evaluate(IList<ExprValue> args)
+    {
+        var flattenned = ExprValue.ToEnumerable(args[0].Flatten());
+        return flattenned.Aggregate(
+            ExprValue.From(0d),
+            (a, b) => aggregate.EvalBin(a, new ExprValue(b))
+        );
+    }
+}
+
+public class CountOp : ArrayOp
+{
+    public override ExprValue Evaluate(IList<ExprValue> args)
+    {
+        return ExprValue.From(ExprValue.ToEnumerable(args[0].Flatten()).Count());
     }
 }
 
@@ -172,6 +191,7 @@ public static class DefaultFunctions
             { InbuiltFunction.Or, new OrOp() },
             { InbuiltFunction.Not, new NotOp() },
             { InbuiltFunction.IfElse, new IfElseOp() },
-            { InbuiltFunction.Sum, new AggregateNumberOp(AddNumberOp) }
+            { InbuiltFunction.Sum, new AggregateNumberOp(AddNumberOp) },
+            { InbuiltFunction.Count, new CountOp() }
         };
 }

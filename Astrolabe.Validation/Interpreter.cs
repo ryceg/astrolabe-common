@@ -1,10 +1,7 @@
-using System.Collections;
 using System.Collections.Immutable;
 using Astrolabe.Evaluator;
 
 namespace Astrolabe.Validation;
-
-using EvaluatedExpr = EnvironmentValue<ExprValue>;
 
 public static class Interpreter
 {
@@ -70,9 +67,8 @@ public static class Interpreter
             var (pathEnv, collectionSeg) = environment.ResolveExpr(rules.Path);
             var indexExpr = rules.Index;
             var runningIndexExpr = indexExpr.AsVar().Prepend("Total");
-            var runningIndexOffset = pathEnv.TryGetReplacement(runningIndexExpr, out var current)
-                ? current.Value.AsValue().AsInt()
-                : 0;
+            var runningIndexOffset =
+                pathEnv.GetReplacement(runningIndexExpr)?.AsValue().AsInt() ?? 0;
             var nextEnv = pathEnv.WithReplacement(
                 runningIndexExpr,
                 ExprValue.From(runningIndexOffset)

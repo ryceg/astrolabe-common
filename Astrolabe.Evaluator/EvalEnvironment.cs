@@ -9,8 +9,8 @@ public interface EvalEnvironment
 {
     EvaluatedExpr EvaluateData(DataPath dataPath);
 
-    bool TryGetReplacement(Expr expr, [MaybeNullWhen(false)] out EnvironmentValue<Expr> value);
-    EvalEnvironment WithReplacement(Expr expr, Expr value);
+    Expr? GetReplacement(Expr expr);
+    EvalEnvironment WithReplacement(Expr expr, Expr? value);
     EvalEnvironment MapReplacement(Expr expr, Func<Expr?, Expr> mapValue);
 
     EnvironmentValue<ExprValue> EvaluateCall(CallableExpr callEnvExpr);
@@ -30,6 +30,11 @@ public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
         return Env.WithValue(select(Value, Env));
     }
 
+    public EnvironmentValue<T2> Then<T2>(Func<EnvironmentValue<T>, EnvironmentValue<T2>> select)
+    {
+        return select(this);
+    }
+
     public EnvironmentValue<T2> Map<T2>(Func<T, T2> select)
     {
         return Env.WithValue(select(Value));
@@ -43,6 +48,15 @@ public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
 
 public static class EvalEnvironmentExtensions
 {
+    public static EvalEnvironment EvaluateForEach<T>(
+        this EvalEnvironment env,
+        IEnumerable<T> evalList,
+        Func<EvalEnvironment, T, EvalEnvironment> evalFunc
+    )
+    {
+        return evalList.Aggregate(env, evalFunc);
+    }
+
     public static EvalEnvironment WithReplacement(this EnvironmentValue<Expr> ev, Expr variable)
     {
         return ev.Env.WithReplacement(variable, ev.Value);
@@ -66,7 +80,7 @@ public static class EvalEnvironmentExtensions
     public static EnvironmentValue<T> WithReplacement<T>(
         this EnvironmentValue<T> evalExpr,
         Expr expr,
-        ExprValue value
+        Expr? value
     )
     {
         return evalExpr with { Env = evalExpr.Env.WithReplacement(expr, value) };
@@ -99,6 +113,22 @@ public static class EvalEnvironmentExtensions
     {
         return env.EvaluateAll(evalList, (env2, e) => env2.Evaluate(e).Single())
             .Map(x => x.ToList());
+    }
+
+    public static EnvironmentValue<IEnumerable<TResult>> EvaluateEach<T, TResult>(
+        this EvalEnvironment env,
+        IEnumerable<T> evalList,
+        Func<EvalEnvironment, T, EnvironmentValue<TResult>> evalFunc
+    )
+    {
+        return evalList.Aggregate(
+            env.WithEmpty<TResult>(),
+            (allResults, r) =>
+            {
+                var result = evalFunc(allResults.Env, r);
+                return result.Map(x => allResults.Value.Append(x));
+            }
+        );
     }
 
     public static EnvironmentValue<IEnumerable<TResult>> EvaluateAll<T, TResult>(

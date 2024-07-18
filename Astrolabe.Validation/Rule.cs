@@ -39,7 +39,7 @@ public record SingleRule(Expr Path, Expr Props, Expr Must) : Rule(RuleType.Singl
 
     public SingleRule WithMessage(Expr message)
     {
-        return this with { Props = new CallEnvExpr("WithMessage", [message, Props]) };
+        return this with { Must = new CallEnvExpr("WithMessage", [message, Must]) };
     }
 }
 

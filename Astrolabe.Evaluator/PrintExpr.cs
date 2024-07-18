@@ -7,7 +7,7 @@ public static class PrintExpr
         return value switch
         {
             null => "null",
-            EmptyPath => "$",
+            EmptyPath => "",
             DataPath dp => dp.ToPathString(),
             ArrayValue av => $"[{string.Join(", ", av.Values.Cast<object?>().Select(PrintValue))}]",
             _ => $"{value}"
@@ -19,8 +19,11 @@ public static class PrintExpr
         return expr switch
         {
             ExprValue v => PrintValue(v.Value),
+            LetExpr letExpr
+                => $"let {string.Join(", ", letExpr.Vars.Select(x => $"{x.Item1.Print()} = {x.Item2.Print()}"))} in {letExpr.In.Print()}",
             ArrayExpr arrayExpr
                 => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
+            DotExpr de => $"{de.Base.Print()}.{de.Segment.Print()}",
             CallExpr { Function: InbuiltFunction.IfElse, Args: var a }
                 when a.ToList() is [var ifE, var t, var f]
                 => $"{ifE.Print()} ? {t.Print()} : {f.Print()}",

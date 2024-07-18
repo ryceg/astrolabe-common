@@ -42,23 +42,18 @@ public record ValidatorEnvironment(
             : this.WithValue(new ExprValue(GetData(dataPath)));
     }
 
-    public bool TryGetReplacement(
-        Expr expr,
-        [MaybeNullWhen(false)] out EnvironmentValue<Expr> value
-    )
+    public Expr? GetReplacement(Expr expr)
     {
-        if (Replacements.TryGetValue(expr, out var ok))
-        {
-            value = this.WithValue(ok);
-            return true;
-        }
-        value = null;
-        return false;
+        return CollectionExtensions.GetValueOrDefault(Replacements, expr);
     }
 
-    public EvalEnvironment WithReplacement(Expr expr, Expr value)
+    public EvalEnvironment WithReplacement(Expr expr, Expr? value)
     {
-        return this with { Replacements = Replacements.SetItem(expr, value) };
+        return this with
+        {
+            Replacements =
+                value == null ? Replacements.Remove(expr) : Replacements.SetItem(expr, value)
+        };
     }
 
     public EvalEnvironment MapReplacement(Expr expr, Func<Expr?, Expr> mapValue)

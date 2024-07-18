@@ -6,13 +6,26 @@ public static class Interpreter
 {
     public static EnvironmentValue<Expr> ResolveExpr(this EvalEnvironment environment, Expr expr)
     {
-        if (environment.TryGetReplacement(expr, out var already))
-            return already;
+        var already = environment.GetReplacement(expr);
+        if (already != null)
+            return environment.WithValue(already);
         return expr switch
         {
             ExprValue or VarExpr or LambdaExpr => environment.WithExpr(expr),
+            ArrayExpr ae
+                => environment
+                    .EvaluateEach(ae.ValueExpr, ResolveExpr)
+                    .Map(x => (Expr)new ArrayExpr(x.ToList())),
             LetExpr v
-                => environment.ResolveExpr(v.Value).WithReplacement(v.Variable).ResolveExpr(v.In),
+                => environment
+                    .EvaluateForEach(
+                        v.Vars,
+                        (acc, nextVar) =>
+                            acc.ResolveExpr(nextVar.Item2)
+                                .Then(e => e.WithReplacement(nextVar.Item1, e.Value))
+                                .Env
+                    )
+                    .ResolveExpr(v.In),
             DotExpr dotExpr => DoDot(dotExpr),
             FilterExpr filterExpr => DoFilter(filterExpr),
             ResolveEval resolveExpr
@@ -24,13 +37,22 @@ public static class Interpreter
         {
             var (arrayEnv, arrayPath) = environment.ResolveExpr(filterExpr.Base);
             var (filterEnv, filterResolved) = arrayEnv.ResolveExpr(filterExpr.Filter);
-            var indexFilter = filterResolved.AsValue().AsInt();
+            return ResolveIndexFilter(filterEnv, arrayPath, filterResolved);
+        }
+
+        EnvironmentValue<Expr> ResolveIndexFilter(
+            EvalEnvironment env,
+            Expr arrayPath,
+            Expr filterExpr
+        )
+        {
+            var indexFilter = filterExpr.AsValue().AsInt();
             return arrayPath switch
             {
                 ExprValue { Value: DataPath dp }
-                    => filterEnv.WithExpr(ExprValue.From(new IndexPath(indexFilter, dp))),
-                ArrayExpr ae => filterEnv.WithExpr(ae.ValueExpr.ToList()[indexFilter]),
-                _ => throw new NotImplementedException($"{arrayPath}[{filterResolved}]")
+                    => env.WithExpr(ExprValue.From(new IndexPath(indexFilter, dp))),
+                ArrayExpr ae => env.WithExpr(ae.ValueExpr.ToList()[indexFilter]),
+                _ => throw new NotImplementedException($"{arrayPath}[{filterExpr}]")
             };
         }
 
@@ -45,63 +67,100 @@ public static class Interpreter
         EnvironmentValue<Expr> DoDot(DotExpr dotExpr)
         {
             var (pathEnv, pathValue) = environment.ResolveExpr(dotExpr.Base);
-            var resolvedMap = pathEnv.ResolveExpr(dotExpr.Segment);
-            var (segEnv, segValue) = resolvedMap;
+            var (env, segment) = pathEnv.ResolveExpr(dotExpr.Segment);
 
-            var lambdaExpr = segValue as LambdaExpr;
-            if (lambdaExpr == null)
+            switch (pathValue)
             {
-                var elemVar = VarExpr.MakeNew("_");
-                lambdaExpr = new LambdaExpr(elemVar, new DotExpr(elemVar, segValue));
-            }
-            if (pathValue is ExprValue { Value: DataPath dp })
-            {
-                return segEnv.EvaluateData(dp).Value.Value switch
+                case ExprValue { Value: DataPath dp }:
                 {
-                    null => segEnv.WithNull().AsExpr(),
-                    ObjectValue _ when segValue is ExprValue { Value: DataPath dp2 }
-                        => segEnv.WithExpr(ExprValue.From(dp.Concat(dp2))),
-                    ArrayValue av
-                        => MapArray(
-                            av.Count,
-                            resolvedMap,
-                            i => ExprValue.From(new IndexPath(i, dp))
-                        )
-                };
-            }
-
-            if (pathValue is ArrayExpr ae)
-            {
-                var arrayVals = ae.ValueExpr.ToList();
-                return MapArray(ae.ValueExpr.Count(), resolvedMap, i => arrayVals[i]);
-            }
-
-            EnvironmentValue<Expr> MapArray(
-                int count,
-                EnvironmentValue<Expr> mapEnvValue,
-                Func<int, Expr> elemExpr
-            )
-            {
-                var range = Enumerable.Range(0, count);
-                var (env, mapExpr) = mapEnvValue;
-
-                return env.EvaluateAll(range, (e, i) => MapLambdaElement(lambdaExpr, e, i).Single())
-                    .Map(x => (Expr)new ArrayExpr(x));
-
-                EnvironmentValue<Expr> MapLambdaElement(LambdaExpr lambda, EvalEnvironment e, int i)
-                {
-                    var (varExpr, v) = lambda;
-                    return e.WithReplacement(varExpr, elemExpr(i))
-                        .WithReplacement(new VarExpr(varExpr.Name + "_index"), ExprValue.From(i))
-                        .MapReplacement(
-                            new VarExpr(varExpr.Name + "_count"),
-                            total => ExprValue.From((total?.AsValue().AsInt() ?? 0) + 1)
-                        )
-                        .ResolveExpr(v);
+                    var dataValue = env.EvaluateData(dp).Value;
+                    return dataValue.Value switch
+                    {
+                        null => env.WithNull().AsExpr(),
+                        ObjectValue _ when segment is ExprValue ev && ev.MaybeDataPath() is { } dp2
+                            => env.WithExpr(ExprValue.From(dp.Concat(dp2))),
+                        ArrayValue when segment is ExprValue ev && ev.MaybeInteger() is { } ind
+                            => ResolveIndexFilter(env, pathValue, ev),
+                        ArrayValue av
+                            when segment is ExprValue ev
+                                && ev.MaybeDataPath() is { } dp2
+                                && VarExpr.MakeNew("i") is var varExpr
+                            => ResolveArray(
+                                env,
+                                varExpr,
+                                varExpr,
+                                av.Count,
+                                ind => ExprValue.From(new IndexPath(ind, dp).Concat(dp2))
+                            ),
+                        ArrayValue av when segment is LambdaExpr lambdaExpr
+                            => ResolveArray(
+                                env,
+                                lambdaExpr.Variable,
+                                lambdaExpr.Value,
+                                av.Count,
+                                i => ExprValue.From(new IndexPath(i, dp))
+                            ),
+                        _ => throw new NotImplementedException()
+                    };
                 }
+                case ArrayExpr ae:
+                {
+                    var arrayVals = ae.ValueExpr.ToList();
+                    return segment switch
+                    {
+                        LambdaExpr lambdaExpr
+                            => ResolveArray(
+                                env,
+                                lambdaExpr.Variable,
+                                lambdaExpr.Value,
+                                ae.ValueExpr.Count(),
+                                i => arrayVals[i]
+                            ),
+                        ExprValue ev
+                            when ev.MaybeDataPath() is { } dp2
+                                && VarExpr.MakeNew("i") is var varExpr
+                            => ResolveArray(
+                                env,
+                                varExpr,
+                                varExpr,
+                                arrayVals.Count,
+                                i => new DotExpr(arrayVals[i], ExprValue.From(dp2))
+                            )
+                    };
+                }
+                default:
+                    throw new NotImplementedException($"{pathValue}.{segment}");
             }
+        }
+    }
 
-            throw new NotImplementedException($"{pathValue}.{segValue}");
+    private static EnvironmentValue<Expr> ResolveArray(
+        EvalEnvironment env,
+        VarExpr varExpr,
+        Expr expr,
+        int count,
+        Func<int, Expr> elemExpr
+    )
+    {
+        var range = Enumerable.Range(0, count);
+        var indexVar = varExpr.Append("_index");
+        var countVar = varExpr.Append("_count");
+        var prevVar = env.GetReplacement(varExpr);
+        var prevIndex = env.GetReplacement(indexVar);
+        return env.EvaluateAll(range, (e, i) => ResolveElement(e, i).Single())
+            .WithReplacement(varExpr, prevVar)
+            .WithReplacement(indexVar, prevIndex)
+            .Then(e => e.Env.WithValue((Expr)new ArrayExpr(e.Value)));
+
+        EnvironmentValue<Expr> ResolveElement(EvalEnvironment e, int i)
+        {
+            return e.WithReplacement(varExpr, elemExpr(i))
+                .WithReplacement(indexVar, ExprValue.From(i))
+                .MapReplacement(
+                    countVar,
+                    total => ExprValue.From((total?.AsValue().AsInt() ?? 0) + 1)
+                )
+                .ResolveExpr(expr);
         }
     }
 
@@ -110,10 +169,16 @@ public static class Interpreter
         return envExpr.Env.Evaluate(envExpr.Value);
     }
 
+    public static EvaluatedExprValue ResolveAndEvaluate(this EvalEnvironment env, Expr expr)
+    {
+        return env.ResolveExpr(expr).Evaluate();
+    }
+
     public static EvaluatedExprValue Evaluate(this EvalEnvironment environment, Expr expr)
     {
-        if (environment.TryGetReplacement(expr, out var already))
-            return already.Evaluate();
+        var already = environment.GetReplacement(expr);
+        if (already != null)
+            return environment.WithValue(already.AsValue());
         return expr switch
         {
             ExprValue { Value: DataPath dp } => environment.EvaluateData(dp),
