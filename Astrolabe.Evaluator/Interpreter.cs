@@ -4,6 +4,11 @@ using EvaluatedExprValue = EnvironmentValue<ExprValue>;
 
 public static class Interpreter
 {
+    public static EnvironmentValue<Expr> ResolveExpr(this EnvironmentValue<Expr> environment)
+    {
+        return environment.Env.ResolveExpr(environment.Value);
+    }
+
     public static EnvironmentValue<Expr> ResolveExpr(this EvalEnvironment environment, Expr expr)
     {
         var already = environment.GetReplacement(expr);
@@ -120,12 +125,13 @@ public static class Interpreter
                             when ev.MaybeDataPath() is { } dp2
                                 && VarExpr.MakeNew("i") is var varExpr
                             => ResolveArray(
-                                env,
-                                varExpr,
-                                varExpr,
-                                arrayVals.Count,
-                                i => new DotExpr(arrayVals[i], ExprValue.From(dp2))
-                            )
+                                    env,
+                                    varExpr,
+                                    varExpr,
+                                    arrayVals.Count,
+                                    i => new DotExpr(arrayVals[i], ExprValue.From(dp2))
+                                )
+                                .ResolveExpr()
                     };
                 }
                 default:
