@@ -11,11 +11,17 @@ public static class VirtualHostingExtensions
         string siteDir,
         string? domainPrefix = null,
         bool fallback = false,
-        DomainSpaOptions? options = null
+        DomainSpaOptions? options = null,
+        Func<HttpRequest, bool>? match = null,
+        PathString? pathString = null
     )
     {
         domainPrefix ??= siteDir + ".";
         options ??= new DomainSpaOptions();
+        match ??=
+            pathString != null
+                ? r => r.Path.StartsWithSegments(pathString.Value)
+                : r => r.Host.Host.StartsWith(domainPrefix);
         var buildDir = Path.Combine(env.ContentRootPath, "ClientApp/sites", siteDir, "out");
         if (!Directory.Exists(buildDir))
         {
@@ -25,13 +31,14 @@ public static class VirtualHostingExtensions
         var fileOptions = new StaticFileOptions()
         {
             FileProvider = new HtmlFileProvider(buildDir),
-            RequestPath = "",
+            RequestPath = pathString?.Value,
             ServeUnknownFileTypes = true,
             DefaultContentType = "text/html;charset=UTF-8",
-            OnPrepareResponse = (ctx) => ctx.Context.Response.Headers.CacheControl = options.CacheControl
+            OnPrepareResponse = (ctx) =>
+                ctx.Context.Response.Headers.CacheControl = options.CacheControl
         };
         app.UseWhen(
-            ctx => fallback || ctx.Request.Host.Host.StartsWith(domainPrefix),
+            ctx => fallback || match(ctx.Request),
             (app2) =>
             {
                 app2.UseStaticFiles(fileOptions);
@@ -39,6 +46,7 @@ public static class VirtualHostingExtensions
                 app2.UseSpa(spa =>
                 {
                     spa.Options.SourcePath = "ClientApp";
+                    spa.Options.DefaultPage = Path.Combine(pathString ?? "/", "index.html");
                     spa.Options.DefaultPageStaticFileOptions = fileOptions;
                 });
             }
@@ -78,7 +86,7 @@ public static class VirtualHostingExtensions
         public IFileInfo GetFileInfo(string subpath)
         {
             var extension = Path.GetExtension(subpath);
-            if (extension == "")
+            if (extension == "" && subpath != "/")
             {
                 return _provider.GetFileInfo(ResolveDynamic(subpath) + ".html");
             }
