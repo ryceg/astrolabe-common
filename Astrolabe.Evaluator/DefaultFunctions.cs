@@ -125,26 +125,48 @@ public class IfElseOp : FunctionHandler
     }
 }
 
-public abstract class ArrayOp : FunctionHandler
+public abstract class ResolveIfValue : FunctionHandler
 {
     public abstract ExprValue Evaluate(IList<ExprValue> args);
 
     public Expr? Resolve(IList<Expr> args)
     {
-        if (args[0].MaybeValue() is { Value: ArrayValue } ev)
+        if (args[0].MaybeValue() is { } v)
         {
-            return Evaluate([ev]);
+            return Evaluate([v]);
         }
         return null;
     }
 }
 
-public class AggregateNumberOp(NumberOp<double, long> aggregate) : ArrayOp
+public abstract class ArrayOp : ResolveIfValue
 {
     public override ExprValue Evaluate(IList<ExprValue> args)
     {
-        var flattenned = ExprValue.ToEnumerable(args[0].Flatten());
-        return flattenned.Aggregate(
+        var asList = args[0].AsList();
+        return EvalArray(asList);
+    }
+
+    private ExprValue EvalArray(IList<object?> asList)
+    {
+        if (asList.Any(x => x is ArrayValue))
+        {
+            return ExprValue.From(
+                ArrayValue.From(asList.Select(x => EvalArray(ExprValue.ToList(x)).Value))
+            );
+        }
+
+        return EvalArrayOp(asList);
+    }
+
+    protected abstract ExprValue EvalArrayOp(IList<object?> arrayValues);
+}
+
+public class AggregateNumberOp(NumberOp<double, long> aggregate) : ArrayOp
+{
+    protected override ExprValue EvalArrayOp(IList<object?> values)
+    {
+        return values.Aggregate(
             ExprValue.From(0d),
             (a, b) => aggregate.EvalBin(a, new ExprValue(b))
         );
@@ -153,9 +175,28 @@ public class AggregateNumberOp(NumberOp<double, long> aggregate) : ArrayOp
 
 public class CountOp : ArrayOp
 {
+    protected override ExprValue EvalArrayOp(IList<object?> asList)
+    {
+        return ExprValue.From(asList.Count);
+    }
+}
+
+public class StringOp : ResolveIfValue
+{
     public override ExprValue Evaluate(IList<ExprValue> args)
     {
-        return ExprValue.From(ExprValue.ToEnumerable(args[0].Flatten()).Count());
+        return ExprValue.From(ToString(args[0].Value));
+    }
+
+    public static string ToString(object? value)
+    {
+        return value switch
+        {
+            null => "",
+            ArrayValue av => string.Join("", ExprValue.ToList(av).Select(ToString)),
+            ObjectValue => "{}",
+            _ => value.ToString() ?? ""
+        };
     }
 }
 
@@ -192,6 +233,7 @@ public static class DefaultFunctions
             { InbuiltFunction.Not, new NotOp() },
             { InbuiltFunction.IfElse, new IfElseOp() },
             { InbuiltFunction.Sum, new AggregateNumberOp(AddNumberOp) },
-            { InbuiltFunction.Count, new CountOp() }
+            { InbuiltFunction.Count, new CountOp() },
+            { InbuiltFunction.String, new StringOp() }
         };
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.ComponentModel.DataAnnotations;
 using Astrolabe.Annotation;
 
 namespace Astrolabe.Evaluator;
@@ -6,22 +7,50 @@ namespace Astrolabe.Evaluator;
 [JsonString]
 public enum InbuiltFunction
 {
+    [Display(Name = "==")]
     Eq,
-    Lt,
-    LtEq,
-    Gt,
-    GtEq,
+
+    [Display(Name = "!=")]
     Ne,
+
+    [Display(Name = "<")]
+    Lt,
+
+    [Display(Name = "<=")]
+    LtEq,
+
+    [Display(Name = ">")]
+    Gt,
+
+    [Display(Name = ">=")]
+    GtEq,
+
+    [Display(Name = "and")]
     And,
+
+    [Display(Name = "or")]
     Or,
+
+    [Display(Name = "!")]
     Not,
+
+    [Display(Name = "+")]
     Add,
+
+    [Display(Name = "-")]
     Minus,
+
+    [Display(Name = "*")]
     Multiply,
+
+    [Display(Name = "/")]
     Divide,
+
+    [Display(Name = "?")]
     IfElse,
     Sum,
-    Count
+    Count,
+    String
 }
 
 public interface Expr;
@@ -172,13 +201,18 @@ public record ExprValue(object? Value) : Expr
         };
     }
 
-    public static IEnumerable<object?> ToEnumerable(object? value)
+    public static IList<object?> ToList(object? value)
     {
         return value switch
         {
-            IEnumerable<object?> v => v,
+            ArrayValue av => av.Values.Cast<object?>().ToList(),
             _ => [value]
         };
+    }
+
+    public IList<object?> AsList()
+    {
+        return ToList(Value);
     }
 }
 

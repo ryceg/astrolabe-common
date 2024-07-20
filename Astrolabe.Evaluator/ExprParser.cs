@@ -12,6 +12,7 @@ public class ExprParser
         {
             "sum" => InbuiltFunction.Sum,
             "count" => InbuiltFunction.Count,
+            "string" => InbuiltFunction.String,
             _ => null
         };
         if (inbuilt != null)
