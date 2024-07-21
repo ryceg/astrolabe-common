@@ -7,6 +7,7 @@ namespace Astrolabe.Validation;
 
 public record ValidatorEnvironment(
     Func<DataPath, object?> GetData,
+    DataPath BasePath,
     IEnumerable<Failure> Failures,
     ExprValue Message,
     ImmutableHashSet<DataPath> FailedData,
@@ -23,6 +24,7 @@ public record ValidatorEnvironment(
     {
         return new ValidatorEnvironment(
             data,
+            DataPath.Empty,
             [],
             ExprValue.Null,
             ImmutableHashSet<DataPath>.Empty,
@@ -105,8 +107,12 @@ public record ValidatorEnvironment(
     {
         if (callEnvExpr is not CallExpr ce)
             return this.WithExpr(callEnvExpr);
-        var result = DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callEnvExpr.Args, this);
-        return result.Map(x => x ?? ce);
+        return DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callEnvExpr, this);
+    }
+
+    public EvalEnvironment WithBasePath(DataPath basePath)
+    {
+        return this with { BasePath = basePath };
     }
 
     public EnvironmentValue<ExprValue> EvaluateValCall(CallEnvExpr callEnvExpr)

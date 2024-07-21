@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/hvams/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
+// Generated from /home/doolse/astrolabe/hvams.roadmanager.server/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -39,7 +39,8 @@ public partial class AstroExprParser : Parser {
 	public const int
 		T__0=1, T__1=2, T__2=3, Number=4, LPAR=5, RPAR=6, LBRAC=7, RBRAC=8, MINUS=9, 
 		PLUS=10, DOT=11, MUL=12, COMMA=13, LESS=14, MORE_=15, LE=16, GE=17, APOS=18, 
-		QUOT=19, AND=20, OR=21, EQ=22, NE=23, Literal=24, Whitespace=25, Identifier=26;
+		QUOT=19, AND=20, OR=21, EQ=22, NE=23, False=24, True=25, Literal=26, Whitespace=27, 
+		Identifier=28;
 	public const int
 		RULE_main = 0, RULE_predicate = 1, RULE_expr = 2, RULE_primaryExpr = 3, 
 		RULE_functionCall = 4, RULE_lambdaExpr = 5, RULE_unionExprNoRoot = 6, 
@@ -56,12 +57,12 @@ public partial class AstroExprParser : Parser {
 	private static readonly string[] _LiteralNames = {
 		null, "'=>'", "'/'", "'$'", null, "'('", "')'", "'['", "']'", "'-'", "'+'", 
 		"'.'", "'*'", "','", "'<'", "'>'", "'<='", "'>='", "'''", "'\"'", "'and'", 
-		"'or'", "'='", "'!='"
+		"'or'", "'='", "'!='", "'false'", "'true'"
 	};
 	private static readonly string[] _SymbolicNames = {
 		null, null, null, null, "Number", "LPAR", "RPAR", "LBRAC", "RBRAC", "MINUS", 
 		"PLUS", "DOT", "MUL", "COMMA", "LESS", "MORE_", "LE", "GE", "APOS", "QUOT", 
-		"AND", "OR", "EQ", "NE", "Literal", "Whitespace", "Identifier"
+		"AND", "OR", "EQ", "NE", "False", "True", "Literal", "Whitespace", "Identifier"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -238,6 +239,8 @@ public partial class AstroExprParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RPAR() { return GetToken(AstroExprParser.RPAR, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Literal() { return GetToken(AstroExprParser.Literal, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Number() { return GetToken(AstroExprParser.Number, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode False() { return GetToken(AstroExprParser.False, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode True() { return GetToken(AstroExprParser.True, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Identifier() { return GetToken(AstroExprParser.Identifier, 0); }
 		public PrimaryExprContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -257,7 +260,7 @@ public partial class AstroExprParser : Parser {
 		PrimaryExprContext _localctx = new PrimaryExprContext(Context, State);
 		EnterRule(_localctx, 6, RULE_primaryExpr);
 		try {
-			State = 53;
+			State = 55;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,0,Context) ) {
 			case 1:
@@ -310,6 +313,20 @@ public partial class AstroExprParser : Parser {
 				EnterOuterAlt(_localctx, 7);
 				{
 				State = 52;
+				Match(False);
+				}
+				break;
+			case 8:
+				EnterOuterAlt(_localctx, 8);
+				{
+				State = 53;
+				Match(True);
+				}
+				break;
+			case 9:
+				EnterOuterAlt(_localctx, 9);
+				{
+				State = 54;
 				Match(Identifier);
 				}
 				break;
@@ -363,37 +380,37 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 55;
+			State = 57;
 			variableReference();
-			State = 56;
+			State = 58;
 			Match(LPAR);
-			State = 65;
+			State = 67;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 83886648L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 385876536L) != 0)) {
 				{
-				State = 57;
+				State = 59;
 				expr();
-				State = 62;
+				State = 64;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					State = 58;
+					State = 60;
 					Match(COMMA);
-					State = 59;
+					State = 61;
 					expr();
 					}
 					}
-					State = 64;
+					State = 66;
 					ErrorHandler.Sync(this);
 					_la = TokenStream.LA(1);
 				}
 				}
 			}
 
-			State = 67;
+			State = 69;
 			Match(RPAR);
 			}
 		}
@@ -435,11 +452,11 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 69;
-			variableReference();
-			State = 70;
-			Match(T__0);
 			State = 71;
+			variableReference();
+			State = 72;
+			Match(T__0);
+			State = 73;
 			expr();
 			}
 		}
@@ -477,20 +494,20 @@ public partial class AstroExprParser : Parser {
 		UnionExprNoRootContext _localctx = new UnionExprNoRootContext(Context, State);
 		EnterRule(_localctx, 12, RULE_unionExprNoRoot);
 		try {
-			State = 75;
+			State = 77;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,3,Context) ) {
 			case 1:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 73;
+				State = 75;
 				Match(Identifier);
 				}
 				break;
 			case 2:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 74;
+				State = 76;
 				filterExpr();
 				}
 				break;
@@ -534,14 +551,14 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 77;
-			primaryExpr();
 			State = 79;
+			primaryExpr();
+			State = 81;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,4,Context) ) {
 			case 1:
 				{
-				State = 78;
+				State = 80;
 				predicate();
 				}
 				break;
@@ -591,23 +608,23 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 81;
+			State = 83;
 			andExpr();
-			State = 86;
+			State = 88;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,5,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 82;
+					State = 84;
 					Match(OR);
-					State = 83;
+					State = 85;
 					andExpr();
 					}
 					} 
 				}
-				State = 88;
+				State = 90;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,5,Context);
 			}
@@ -656,23 +673,23 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 89;
+			State = 91;
 			equalityExpr();
-			State = 94;
+			State = 96;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,6,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 90;
+					State = 92;
 					Match(AND);
-					State = 91;
+					State = 93;
 					equalityExpr();
 					}
 					} 
 				}
-				State = 96;
+				State = 98;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,6,Context);
 			}
@@ -726,16 +743,16 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 97;
+			State = 99;
 			relationalExpr();
-			State = 102;
+			State = 104;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,7,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 98;
+					State = 100;
 					_la = TokenStream.LA(1);
 					if ( !(_la==EQ || _la==NE) ) {
 					ErrorHandler.RecoverInline(this);
@@ -744,12 +761,12 @@ public partial class AstroExprParser : Parser {
 						ErrorHandler.ReportMatch(this);
 					    Consume();
 					}
-					State = 99;
+					State = 101;
 					relationalExpr();
 					}
 					} 
 				}
-				State = 104;
+				State = 106;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,7,Context);
 			}
@@ -811,16 +828,16 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 105;
+			State = 107;
 			additiveExpr();
-			State = 110;
+			State = 112;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,8,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 106;
+					State = 108;
 					_la = TokenStream.LA(1);
 					if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 245760L) != 0)) ) {
 					ErrorHandler.RecoverInline(this);
@@ -829,12 +846,12 @@ public partial class AstroExprParser : Parser {
 						ErrorHandler.ReportMatch(this);
 					    Consume();
 					}
-					State = 107;
+					State = 109;
 					additiveExpr();
 					}
 					} 
 				}
-				State = 112;
+				State = 114;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,8,Context);
 			}
@@ -888,16 +905,16 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 113;
+			State = 115;
 			multiplicativeExpr();
-			State = 118;
+			State = 120;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,9,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 114;
+					State = 116;
 					_la = TokenStream.LA(1);
 					if ( !(_la==MINUS || _la==PLUS) ) {
 					ErrorHandler.RecoverInline(this);
@@ -906,12 +923,12 @@ public partial class AstroExprParser : Parser {
 						ErrorHandler.ReportMatch(this);
 					    Consume();
 					}
-					State = 115;
+					State = 117;
 					multiplicativeExpr();
 					}
 					} 
 				}
-				State = 120;
+				State = 122;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,9,Context);
 			}
@@ -961,16 +978,16 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 121;
+			State = 123;
 			mapExpr();
-			State = 126;
+			State = 128;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,10,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 122;
+					State = 124;
 					_la = TokenStream.LA(1);
 					if ( !(_la==T__1 || _la==MUL) ) {
 					ErrorHandler.RecoverInline(this);
@@ -979,12 +996,12 @@ public partial class AstroExprParser : Parser {
 						ErrorHandler.ReportMatch(this);
 					    Consume();
 					}
-					State = 123;
+					State = 125;
 					mapExpr();
 					}
 					} 
 				}
-				State = 128;
+				State = 130;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,10,Context);
 			}
@@ -1033,23 +1050,23 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 129;
+			State = 131;
 			unaryExprNoRoot();
-			State = 134;
+			State = 136;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,11,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 130;
+					State = 132;
 					Match(DOT);
-					State = 131;
+					State = 133;
 					unaryExprNoRoot();
 					}
 					} 
 				}
-				State = 136;
+				State = 138;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,11,Context);
 			}
@@ -1095,21 +1112,21 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 140;
+			State = 142;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			while (_la==MINUS) {
 				{
 				{
-				State = 137;
+				State = 139;
 				Match(MINUS);
 				}
 				}
-				State = 142;
+				State = 144;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
-			State = 143;
+			State = 145;
 			unionExprNoRoot();
 			}
 		}
@@ -1146,9 +1163,9 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 145;
+			State = 147;
 			Match(T__2);
-			State = 146;
+			State = 148;
 			Match(Identifier);
 			}
 		}
@@ -1164,51 +1181,52 @@ public partial class AstroExprParser : Parser {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,26,149,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
+		4,1,28,151,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
 		7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,
 		2,15,7,15,2,16,7,16,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,2,1,2,1,3,1,3,1,3,1,
-		3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,54,8,3,1,4,1,4,1,4,1,4,1,4,5,4,61,8,4,10,
-		4,12,4,64,9,4,3,4,66,8,4,1,4,1,4,1,5,1,5,1,5,1,5,1,6,1,6,3,6,76,8,6,1,
-		7,1,7,3,7,80,8,7,1,8,1,8,1,8,5,8,85,8,8,10,8,12,8,88,9,8,1,9,1,9,1,9,5,
-		9,93,8,9,10,9,12,9,96,9,9,1,10,1,10,1,10,5,10,101,8,10,10,10,12,10,104,
-		9,10,1,11,1,11,1,11,5,11,109,8,11,10,11,12,11,112,9,11,1,12,1,12,1,12,
-		5,12,117,8,12,10,12,12,12,120,9,12,1,13,1,13,1,13,5,13,125,8,13,10,13,
-		12,13,128,9,13,1,14,1,14,1,14,5,14,133,8,14,10,14,12,14,136,9,14,1,15,
-		5,15,139,8,15,10,15,12,15,142,9,15,1,15,1,15,1,16,1,16,1,16,1,16,0,0,17,
-		0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,0,4,1,0,22,23,1,0,14,17,
-		1,0,9,10,2,0,2,2,12,12,149,0,34,1,0,0,0,2,37,1,0,0,0,4,41,1,0,0,0,6,53,
-		1,0,0,0,8,55,1,0,0,0,10,69,1,0,0,0,12,75,1,0,0,0,14,77,1,0,0,0,16,81,1,
-		0,0,0,18,89,1,0,0,0,20,97,1,0,0,0,22,105,1,0,0,0,24,113,1,0,0,0,26,121,
-		1,0,0,0,28,129,1,0,0,0,30,140,1,0,0,0,32,145,1,0,0,0,34,35,3,4,2,0,35,
+		3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,56,8,3,1,4,1,4,1,4,1,4,1,4,5,4,63,
+		8,4,10,4,12,4,66,9,4,3,4,68,8,4,1,4,1,4,1,5,1,5,1,5,1,5,1,6,1,6,3,6,78,
+		8,6,1,7,1,7,3,7,82,8,7,1,8,1,8,1,8,5,8,87,8,8,10,8,12,8,90,9,8,1,9,1,9,
+		1,9,5,9,95,8,9,10,9,12,9,98,9,9,1,10,1,10,1,10,5,10,103,8,10,10,10,12,
+		10,106,9,10,1,11,1,11,1,11,5,11,111,8,11,10,11,12,11,114,9,11,1,12,1,12,
+		1,12,5,12,119,8,12,10,12,12,12,122,9,12,1,13,1,13,1,13,5,13,127,8,13,10,
+		13,12,13,130,9,13,1,14,1,14,1,14,5,14,135,8,14,10,14,12,14,138,9,14,1,
+		15,5,15,141,8,15,10,15,12,15,144,9,15,1,15,1,15,1,16,1,16,1,16,1,16,0,
+		0,17,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,0,4,1,0,22,23,1,0,14,
+		17,1,0,9,10,2,0,2,2,12,12,153,0,34,1,0,0,0,2,37,1,0,0,0,4,41,1,0,0,0,6,
+		55,1,0,0,0,8,57,1,0,0,0,10,71,1,0,0,0,12,77,1,0,0,0,14,79,1,0,0,0,16,83,
+		1,0,0,0,18,91,1,0,0,0,20,99,1,0,0,0,22,107,1,0,0,0,24,115,1,0,0,0,26,123,
+		1,0,0,0,28,131,1,0,0,0,30,142,1,0,0,0,32,147,1,0,0,0,34,35,3,4,2,0,35,
 		36,5,0,0,1,36,1,1,0,0,0,37,38,5,7,0,0,38,39,3,4,2,0,39,40,5,8,0,0,40,3,
-		1,0,0,0,41,42,3,16,8,0,42,5,1,0,0,0,43,54,3,8,4,0,44,54,3,10,5,0,45,54,
-		3,32,16,0,46,47,5,5,0,0,47,48,3,4,2,0,48,49,5,6,0,0,49,54,1,0,0,0,50,54,
-		5,24,0,0,51,54,5,4,0,0,52,54,5,26,0,0,53,43,1,0,0,0,53,44,1,0,0,0,53,45,
-		1,0,0,0,53,46,1,0,0,0,53,50,1,0,0,0,53,51,1,0,0,0,53,52,1,0,0,0,54,7,1,
-		0,0,0,55,56,3,32,16,0,56,65,5,5,0,0,57,62,3,4,2,0,58,59,5,13,0,0,59,61,
-		3,4,2,0,60,58,1,0,0,0,61,64,1,0,0,0,62,60,1,0,0,0,62,63,1,0,0,0,63,66,
-		1,0,0,0,64,62,1,0,0,0,65,57,1,0,0,0,65,66,1,0,0,0,66,67,1,0,0,0,67,68,
-		5,6,0,0,68,9,1,0,0,0,69,70,3,32,16,0,70,71,5,1,0,0,71,72,3,4,2,0,72,11,
-		1,0,0,0,73,76,5,26,0,0,74,76,3,14,7,0,75,73,1,0,0,0,75,74,1,0,0,0,76,13,
-		1,0,0,0,77,79,3,6,3,0,78,80,3,2,1,0,79,78,1,0,0,0,79,80,1,0,0,0,80,15,
-		1,0,0,0,81,86,3,18,9,0,82,83,5,21,0,0,83,85,3,18,9,0,84,82,1,0,0,0,85,
-		88,1,0,0,0,86,84,1,0,0,0,86,87,1,0,0,0,87,17,1,0,0,0,88,86,1,0,0,0,89,
-		94,3,20,10,0,90,91,5,20,0,0,91,93,3,20,10,0,92,90,1,0,0,0,93,96,1,0,0,
-		0,94,92,1,0,0,0,94,95,1,0,0,0,95,19,1,0,0,0,96,94,1,0,0,0,97,102,3,22,
-		11,0,98,99,7,0,0,0,99,101,3,22,11,0,100,98,1,0,0,0,101,104,1,0,0,0,102,
-		100,1,0,0,0,102,103,1,0,0,0,103,21,1,0,0,0,104,102,1,0,0,0,105,110,3,24,
-		12,0,106,107,7,1,0,0,107,109,3,24,12,0,108,106,1,0,0,0,109,112,1,0,0,0,
-		110,108,1,0,0,0,110,111,1,0,0,0,111,23,1,0,0,0,112,110,1,0,0,0,113,118,
-		3,26,13,0,114,115,7,2,0,0,115,117,3,26,13,0,116,114,1,0,0,0,117,120,1,
-		0,0,0,118,116,1,0,0,0,118,119,1,0,0,0,119,25,1,0,0,0,120,118,1,0,0,0,121,
-		126,3,28,14,0,122,123,7,3,0,0,123,125,3,28,14,0,124,122,1,0,0,0,125,128,
-		1,0,0,0,126,124,1,0,0,0,126,127,1,0,0,0,127,27,1,0,0,0,128,126,1,0,0,0,
-		129,134,3,30,15,0,130,131,5,11,0,0,131,133,3,30,15,0,132,130,1,0,0,0,133,
-		136,1,0,0,0,134,132,1,0,0,0,134,135,1,0,0,0,135,29,1,0,0,0,136,134,1,0,
-		0,0,137,139,5,9,0,0,138,137,1,0,0,0,139,142,1,0,0,0,140,138,1,0,0,0,140,
-		141,1,0,0,0,141,143,1,0,0,0,142,140,1,0,0,0,143,144,3,12,6,0,144,31,1,
-		0,0,0,145,146,5,3,0,0,146,147,5,26,0,0,147,33,1,0,0,0,13,53,62,65,75,79,
-		86,94,102,110,118,126,134,140
+		1,0,0,0,41,42,3,16,8,0,42,5,1,0,0,0,43,56,3,8,4,0,44,56,3,10,5,0,45,56,
+		3,32,16,0,46,47,5,5,0,0,47,48,3,4,2,0,48,49,5,6,0,0,49,56,1,0,0,0,50,56,
+		5,26,0,0,51,56,5,4,0,0,52,56,5,24,0,0,53,56,5,25,0,0,54,56,5,28,0,0,55,
+		43,1,0,0,0,55,44,1,0,0,0,55,45,1,0,0,0,55,46,1,0,0,0,55,50,1,0,0,0,55,
+		51,1,0,0,0,55,52,1,0,0,0,55,53,1,0,0,0,55,54,1,0,0,0,56,7,1,0,0,0,57,58,
+		3,32,16,0,58,67,5,5,0,0,59,64,3,4,2,0,60,61,5,13,0,0,61,63,3,4,2,0,62,
+		60,1,0,0,0,63,66,1,0,0,0,64,62,1,0,0,0,64,65,1,0,0,0,65,68,1,0,0,0,66,
+		64,1,0,0,0,67,59,1,0,0,0,67,68,1,0,0,0,68,69,1,0,0,0,69,70,5,6,0,0,70,
+		9,1,0,0,0,71,72,3,32,16,0,72,73,5,1,0,0,73,74,3,4,2,0,74,11,1,0,0,0,75,
+		78,5,28,0,0,76,78,3,14,7,0,77,75,1,0,0,0,77,76,1,0,0,0,78,13,1,0,0,0,79,
+		81,3,6,3,0,80,82,3,2,1,0,81,80,1,0,0,0,81,82,1,0,0,0,82,15,1,0,0,0,83,
+		88,3,18,9,0,84,85,5,21,0,0,85,87,3,18,9,0,86,84,1,0,0,0,87,90,1,0,0,0,
+		88,86,1,0,0,0,88,89,1,0,0,0,89,17,1,0,0,0,90,88,1,0,0,0,91,96,3,20,10,
+		0,92,93,5,20,0,0,93,95,3,20,10,0,94,92,1,0,0,0,95,98,1,0,0,0,96,94,1,0,
+		0,0,96,97,1,0,0,0,97,19,1,0,0,0,98,96,1,0,0,0,99,104,3,22,11,0,100,101,
+		7,0,0,0,101,103,3,22,11,0,102,100,1,0,0,0,103,106,1,0,0,0,104,102,1,0,
+		0,0,104,105,1,0,0,0,105,21,1,0,0,0,106,104,1,0,0,0,107,112,3,24,12,0,108,
+		109,7,1,0,0,109,111,3,24,12,0,110,108,1,0,0,0,111,114,1,0,0,0,112,110,
+		1,0,0,0,112,113,1,0,0,0,113,23,1,0,0,0,114,112,1,0,0,0,115,120,3,26,13,
+		0,116,117,7,2,0,0,117,119,3,26,13,0,118,116,1,0,0,0,119,122,1,0,0,0,120,
+		118,1,0,0,0,120,121,1,0,0,0,121,25,1,0,0,0,122,120,1,0,0,0,123,128,3,28,
+		14,0,124,125,7,3,0,0,125,127,3,28,14,0,126,124,1,0,0,0,127,130,1,0,0,0,
+		128,126,1,0,0,0,128,129,1,0,0,0,129,27,1,0,0,0,130,128,1,0,0,0,131,136,
+		3,30,15,0,132,133,5,11,0,0,133,135,3,30,15,0,134,132,1,0,0,0,135,138,1,
+		0,0,0,136,134,1,0,0,0,136,137,1,0,0,0,137,29,1,0,0,0,138,136,1,0,0,0,139,
+		141,5,9,0,0,140,139,1,0,0,0,141,144,1,0,0,0,142,140,1,0,0,0,142,143,1,
+		0,0,0,143,145,1,0,0,0,144,142,1,0,0,0,145,146,3,12,6,0,146,31,1,0,0,0,
+		147,148,5,3,0,0,148,149,5,28,0,0,149,33,1,0,0,0,13,55,64,67,77,81,88,96,
+		104,112,120,128,136,142
 	};
 
 	public static readonly ATN _ATN =

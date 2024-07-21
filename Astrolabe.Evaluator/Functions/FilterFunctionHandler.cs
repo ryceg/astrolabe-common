@@ -7,12 +7,64 @@ public class FilterFunctionHandler : FunctionHandler
         EvalEnvironment environment
     )
     {
-        throw new NotImplementedException();
+        var arrayValue = environment.Evaluate(args[0]);
+        return arrayValue.Value.Value switch
+        {
+            ArrayValue av
+                => arrayValue.Map<(ExprValue, List<ExprValue>)>(_ =>
+                    (
+                        ExprValue.From(ArrayValue.From(av.Values.OfType<object>())),
+                        [arrayValue.Value]
+                    )
+                ),
+            var v => throw new NotImplementedException()
+        };
     }
 
-    public EnvironmentValue<Expr?> Resolve(IList<Expr> args, EvalEnvironment environment)
+    public EnvironmentValue<Expr> Resolve(CallableExpr callableExpr, EvalEnvironment environment)
     {
-        throw new NotImplementedException();
+        var nextEnv = environment.ResolveExpr(callableExpr.Args[0]);
+        return (
+            nextEnv.Value switch
+            {
+                ArrayExpr ae
+                    => nextEnv
+                        .Env.EvaluateEach(ae.ValueExpr, (e, expr) => FilterElem(e.WithValue(expr)))
+                        .Map(x => (Expr)new ArrayExpr(x)),
+                _ => FilterElem(nextEnv)
+            }
+        ).Map(x => (Expr)new CallExpr(InbuiltFunction.Filter, [x]));
+        ;
+
+        EnvironmentValue<Expr> FilterElem(EnvironmentValue<Expr> expand)
+        {
+            return expand.Value switch
+            {
+                ExprValue { Value: DataPath dp }
+                    => expand.Env.EvaluateData(dp) switch
+                    {
+                        (var next, { Value: ArrayValue av })
+                            => next.EvaluateEach(
+                                    Enumerable.Range(0, av.Count),
+                                    (e, i) =>
+                                        e.WithBasePath(new IndexPath(i, dp))
+                                            .ResolveExpr(callableExpr.Args[1])
+                                            .Map(x => new CallExpr(
+                                                InbuiltFunction.IfElse,
+                                                [
+                                                    x,
+                                                    new ExprValue(new IndexPath(i, dp)),
+                                                    ExprValue.Null
+                                                ]
+                                            ))
+                                )
+                                .Map(x => (Expr)new ArrayExpr(x))
+                                .WithBasePath(next.BasePath),
+                        var other => throw new NotImplementedException()
+                    },
+                _ => throw new NotImplementedException()
+            };
+        }
     }
 
     //     EnvironmentValue<Expr> DoFilter(FilterExpr filterExpr)

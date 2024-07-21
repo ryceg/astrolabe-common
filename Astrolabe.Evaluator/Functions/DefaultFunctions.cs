@@ -9,7 +9,7 @@ public interface FunctionHandler
         EvalEnvironment environment
     );
 
-    EnvironmentValue<Expr?> Resolve(IList<Expr> args, EvalEnvironment environment);
+    EnvironmentValue<Expr> Resolve(CallableExpr callExpr, EvalEnvironment environment);
 }
 
 public abstract class ResolveFirst : FunctionHandler
@@ -26,11 +26,16 @@ public abstract class ResolveFirst : FunctionHandler
 
     public abstract ExprValue DoEvaluate(IList<ExprValue> evalArgs);
 
-    public virtual EnvironmentValue<Expr?> Resolve(IList<Expr> args, EvalEnvironment env)
+    public virtual EnvironmentValue<Expr> Resolve(CallableExpr callableExpr, EvalEnvironment env)
     {
-        var (nextEnv, evalArgs) = env.EvaluateEach(args, (e, expr) => e.ResolveExpr(expr))
+        var (nextEnv, evalArgs) = env.EvaluateEach(
+                callableExpr.Args,
+                (e, expr) => e.ResolveExpr(expr)
+            )
             .Map(x => x.ToList());
-        return nextEnv.WithValue(DoResolve(evalArgs));
+        return nextEnv.WithValue(
+            DoResolve(evalArgs) is { } r ? r : callableExpr.WithArgs(evalArgs)
+        );
     }
 
     public abstract Expr? DoResolve(IList<Expr> args);
@@ -159,7 +164,7 @@ public abstract class ResolveIfValue : ResolveFirst
 {
     public override Expr? DoResolve(IList<Expr> args)
     {
-        if (args[0].MaybeValue() is { } v)
+        if (args[0].MaybeValue() is { Value: not DataPath } v)
         {
             return DoEvaluate([v]);
         }

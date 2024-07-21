@@ -21,9 +21,11 @@ AND=20
 OR=21
 EQ=22
 NE=23
-Literal=24
-Whitespace=25
-Identifier=26
+False=24
+True=25
+Literal=26
+Whitespace=27
+Identifier=28
 '=>'=1
 '/'=2
 '$'=3
@@ -46,3 +48,5 @@ Identifier=26
 'or'=21
 '='=22
 '!='=23
+'false'=24
+'true'=25

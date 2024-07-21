@@ -22,6 +22,8 @@ primaryExpr
     | '(' expr ')'
     | Literal
     | Number
+    | 'false'
+    | 'true'
     | Identifier
     ;
 
@@ -162,6 +164,14 @@ EQ
     ;
 NE
     : '!='
+    ;
+    
+False
+    : 'false'
+    ;
+
+True
+    : 'true'
     ;
 
 Literal

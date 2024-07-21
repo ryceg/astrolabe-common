@@ -46,8 +46,16 @@ public class ExprParser
                 AstroExprParser.Identifier
                     => ExprValue.From(new FieldPath(node.GetText(), DataPath.Empty)),
                 AstroExprParser.Number => ExprValue.From(double.Parse(node.GetText())),
+                AstroExprParser.False => ExprValue.False,
+                AstroExprParser.True => ExprValue.True,
                 _ => throw new NotImplementedException()
             };
+        }
+
+        public override Expr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
+        {
+            var leftPar = context.LPAR();
+            return leftPar != null ? Visit(context.expr()) : base.VisitPrimaryExpr(context);
         }
 
         public override Expr VisitPredicate(AstroExprParser.PredicateContext context)

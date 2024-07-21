@@ -8,7 +8,7 @@ using EvaluatedExpr = EnvironmentValue<ExprValue>;
 public interface EvalEnvironment
 {
     EvaluatedExpr EvaluateData(DataPath dataPath);
-
+    DataPath BasePath { get; }
     Expr? GetReplacement(Expr expr);
     EvalEnvironment WithReplacement(Expr expr, Expr? value);
     EvalEnvironment MapReplacement(Expr expr, Func<Expr?, Expr> mapValue);
@@ -16,6 +16,7 @@ public interface EvalEnvironment
     EnvironmentValue<ExprValue> EvaluateCall(CallableExpr callEnvExpr);
 
     EnvironmentValue<Expr> ResolveCall(CallableExpr callEnvExpr);
+    EvalEnvironment WithBasePath(DataPath indexPath);
 }
 
 public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
@@ -43,6 +44,11 @@ public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
     public EnvironmentValue<IEnumerable<T>> Single()
     {
         return Env.WithValue<IEnumerable<T>>([Value]);
+    }
+
+    public EnvironmentValue<T> WithBasePath(DataPath basePath)
+    {
+        return Env.WithBasePath(basePath).WithValue(Value);
     }
 }
 
