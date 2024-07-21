@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using Astrolabe.Evaluator;
+using Astrolabe.Evaluator.Functions;
 
 namespace Astrolabe.Validation;
 
@@ -75,9 +76,10 @@ public record ValidatorEnvironment(
             return EvaluateValCall(callEnvExpr);
         if (callExpr is not CallExpr ce)
             return this.WithNull();
-        var evalArgs = this.EvaluateAll(ce.Args, (ee, e) => ee.Evaluate(e).Single())
-            .Map(x => x.ToList());
-        var result = DefaultFunctions.FunctionHandlers[ce.Function].Evaluate(evalArgs.Value);
+        var envResult = DefaultFunctions
+            .FunctionHandlers[ce.Function]
+            .Evaluate(callExpr.Args, this);
+        var result = envResult.Value.Item1;
         if (
             result.IsFalse()
             && ce.Function
@@ -90,21 +92,21 @@ public record ValidatorEnvironment(
         )
         {
             return (
-                FromEnv(evalArgs.Env) with
+                FromEnv(envResult.Env) with
                 {
-                    Failures = Failures.Append(new Failure(ce, evalArgs.Value))
+                    Failures = Failures.Append(new Failure(ce, envResult.Value.Item2))
                 }
             ).WithExprValue(ExprValue.False);
         }
-        return evalArgs.Env.WithValue(result);
+        return envResult.Env.WithValue(result);
     }
 
     public EnvironmentValue<Expr> ResolveCall(CallableExpr callEnvExpr)
     {
         if (callEnvExpr is not CallExpr ce)
             return this.WithExpr(callEnvExpr);
-        var result = DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callEnvExpr.Args);
-        return this.WithExpr(result ?? ce);
+        var result = DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callEnvExpr.Args, this);
+        return result.Map(x => x ?? ce);
     }
 
     public EnvironmentValue<ExprValue> EvaluateValCall(CallEnvExpr callEnvExpr)

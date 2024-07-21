@@ -50,14 +50,12 @@ public enum InbuiltFunction
     IfElse,
     Sum,
     Count,
-    String
+    String,
+    Map,
+    Filter
 }
 
 public interface Expr;
-
-public record DotExpr(Expr Base, Expr Segment) : Expr;
-
-public record FilterExpr(Expr Base, Expr Filter) : Expr;
 
 public record LetExpr(IEnumerable<(VarExpr, Expr)> Vars, Expr In) : Expr
 {
@@ -420,7 +418,7 @@ public static class ValueExtensions
         return (expr, other) switch
         {
             (ExprValue { Value: DataPath ps }, ExprValue v) => ExprValue.From(ApplyDot(ps, v)),
-            _ => new DotExpr(expr, other)
+            _ => new CallExpr(InbuiltFunction.Map, [expr, other])
         };
     }
 

@@ -26,17 +26,23 @@ public interface TypedExpr<T> : WrappedExpr
     public TypedExpr<T2> Prop<T2>(Expression<Func<T, T2?>> getter)
         where T2 : struct
     {
-        return new SimpleTypedExpr<T2>(new DotExpr(Wrapped, TypedExprExtensions.FieldName(getter)));
+        return new SimpleTypedExpr<T2>(
+            new CallExpr(InbuiltFunction.Map, [Wrapped, TypedExprExtensions.FieldName(getter)])
+        );
     }
 
     public TypedExpr<T2> Prop<T2>(Expression<Func<T, T2>> getter)
     {
-        return new SimpleTypedExpr<T2>(new DotExpr(Wrapped, TypedExprExtensions.FieldName(getter)));
+        return new SimpleTypedExpr<T2>(
+            new CallExpr(InbuiltFunction.Map, [Wrapped, TypedExprExtensions.FieldName(getter)])
+        );
     }
 
     public TypedArrayExpr<T2> ArrayProp<T2>(Expression<Func<T, IEnumerable<T2>>> getter)
     {
-        return new SimpleTypedExpr<T2>(new DotExpr(Wrapped, TypedExprExtensions.FieldName(getter)));
+        return new SimpleTypedExpr<T2>(
+            new CallExpr(InbuiltFunction.Map, [Wrapped, TypedExprExtensions.FieldName(getter)])
+        );
     }
 
     public TypedElementExpr<T2> Elements<T2>(Expression<Func<T, IEnumerable<T2>>> getter)
@@ -81,7 +87,7 @@ public static class TypedExprExtensions
     {
         var indexVar = VarExpr.MakeNew("i");
         return new SimpleTypedExpr<T>(
-            new DotExpr(array.Wrapped, indexVar),
+            new CallExpr(InbuiltFunction.Map, [array.Wrapped, indexVar]),
             indexVar,
             array.Wrapped
         );
@@ -94,9 +100,15 @@ public static class TypedExprExtensions
     {
         var elemPath = VarExpr.MakeNew("e");
         return new SimpleTypedExpr<T2>(
-            new DotExpr(
-                array.Wrapped,
-                new LambdaExpr(elemPath, new DotExpr(elemPath, FieldName(mapTo)))
+            new CallExpr(
+                InbuiltFunction.Map,
+                [
+                    array.Wrapped,
+                    new LambdaExpr(
+                        elemPath,
+                        new CallExpr(InbuiltFunction.Map, [elemPath, FieldName(mapTo)])
+                    )
+                ]
             )
         );
     }

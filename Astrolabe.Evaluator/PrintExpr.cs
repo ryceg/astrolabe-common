@@ -23,7 +23,9 @@ public static class PrintExpr
                 => $"let {string.Join(", ", letExpr.Vars.Select(x => $"{x.Item1.Print()} = {x.Item2.Print()}"))} in {letExpr.In.Print()}",
             ArrayExpr arrayExpr
                 => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
-            DotExpr de => $"{de.Base.Print()}.{de.Segment.Print()}",
+            CallExpr { Function: InbuiltFunction.Filter, Args: var a }
+                when a.ToList() is [var first, var t]
+                => $"{first.Print()}[{t.Print()}]",
             CallExpr { Function: InbuiltFunction.IfElse, Args: var a }
                 when a.ToList() is [var ifE, var t, var f]
                 => $"{ifE.Print()} ? {t.Print()} : {f.Print()}",
@@ -53,6 +55,7 @@ public static class PrintExpr
             InbuiltFunction.Minus => " - ",
             InbuiltFunction.Multiply => " * ",
             InbuiltFunction.Divide => " / ",
+            InbuiltFunction.Map => ".",
             _ => null
         };
     }
