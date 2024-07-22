@@ -39,6 +39,14 @@ public class ExprParser
             return new VarExpr(context.Identifier().GetText());
         }
 
+        public override Expr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
+        {
+            return new LambdaExpr(
+                Visit(context.variableReference()).AsVar(),
+                Visit(context.expr())
+            );
+        }
+
         public override Expr VisitTerminal(ITerminalNode node)
         {
             return node.Symbol.Type switch

@@ -18,6 +18,7 @@ public static class Interpreter
         {
             ExprValue { Value: DataPath dp }
                 => environment.WithExpr(new ExprValue(environment.BasePath.Concat(dp))),
+            LambdaExpr lambdaExpr => DoLambda(lambdaExpr),
             ExprValue or VarExpr or LambdaExpr => environment.WithExpr(expr),
             ArrayExpr ae
                 => environment
@@ -37,6 +38,17 @@ public static class Interpreter
                 => environment.ResolveExpr(resolveExpr.Expr).Evaluate().AsExpr(),
             CallableExpr callExpr => environment.ResolveCall(callExpr),
         };
+
+        EnvironmentValue<Expr> DoLambda(LambdaExpr lambdaExpr)
+        {
+            return environment.BasePath switch
+            {
+                IndexPath ip
+                    => environment
+                        .WithReplacement(lambdaExpr.Variable, ExprValue.From(ip.Index))
+                        .ResolveExpr(lambdaExpr.Value)
+            };
+        }
     }
 
     public static EvaluatedExprValue Evaluate(this EnvironmentValue<Expr> envExpr)
