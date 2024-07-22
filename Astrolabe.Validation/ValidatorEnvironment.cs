@@ -10,11 +10,14 @@ public record ValidatorEnvironment(
     DataPath BasePath,
     IEnumerable<Failure> Failures,
     ExprValue Message,
+    IEnumerable<ResolvedRule> Rules,
     ImmutableHashSet<DataPath> FailedData,
     ImmutableDictionary<string, object?> Properties,
     ImmutableDictionary<Expr, Expr> Replacements
 ) : EvalEnvironment
 {
+    public const string RuleFunction = "ValidatorRule";
+
     public static ValidatorEnvironment FromEnv(EvalEnvironment eval)
     {
         return (ValidatorEnvironment)eval;
@@ -27,6 +30,7 @@ public record ValidatorEnvironment(
             DataPath.Empty,
             [],
             ExprValue.Null,
+            [],
             ImmutableHashSet<DataPath>.Empty,
             ImmutableDictionary<string, object?>.Empty,
             ImmutableDictionary<Expr, Expr>.Empty
@@ -103,16 +107,51 @@ public record ValidatorEnvironment(
         return envResult.Env.WithValue(result);
     }
 
-    public EnvironmentValue<Expr> ResolveCall(CallableExpr callEnvExpr)
+    public EnvironmentValue<Expr> ResolveCall(CallableExpr callExpr)
     {
-        if (callEnvExpr is not CallExpr ce)
-            return this.WithExpr(callEnvExpr);
-        return DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callEnvExpr, this);
+        if (callExpr is CallEnvExpr callEnvExpr)
+            return ResolveValCall(callEnvExpr);
+        if (callExpr is not CallExpr ce)
+            return this.WithExpr(callExpr);
+        return DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callExpr, this);
     }
 
     public EvalEnvironment WithBasePath(DataPath basePath)
     {
         return this with { BasePath = basePath };
+    }
+
+    public EnvironmentValue<Expr> ResolveValCall(CallEnvExpr callEnvExpr)
+    {
+        var args = callEnvExpr.Args;
+        return callEnvExpr.Function switch
+        {
+            RuleFunction => ResolveRule(),
+            _
+                => this.EvaluateEach(args, (env, e) => env.ResolveExpr(e))
+                    .Map(x => (Expr)(callEnvExpr with { Args = x.ToList() }))
+        };
+
+        EnvironmentValue<Expr> ResolveRule()
+        {
+            var path = this.ResolveExpr(args[0]);
+            var resolvedMust = path.Env.ResolveExpr(args[1]);
+            var evalProps = resolvedMust.Env.Evaluate(args[2]);
+            var valEnv = FromEnv(evalProps.Env);
+            return (
+                valEnv with
+                {
+                    Rules = valEnv.Rules.Append(
+                        new ResolvedRule(
+                            path.Value.AsValue().AsPath(),
+                            resolvedMust.Value,
+                            valEnv.Properties.ToDictionary()
+                        )
+                    ),
+                    Properties = ImmutableDictionary<string, object?>.Empty,
+                }
+            ).WithExpr(ExprValue.Null);
+        }
     }
 
     public EnvironmentValue<ExprValue> EvaluateValCall(CallEnvExpr callEnvExpr)

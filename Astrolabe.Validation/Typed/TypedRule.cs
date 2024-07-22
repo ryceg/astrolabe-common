@@ -67,7 +67,7 @@ public static class TypedRuleExtensions
         Rule rule
     )
     {
-        return new ForEachRule(expr.Array.Wrapped, expr.Index.Wrapped, vars, rule);
+        return new ForEachRule(expr.Wrapped, expr.Index.Wrapped.AsVar(), vars, rule);
     }
 
     public static TypedPathRule<T> RuleFor<T>(this TypedExpr<T> expr)

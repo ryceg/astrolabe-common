@@ -33,6 +33,13 @@ public static class Interpreter
         Rule rule
     )
     {
+        return environment
+            .ResolveExpr(ToExpr(rule))
+            .Map((v, e) => ValidatorEnvironment.FromEnv(e).Rules);
+    }
+
+    private static Expr ToExpr(Rule rule)
+    {
         return rule switch
         {
             ForEachRule rulesForEach => DoRulesForEach(rulesForEach),
@@ -40,62 +47,28 @@ public static class Interpreter
             MultiRule multi => DoMultiRule(multi)
         };
 
-        EnvironmentValue<IEnumerable<ResolvedRule>> DoMultiRule(MultiRule multiRule)
+        Expr DoMultiRule(MultiRule multiRule)
         {
-            return environment.EvaluateAll(multiRule.Rules, EvaluateRule);
+            return new ArrayExpr(multiRule.Rules.Select(ToExpr));
         }
 
-        EnvironmentValue<IEnumerable<ResolvedRule>> DoPathRule(SingleRule pathRule)
+        Expr DoPathRule(SingleRule pathRule)
         {
-            var (pathEnv, segments) = environment.ResolveExpr(pathRule.Path);
-            var (mustEnv, must) = pathEnv.ResolveExpr(pathRule.Must);
-            var (propsEnv, props) = mustEnv.ResolveExpr(pathRule.Props);
-            var propsResult = propsEnv.Evaluate(props);
-            return propsEnv
-                .WithValue(
-                    new ResolvedRule(
-                        ((ExprValue)segments).AsPath(),
-                        must,
-                        ValidatorEnvironment.FromEnv(propsResult.Env).Properties
-                    )
-                )
-                .Single();
-        }
-
-        EnvironmentValue<IEnumerable<ResolvedRule>> DoRulesForEach(ForEachRule rules)
-        {
-            var (pathEnv, collectionSeg) = environment.ResolveExpr(rules.Path);
-            var indexExpr = rules.Index;
-            var runningIndexExpr = indexExpr.AsVar().Prepend("Total");
-            var runningIndexOffset =
-                pathEnv.GetReplacement(runningIndexExpr)?.AsValue().AsInt() ?? 0;
-            var nextEnv = pathEnv.WithReplacement(
-                runningIndexExpr,
-                ExprValue.From(runningIndexOffset)
+            return new CallEnvExpr(
+                ValidatorEnvironment.RuleFunction,
+                [pathRule.Path, pathRule.Must, pathRule.Props]
             );
+        }
 
-            var dataCollection = nextEnv
-                .EvaluateData(collectionSeg.AsValue().AsPath())
-                .AsValue()
-                .Value;
-            if (dataCollection is ArrayValue array)
-            {
-                return nextEnv.EvaluateAll(
-                    Enumerable.Range(0, array.Count),
-                    (env, index) =>
-                    {
-                        var envWithIndex = env.WithReplacement(indexExpr, ExprValue.From(index));
-                        return envWithIndex
-                            .EvaluateRule(rules.Rule)
-                            .WithReplacement(
-                                runningIndexExpr,
-                                ExprValue.From(runningIndexOffset + index + 1)
-                            );
-                    }
-                );
-            }
-
-            throw new ArgumentException($"Not an array: {dataCollection?.GetType()}");
+        Expr DoRulesForEach(ForEachRule rules)
+        {
+            var ruleExpr = ToExpr(rules.Rule);
+            if (rules.Variables != null)
+                ruleExpr = rules.Variables with { In = ruleExpr };
+            return new CallExpr(
+                InbuiltFunction.Map,
+                [rules.Path, new LambdaExpr(rules.Index, ruleExpr)]
+            );
         }
     }
 }
