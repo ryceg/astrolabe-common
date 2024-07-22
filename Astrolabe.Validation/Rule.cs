@@ -56,7 +56,8 @@ public record MultiRule(IEnumerable<Rule> Rules) : Rule(RuleType.Multi)
     }
 }
 
-public record ForEachRule(Expr Path, Expr Index, Rule Rule) : Rule(RuleType.ForEach)
+public record ForEachRule(Expr Path, Expr Index, LetExpr? Variables, Rule Rule)
+    : Rule(RuleType.ForEach)
 {
     public ForEachRule AddRule(Rule rule)
     {
