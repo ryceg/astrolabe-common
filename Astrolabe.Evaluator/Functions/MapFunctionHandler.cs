@@ -29,7 +29,7 @@ public class MapFunctionHandler : FunctionHandler
                     => nextEnv
                         .Env.EvaluateEach(ae.ValueExpr, (e, expr) => MapElem(e.WithValue(expr)))
                         .Map(x => (Expr)new ArrayExpr(x)),
-                ExprValue { Value: DataPath dp }
+                ExprValue ev when ev.MaybeDataPath() is { } dp
                     => expand.Env.EvaluateData(dp) switch
                     {
                         (var next, { Value: ArrayValue av })

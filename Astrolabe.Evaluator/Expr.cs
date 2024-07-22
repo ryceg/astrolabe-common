@@ -381,7 +381,11 @@ public static class ValueExtensions
 
     public static DataPath AsPath(this ExprValue v)
     {
-        return (DataPath)v.Value!;
+        return v.Value switch
+        {
+            string s => new FieldPath(s, DataPath.Empty),
+            DataPath dp => dp
+        };
     }
 
     public static bool IsNull(this ExprValue v)
