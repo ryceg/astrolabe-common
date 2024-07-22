@@ -81,6 +81,12 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFilterExpr([NotNull] AstroExprParser.FilterExprContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.conditionExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitConditionExpression([NotNull] AstroExprParser.ConditionExpressionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.orExpr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

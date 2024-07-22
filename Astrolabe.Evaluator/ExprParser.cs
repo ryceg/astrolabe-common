@@ -80,6 +80,21 @@ public class ExprParser
                 : baseExpr;
         }
 
+        public override Expr VisitConditionExpression(
+            AstroExprParser.ConditionExpressionContext context
+        )
+        {
+            var ifExpr = Visit(context.orExpr());
+            var thenExpr = context.expr();
+            var elseExpr = context.conditionExpression();
+            if (thenExpr != null)
+                return new CallExpr(
+                    InbuiltFunction.IfElse,
+                    [ifExpr, Visit(thenExpr), Visit(elseExpr)]
+                );
+            return ifExpr;
+        }
+
         public override Expr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
         {
             var variableString = context.variableReference().Identifier().GetText();

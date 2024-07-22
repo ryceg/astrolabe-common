@@ -12,7 +12,7 @@ predicate
     ;
 
 expr
-    : orExpr
+    : conditionExpression
     ;
 
 primaryExpr
@@ -42,6 +42,10 @@ unionExprNoRoot
 
 filterExpr
     : primaryExpr predicate?
+    ;
+
+conditionExpression
+    : orExpr ('?' expr ':' conditionExpression)?
     ;
 
 orExpr
