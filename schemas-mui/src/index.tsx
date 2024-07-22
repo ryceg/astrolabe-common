@@ -14,7 +14,7 @@ export function muiTextfieldRenderer(
   return {
     type: "data",
     schemaType: FieldType.String,
-    renderType: DataRenderType.Standard,
+    renderType: DataRenderType.Textfield,
     render: ({ control, required, id, readonly }) => {
       return (lc) => ({
         ...lc,
