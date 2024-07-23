@@ -473,6 +473,11 @@
       "projectFolder": "../aria-datepicker",
       "shouldPublish": true
     },
+    {
+      "packageName": "@astroapps/evaluator",
+      "projectFolder": "../astrolabe-evaluator",
+      "shouldPublish": true
+    },
 //    {
 //      "packageName": "@react-typed-forms/core",
 //      "projectFolder": "../react-typed-forms/packages/core"

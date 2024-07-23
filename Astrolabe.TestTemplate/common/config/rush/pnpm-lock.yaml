@@ -161,6 +161,23 @@ importers:
       rimraf: 3.0.2
       typescript: 5.2.2
 
+  ../../../astrolabe-evaluator:
+    specifiers:
+      '@lezer/generator': ^1.0.0
+      '@lezer/lr': ^1.0.0
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      rimraf: ^3.0.2
+      typescript: ^5.2.2
+    dependencies:
+      '@lezer/lr': 1.4.1
+    devDependencies:
+      '@lezer/generator': 1.7.1
+      microbundle: 0.15.1
+      prettier: 3.3.2
+      rimraf: 3.0.2
+      typescript: 5.2.2
+
   ../../../astrolabe-quill-editor:
     specifiers:
       '@babel/cli': ^7.23.4
@@ -516,9 +533,11 @@ importers:
       '@astroapps/client': workspace:*
       '@astroapps/client-nextjs': workspace:^0.2.0
       '@astroapps/datagrid': workspace:^1.0.6
+      '@astroapps/evaluator': workspace:*
       '@astroapps/schemas-datepicker': workspace:*
       '@astroapps/schemas-editor': workspace:*
       '@astrolabe/ui': workspace:*
+      '@lezer/common': ^1.0.0
       '@react-typed-forms/core': ^3.5.2
       '@react-typed-forms/schemas': workspace:*
       '@tailwindcss/forms': ^0.5.7
@@ -542,9 +561,11 @@ importers:
       '@astroapps/client': link:../../../../astrolabe-client
       '@astroapps/client-nextjs': link:../../../../astrolabe-client-nextjs
       '@astroapps/datagrid': link:../../../../astrolabe-datagrid
+      '@astroapps/evaluator': link:../../../../astrolabe-evaluator
       '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
       '@astrolabe/ui': link:../../../../astrolabe-ui
+      '@lezer/common': 1.2.1
       '@react-typed-forms/core': 3.5.2
       '@react-typed-forms/schemas': link:../../../../schemas
       next: 14.0.4_nnrd3gsncyragczmpvfhocinkq
@@ -2620,6 +2641,22 @@ packages:
   /@juggle/resize-observer/3.4.0:
     resolution: {integrity: sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==}
     dev: true
+
+  /@lezer/common/1.2.1:
+    resolution: {integrity: sha512-yemX0ZD2xS/73llMZIK6KplkjIjf2EvAHcinDi/TfJ9hS25G0388+ClHt6/3but0oOxinTcQHJLDXh6w1crzFQ==}
+
+  /@lezer/generator/1.7.1:
+    resolution: {integrity: sha512-MgPJN9Si+ccxzXl3OAmCeZuUKw4XiPl4y664FX/hnnyG9CTqUPq65N3/VGPA2jD23D7QgMTtNqflta+cPN+5mQ==}
+    hasBin: true
+    dependencies:
+      '@lezer/common': 1.2.1
+      '@lezer/lr': 1.4.1
+    dev: true
+
+  /@lezer/lr/1.4.1:
+    resolution: {integrity: sha512-CHsKq8DMKBf9b3yXPDIU4DbH+ZJd/sJdYOW2llbW/HudP5u0VS6Bfq1hLYfgU7uAYGFIyGGQIsSOXGPEErZiJw==}
+    dependencies:
+      '@lezer/common': 1.2.1
 
   /@mdx-js/react/2.3.0_react@18.3.1:
     resolution: {integrity: sha512-zQH//gdOmuu7nt2oJR29vFhDv88oGPmVw6BggmrHeMI+xgEkp1B2dX9/bMBSYtK0dyLX/aOmesKS09g222K1/g==}

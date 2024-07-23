@@ -1,0 +1,46 @@
+@precedence {
+  call,
+  map @left,
+  times @left,
+  plus @left,
+  rel @left,
+  ternary @right
+  filter @right
+}
+
+@top EvalProgram { expression }
+
+expression { 
+    Identifier | 
+    Number | 
+    String | 
+    BinaryExpression | 
+    UnaryExpression | 
+    ConditionalExpression {
+        expression !ternary "?" expression ":" expression
+    }
+}
+  
+UnaryExpression {
+  ("!" | "+" | "-")
+  expression
+}
+
+BinaryExpression {
+  expression !map call<"."> expression |
+  expression !times (call<"/"> | call<"*">) expression |
+  expression !plus ("+" | "-") expression |
+  expression !rel ("<" | ">" | "=" | "!=" | "<=" | ">=") expression |
+  expression !filter "[" expression "]"
+}
+
+@skip { space }
+
+call<expr> { Call { function[@name={expr}] { expr } } }
+
+@tokens {
+  space { @whitespace+ }
+  Identifier { $[A-Za-z_]+ }
+  Number { $[0-9]+ }
+  String { '"' !["]* '"' }
+}

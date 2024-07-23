@@ -7,6 +7,7 @@
       <Path>astrolabe-client</Path>
       <Path>astrolabe-client-nextjs</Path>
       <Path>astrolabe-datagrid</Path>
+      <Path>astrolabe-evaluator</Path>
       <Path>astrolabe-quill-editor</Path>
       <Path>astrolabe-schemas-editor</Path>
       <Path>astrolabe-storybook</Path>
