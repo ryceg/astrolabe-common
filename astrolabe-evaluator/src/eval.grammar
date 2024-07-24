@@ -10,7 +10,7 @@
 
 @top EvalProgram { expression }
 
-expression { 
+expression[@isGroup=Expression] { 
     Identifier | 
     Number | 
     String | 
@@ -29,14 +29,14 @@ UnaryExpression {
 BinaryExpression {
   expression !map call<"."> expression |
   expression !times (call<"/"> | call<"*">) expression |
-  expression !plus ("+" | "-") expression |
+  expression !plus (call<"+"> | call<"-">) expression |
   expression !rel ("<" | ">" | "=" | "!=" | "<=" | ">=") expression |
   expression !filter "[" expression "]"
 }
 
 @skip { space }
 
-call<expr> { Call { function[@name={expr}] { expr } } }
+call<expr> { Call { expr } }
 
 @tokens {
   space { @whitespace+ }

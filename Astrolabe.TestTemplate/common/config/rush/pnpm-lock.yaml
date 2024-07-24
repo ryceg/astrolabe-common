@@ -163,13 +163,15 @@ importers:
 
   ../../../astrolabe-evaluator:
     specifiers:
+      '@lezer/common': ^1.2.1
       '@lezer/generator': ^1.0.0
-      '@lezer/lr': ^1.0.0
+      '@lezer/lr': ^1.4.1
       microbundle: ^0.15.1
       prettier: ^3.0.3
       rimraf: ^3.0.2
       typescript: ^5.2.2
     dependencies:
+      '@lezer/common': 1.2.1
       '@lezer/lr': 1.4.1
     devDependencies:
       '@lezer/generator': 1.7.1

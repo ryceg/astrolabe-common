@@ -5,4 +5,4 @@ export const
   Number = 3,
   String = 4,
   BinaryExpression = 5,
-  UnaryExpression = 13
+  UnaryExpression = 11

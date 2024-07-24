@@ -22,7 +22,8 @@
     "json"
   ],
   "dependencies": {
-    "@lezer/lr": "^1.0.0"
+    "@lezer/lr": "^1.4.1",
+    "@lezer/common": "^1.2.1"
   },
   "devDependencies": {
     "@lezer/generator": "^1.0.0",
