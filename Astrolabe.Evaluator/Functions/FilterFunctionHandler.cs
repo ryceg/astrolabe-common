@@ -34,7 +34,6 @@ public class FilterFunctionHandler : FunctionHandler
                 _ => FilterElem(nextEnv)
             }
         ).Map(x => (Expr)new CallExpr(InbuiltFunction.Filter, [x]));
-        ;
 
         EnvironmentValue<Expr> FilterElem(EnvironmentValue<Expr> expand)
         {

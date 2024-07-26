@@ -4,7 +4,6 @@ import { callExpr, EvalExpr, pathExpr, segmentPath, valueExpr } from "./nodes";
 
 export function parseEval(input: string) {
   const parseTree = parser.parse(input);
-  console.log(parseTree);
   return visit(parseTree.topNode);
 
   function visit(node: SyntaxNode | null): EvalExpr {
@@ -15,6 +14,9 @@ export function parseEval(input: string) {
         return visit(node.getChild("Expression"));
       case "Number":
         return valueExpr(parseFloat(getNodeText(node)));
+      case "String":
+        const quoted = getNodeText(node);
+        return valueExpr(quoted.substring(1, quoted.length - 1));
       case "Identifier":
         return pathExpr(segmentPath(input.substring(node.from, node.to)));
       case "BinaryExpression":
