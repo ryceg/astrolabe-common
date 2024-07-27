@@ -1,6 +1,14 @@
 import { parser } from "./parser";
 import { SyntaxNode } from "@lezer/common";
-import { callExpr, EvalExpr, pathExpr, segmentPath, valueExpr } from "./nodes";
+import {
+  callExpr,
+  EvalExpr,
+  pathExpr,
+  segmentPath,
+  valueExpr,
+  VarExpr,
+  varExpr,
+} from "./nodes";
 
 export function parseEval(input: string) {
   const parseTree = parser.parse(input);
@@ -10,8 +18,18 @@ export function parseEval(input: string) {
     if (node == null) throw "Couldn't find node";
     const nodeName = node.type.name;
     switch (nodeName) {
+      case "ParenthesizedExpression":
       case "EvalProgram":
         return visit(node.getChild("Expression"));
+      case "Reference":
+        return varExpr(getNodeText(node).substring(1));
+      case "CallExpression":
+        const func = visit(node.getChild("Expression"));
+        const args = node
+          .getChild("ArgList")!
+          .getChildren("Expression")
+          .map(visit);
+        return callExpr((func as VarExpr).variable, args);
       case "Number":
         return valueExpr(parseFloat(getNodeText(node)));
       case "String":

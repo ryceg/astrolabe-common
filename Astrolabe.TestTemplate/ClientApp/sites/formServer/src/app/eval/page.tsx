@@ -10,7 +10,7 @@ import {
 } from "@astroapps/evaluator";
 import { useControl, useControlEffect } from "@react-typed-forms/core";
 import React from "react";
-
+import sample from "./sample.json";
 export default function EvalPage() {
   const input = useControl("");
   const output = useControl<any>();
@@ -21,16 +21,7 @@ export default function EvalPage() {
         const exprTree = parseEval(v);
         let result;
         try {
-          result = flatmapEnv(
-            resolve(
-              basicEnv({
-                simple: { child: 12 },
-                hai: [{ cool: { again: "yo" } }, { cool: { again: "yep" } }],
-              }),
-              exprTree,
-            ),
-            evaluate,
-          )[1];
+          result = flatmapEnv(resolve(basicEnv(sample), exprTree), evaluate)[1];
         } catch (e) {
           console.error(e);
           result = e?.toString();

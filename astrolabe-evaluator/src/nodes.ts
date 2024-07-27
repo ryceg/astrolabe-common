@@ -89,6 +89,10 @@ export function concatPath(path1: Path, path2: Path): Path {
   return { ...path2, parent: concatPath(path1, path2.parent!) };
 }
 
+export function varExpr(variable: string): VarExpr {
+  return { type: "var", variable };
+}
+
 export function valueExpr(value: any): ValueExpr {
   return { type: "value", value };
 }
@@ -123,9 +127,37 @@ export function resolve(env: EvalEnv, expr: EvalExpr): EnvValue<EvalExpr> {
         expr,
       );
     case "path":
-      return [env, pathExpr(concatPath(env.basePath, expr.path))];
+      const fullPath = concatPath(env.basePath, expr.path);
+      const pathData = env.getData(fullPath);
+      if (Array.isArray(pathData)) {
+        return [
+          env,
+          arrayExpr(
+            pathData.map((x, i) => pathExpr({ segment: i, parent: fullPath })),
+          ),
+        ];
+      }
+      return [env, pathExpr(fullPath)];
     default:
       return [env, expr];
+  }
+}
+
+export function evaluateOptional(
+  env: EvalEnv,
+  expr: EvalExpr,
+  index: number,
+): EnvValue<unknown> {
+  switch (expr.type) {
+    case "optional":
+      const cond = evaluate(env, expr.condition);
+      const condValue = cond[1];
+      return (typeof condValue == "number" && condValue == index) ||
+        condValue === true
+        ? flatmapEnv(cond, (e) => evaluate(e, expr.value))
+        : mapEnv(cond, (_) => undefined);
+    default:
+      return evaluate(env, expr);
   }
 }
 
@@ -134,11 +166,6 @@ export function evaluate(env: EvalEnv, expr: EvalExpr): EnvValue<unknown> {
   switch (expr.type) {
     case "value":
       return [env, expr.value];
-    case "optional":
-      const cond = evaluate(env, expr.condition);
-      return cond[1]
-        ? flatmapEnv(cond, (e) => evaluate(e, expr.value))
-        : mapEnv(cond, (_) => undefined);
     case "call":
       const args = mapAllEnv(env, expr.args, evaluate);
       return (env.getVariable(expr.function) as FunctionExpr).evaluate(
@@ -148,7 +175,7 @@ export function evaluate(env: EvalEnv, expr: EvalExpr): EnvValue<unknown> {
     case "path":
       return [env, env.getData(expr.path)];
     case "array":
-      return mapEnv(mapAllEnv(env, expr.values, evaluate), (a) =>
+      return mapEnv(mapAllEnv(env, expr.values, evaluateOptional), (a) =>
         a.filter((x) => x !== undefined),
       );
     default:
@@ -233,21 +260,26 @@ export function basicEnv(data: any): EvalEnv {
       ">=": binFunction((a, b) => a >= b),
       "=": binFunction((a, b) => a == b),
       "!=": binFunction((a, b) => a != b),
+      string: stringFunction,
+      sum: sumFunction,
+      count: countFunction,
       ".": mapFunction,
       "[": filterFunction,
     },
   );
 }
 
+function resolveCall(env: EvalEnv, callExpr: CallExpr): EnvValue<CallExpr> {
+  return mapEnv(mapAllEnv(env, callExpr.args, resolve), (args) => ({
+    ...callExpr,
+    args,
+  }));
+}
+
 export function binFunction(func: (a: any, b: any) => unknown): FunctionExpr {
   return {
     type: "func",
-    resolve: (env, callExpr) => {
-      return mapEnv(mapAllEnv(env, callExpr.args, resolve), (args) => ({
-        ...callExpr,
-        args,
-      }));
-    },
+    resolve: resolveCall,
     evaluate: (env, args) => {
       const [a, b] = args;
       if (a == null || b == null) return [env, null];
@@ -271,19 +303,6 @@ const mapFunction: FunctionExpr = {
       if (firstArg.type === "path") {
         const pathData = nextEnv.getData(firstArg.path);
         if (pathData == null) return [nextEnv, valueExpr(null)];
-        if (Array.isArray(pathData)) {
-          const elems = mapAllEnv(nextEnv, pathData, (e, _, i) =>
-            resolve(
-              e.withBasePath({ segment: i, parent: firstArg.path }),
-              right,
-            ),
-          );
-          return mapEnv(
-            elems,
-            (x) => arrayExpr(x),
-            (e) => e.withBasePath(nextEnv.basePath),
-          );
-        }
         if (typeof pathData === "object") {
           return mapEnv(
             resolve(nextEnv.withBasePath(firstArg.path), right),
@@ -340,4 +359,60 @@ const condFunction: FunctionExpr = {
   evaluate: (env: EvalEnv, args: any[]) => {
     return [env, args[0] ? args[1] : args[2]];
   },
+};
+
+function asArray(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : [v];
+}
+
+function aggFunction<A>(
+  v: unknown[],
+  init: A,
+  op: (acc: A, x: unknown) => A,
+): any {
+  function recurse(v: unknown[]): any {
+    if (v.some(Array.isArray)) {
+      return v.map((x) => recurse(asArray(x)));
+    }
+    return v.reduce(op, init);
+  }
+  if (v.length == 1) return recurse(v[0] as unknown[]);
+  return recurse(v);
+}
+const sumFunction: FunctionExpr = {
+  type: "func",
+  resolve: resolveCall,
+  evaluate: (e, vals) => [
+    e,
+    aggFunction(vals, 0, (acc, b) => acc + (b as number)),
+  ],
+};
+
+const countFunction: FunctionExpr = {
+  type: "func",
+  resolve: resolveCall,
+  evaluate: (e, vals) => [e, aggFunction(vals, 0, (acc, b) => acc + 1)],
+};
+
+function toString(v: unknown): string {
+  switch (typeof v) {
+    case "string":
+      return v;
+    case "boolean":
+      return v ? "true" : "false";
+    case "undefined":
+      return "null";
+    case "object":
+      if (Array.isArray(v)) return v.map(toString).join("");
+      if (v == null) return "null";
+      return JSON.stringify(v);
+    default:
+      return (v as any).toString();
+  }
+}
+
+const stringFunction: FunctionExpr = {
+  type: "func",
+  resolve: resolveCall,
+  evaluate: (env, vals) => [env, toString(vals)],
 };

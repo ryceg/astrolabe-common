@@ -11,16 +11,29 @@
 @top EvalProgram { expression }
 
 expression[@isGroup=Expression] { 
+    Reference |
     Identifier | 
     Number | 
     String | 
     BinaryExpression | 
     UnaryExpression | 
+    ParenthesizedExpression |
     ConditionalExpression {
         expression !ternary "?" expression ":" expression
+    } |
+    CallExpression {
+        expression !call ArgList
     }
 }
-  
+
+ParenthesizedExpression { "(" expression ")" }
+
+ArgList { "(" commaSep<expression> ")" }
+
+commaSep<content> {
+  (content ("," content)*)?
+}
+
 UnaryExpression {
   ("!" | "+" | "-")
   expression
@@ -40,6 +53,7 @@ call<expr> { Call { expr } }
 
 @tokens {
   space { @whitespace+ }
+  Reference { "$" Identifier }
   Identifier { $[A-Za-z_]+ }
   Number { $[0-9]+ }
   String { '"' !["]* '"' }
