@@ -3,9 +3,10 @@ export const
   EvalProgram = 1,
   Reference = 2,
   Identifier = 3,
-  Number = 4,
-  String = 5,
-  BinaryExpression = 6,
-  UnaryExpression = 19,
-  ParenthesizedExpression = 20,
-  ArgList = 23
+  BooleanLiteral = 4,
+  Number = 5,
+  String = 6,
+  BinaryExpression = 7,
+  UnaryExpression = 20,
+  ParenthesizedExpression = 21,
+  ArgList = 24

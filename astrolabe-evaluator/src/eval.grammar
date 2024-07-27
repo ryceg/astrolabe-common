@@ -1,11 +1,11 @@
 @precedence {
   call,
+  filter @left
   map @left,
   times @left,
   plus @left,
   rel @left,
   ternary @right
-  filter @right
 }
 
 @top EvalProgram { expression }
@@ -13,6 +13,7 @@
 expression[@isGroup=Expression] { 
     Reference |
     Identifier | 
+    @specialize[@name=BooleanLiteral]<Identifier, "true" | "false"> |
     Number | 
     String | 
     BinaryExpression | 

@@ -23,6 +23,19 @@ export function parseEval(input: string) {
         return visit(node.getChild("Expression"));
       case "Reference":
         return varExpr(getNodeText(node).substring(1));
+      case "BooleanLiteral":
+        return valueExpr(getNodeText(node) === "true");
+      case "UnaryExpression":
+        const expr = visit(node.getChild("Expression"));
+        switch (getNodeText(node).charAt(0)) {
+          case "!":
+            return callExpr("!", [expr]);
+          case "+":
+            return expr;
+          case "-":
+            return callExpr("-", [valueExpr(0), expr]);
+        }
+        throw new Error("Unknown unary: " + getNodeText(node));
       case "CallExpression":
         const func = visit(node.getChild("Expression"));
         const args = node
