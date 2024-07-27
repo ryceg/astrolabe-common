@@ -2,6 +2,8 @@
   call,
   filter @left
   map @left,
+  and @left,
+  or @left,
   times @left,
   plus @left,
   rel @left,
@@ -13,6 +15,7 @@
 expression[@isGroup=Expression] { 
     Reference |
     Identifier | 
+    Lambda |
     @specialize[@name=BooleanLiteral]<Identifier, "true" | "false"> |
     Number | 
     String | 
@@ -26,6 +29,8 @@ expression[@isGroup=Expression] {
         expression !call ArgList
     }
 }
+
+Lambda { Reference "=>" expression }
 
 ParenthesizedExpression { "(" expression ")" }
 
@@ -41,6 +46,8 @@ UnaryExpression {
 }
 
 BinaryExpression {
+  expression !and @specialize[@name=Call]<Identifier, "and"> expression |
+  expression !or @specialize[@name=Call]<Identifier, "or"> expression |
   expression !map call<"."> expression |
   expression !times (call<"/"> | call<"*">) expression |
   expression !plus (call<"+"> | call<"-">) expression |
@@ -50,12 +57,46 @@ BinaryExpression {
 
 @skip { space }
 
-call<expr> { Call { expr } }
+@skip {} {
+  String {
+    '"' (stringContentDouble | Escape)* ('"' | "\n") |
+    "'" (stringContentSingle | Escape)* ("'" | "\n")
+  }
+}
 
+
+call<expr> { Call { expr } }
+  
 @tokens {
-  space { @whitespace+ }
+
+  hex { @digit | $[a-fA-F] }
+
+  Number {
+    (@digit ("_" | @digit)* ("." ("_" | @digit)*)? | "." @digit ("_" | @digit)*)
+      (("e" | "E") ("+" | "-")? ("_" | @digit)+)? |
+    @digit ("_" | @digit)* "n" |
+    "0x" (hex | "_")+ "n"? |
+    "0b" $[01_]+ "n"? |
+    "0o" $[0-7_]+ "n"?
+  }
+
+  @precedence { Number "." }
+
+  Escape {
+    "\\" ("x" hex hex | "u" ("{" hex+ "}" | hex hex hex hex) | ![xu])
+  }
+
+  identifierChar { @asciiLetter | "_" }
+
+
+  Identifier { identifierChar (identifierChar | @digit)* }
+
   Reference { "$" Identifier }
-  Identifier { $[A-Za-z_]+ }
-  Number { $[0-9]+ }
-  String { '"' !["]* '"' }
+
+  space { @whitespace+ }
+
+  
+  stringContentSingle { ![\\\n']+ }
+
+  stringContentDouble { ![\\\n"]+ }
 }

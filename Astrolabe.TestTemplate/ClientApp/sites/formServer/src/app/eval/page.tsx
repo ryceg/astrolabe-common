@@ -27,8 +27,8 @@ export default function EvalPage() {
           result = e?.toString();
         }
         output.value = {
-          exprTree,
           result,
+          exprTree,
         };
       } catch (e) {
         console.error(e);

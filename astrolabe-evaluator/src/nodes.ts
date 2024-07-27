@@ -20,6 +20,7 @@ export type EvalExpr =
   | ArrayExpr
   | CallExpr
   | VarExpr
+  | LambdaExpr
   | ValueExpr
   | FunctionExpr
   | OptionalExpr
@@ -97,6 +98,10 @@ export function valueExpr(value: any): ValueExpr {
   return { type: "value", value };
 }
 
+export function lambdaExpr(variable: string, expr: EvalExpr): LambdaExpr {
+  return { type: "lambda", variable, expr };
+}
+
 export function arrayExpr(values: EvalExpr[]): ArrayExpr {
   return { type: "array", values };
 }
@@ -138,6 +143,11 @@ export function resolve(env: EvalEnv, expr: EvalExpr): EnvValue<EvalExpr> {
         ];
       }
       return [env, pathExpr(fullPath)];
+    case "lambda":
+      return resolve(
+        env.withVariables([[expr.variable, valueExpr(env.basePath.segment)]]),
+        expr.expr,
+      );
     default:
       return [env, expr];
   }
@@ -251,6 +261,8 @@ export function basicEnv(data: any): EvalEnv {
     {
       "?": condFunction,
       "!": notFunction,
+      and: binFunction((a, b) => a && b),
+      or: binFunction((a, b) => a || b),
       "+": binFunction((a, b) => a + b),
       "-": binFunction((a, b) => a - b),
       "*": binFunction((a, b) => a * b),
@@ -302,7 +314,7 @@ function resolveElem(
 ): EnvValue<EvalExpr> {
   const [nextEnv, firstArg] = elem;
   if (firstArg.type === "optional") {
-    const resolvedVal = resolveElem([elem[0], firstArg.value], right);
+    const resolvedVal = resolveElem([nextEnv, firstArg.value], right);
     return mapEnv(resolvedVal, (x) => ({ ...firstArg, value: x }));
   }
   if (firstArg.type === "path") {

@@ -3,6 +3,7 @@ import { SyntaxNode } from "@lezer/common";
 import {
   callExpr,
   EvalExpr,
+  lambdaExpr,
   pathExpr,
   segmentPath,
   valueExpr,
@@ -23,6 +24,9 @@ export function parseEval(input: string) {
         return visit(node.getChild("Expression"));
       case "Reference":
         return varExpr(getNodeText(node).substring(1));
+      case "Lambda":
+        const [v, e] = node.getChildren("Expression").map(visit);
+        return lambdaExpr((v as VarExpr).variable, e);
       case "BooleanLiteral":
         return valueExpr(getNodeText(node) === "true");
       case "UnaryExpression":
