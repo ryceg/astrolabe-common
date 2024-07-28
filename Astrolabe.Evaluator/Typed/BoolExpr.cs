@@ -1,8 +1,8 @@
 namespace Astrolabe.Evaluator.Typed;
 
-public class BoolExpr(Expr expr) : TypedExpr<bool>
+public class BoolExpr(EvalExpr expr) : TypedExpr<bool>
 {
-    public Expr Wrapped => expr;
+    public EvalExpr Wrapped => expr;
 
     public override string ToString()
     {
@@ -11,7 +11,7 @@ public class BoolExpr(Expr expr) : TypedExpr<bool>
 
     public static BoolExpr BinOp(InbuiltFunction func, BoolExpr e1, BoolExpr e2)
     {
-        return new BoolExpr(new CallExpr(func, [e1.Wrapped, e2.Wrapped]));
+        return new BoolExpr(CallExpr.Inbuilt(func, [e1.Wrapped, e2.Wrapped]));
     }
 
     public static BoolExpr operator &(BoolExpr e1, BoolExpr e2)
@@ -26,7 +26,7 @@ public class BoolExpr(Expr expr) : TypedExpr<bool>
 
     public static BoolExpr operator !(BoolExpr e1)
     {
-        return new BoolExpr(new CallExpr(InbuiltFunction.Not, [e1.Wrapped]));
+        return new BoolExpr(CallExpr.Inbuilt(InbuiltFunction.Not, [e1.Wrapped]));
     }
 
     public static BoolExpr operator ==(BoolExpr e1, BoolExpr e2)
@@ -41,6 +41,6 @@ public class BoolExpr(Expr expr) : TypedExpr<bool>
 
     public static implicit operator BoolExpr(bool b)
     {
-        return new BoolExpr(ExprValue.From(b));
+        return new BoolExpr(ValueExpr.From(b));
     }
 }

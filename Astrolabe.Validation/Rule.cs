@@ -17,29 +17,29 @@ public enum RuleType
 [JsonSubType("Rules", typeof(MultiRule))]
 public abstract record Rule(RuleType Type);
 
-public record SingleRule(Expr Path, Expr Props, Expr Must) : Rule(RuleType.Single)
+public record SingleRule(EvalExpr Path, EvalExpr Props, EvalExpr Must) : Rule(RuleType.Single)
 {
-    public SingleRule WithProp(Expr key, Expr value)
+    public SingleRule WithProp(EvalExpr key, EvalExpr value)
     {
-        return this with { Props = new CallEnvExpr("WithProperty", [key, value, Props]) };
+        return this with { Props = new CallExpr("WithProperty", [key, value, Props]) };
     }
 
-    public SingleRule AndMust(Expr andMust)
+    public SingleRule AndMust(EvalExpr andMust)
     {
         return this with { Must = Must.AndExpr(andMust) };
     }
 
-    public SingleRule When(Expr whenExpr)
+    public SingleRule When(EvalExpr whenExpr)
     {
         return this with
         {
-            Must = new CallExpr(InbuiltFunction.IfElse, [whenExpr, Must, ExprValue.Null,])
+            Must = CallExpr.Inbuilt(InbuiltFunction.IfElse, [whenExpr, Must, ValueExpr.Null,])
         };
     }
 
-    public SingleRule WithMessage(Expr message)
+    public SingleRule WithMessage(EvalExpr message)
     {
-        return this with { Must = new CallEnvExpr("WithMessage", [message, Must]) };
+        return this with { Must = new CallExpr("WithMessage", [message, Must]) };
     }
 }
 
@@ -56,7 +56,7 @@ public record MultiRule(IEnumerable<Rule> Rules) : Rule(RuleType.Multi)
     }
 }
 
-public record ForEachRule(Expr Path, VarExpr Index, LetExpr? Variables, Rule Rule)
+public record ForEachRule(EvalExpr Path, VarExpr Index, LetExpr? Variables, Rule Rule)
     : Rule(RuleType.ForEach)
 {
     public ForEachRule AddRule(Rule rule)
@@ -65,7 +65,7 @@ public record ForEachRule(Expr Path, VarExpr Index, LetExpr? Variables, Rule Rul
     }
 }
 
-public record ResolvedRule(DataPath Path, Expr Must, IDictionary<string, object?> Properties);
+public record ResolvedRule(DataPath Path, EvalExpr Must, IDictionary<string, object?> Properties);
 
 public static class RuleExtensions
 {
@@ -104,11 +104,11 @@ public static class RuleExtensions
             }
         }
 
-        void AddExprPaths(Expr e)
+        void AddExprPaths(EvalExpr e)
         {
             switch (e)
             {
-                case ExprValue { Value: DataPath fp }:
+                case ValueExpr { Value: DataPath fp }:
                     AddRules(fp, ruleLookup[fp]);
                     break;
                 case CallExpr { Args: var args }:

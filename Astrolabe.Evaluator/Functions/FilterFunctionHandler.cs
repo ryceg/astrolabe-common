@@ -2,8 +2,8 @@ namespace Astrolabe.Evaluator.Functions;
 
 public class FilterFunctionHandler : FunctionHandler
 {
-    public EnvironmentValue<(ExprValue, List<ExprValue>)> Evaluate(
-        IList<Expr> args,
+    public EnvironmentValue<(ValueExpr, List<ValueExpr>)> Evaluate(
+        IList<EvalExpr> args,
         EvalEnvironment environment
     )
     {
@@ -11,9 +11,9 @@ public class FilterFunctionHandler : FunctionHandler
         return arrayValue.Value.Value switch
         {
             ArrayValue av
-                => arrayValue.Map<(ExprValue, List<ExprValue>)>(_ =>
+                => arrayValue.Map<(ValueExpr, List<ValueExpr>)>(_ =>
                     (
-                        ExprValue.From(ArrayValue.From(av.Values.OfType<object>())),
+                        ValueExpr.From(ArrayValue.From(av.Values.OfType<object>())),
                         [arrayValue.Value]
                     )
                 ),
@@ -21,7 +21,7 @@ public class FilterFunctionHandler : FunctionHandler
         };
     }
 
-    public EnvironmentValue<Expr> Resolve(CallableExpr callableExpr, EvalEnvironment environment)
+    public EnvironmentValue<EvalExpr> Resolve(CallExpr callableExpr, EvalEnvironment environment)
     {
         var nextEnv = environment.ResolveExpr(callableExpr.Args[0]);
         return (
@@ -30,16 +30,16 @@ public class FilterFunctionHandler : FunctionHandler
                 ArrayExpr ae
                     => nextEnv
                         .Env.EvaluateEach(ae.ValueExpr, (e, expr) => FilterElem(e.WithValue(expr)))
-                        .Map(x => (Expr)new ArrayExpr(x)),
+                        .Map(x => (EvalExpr)new ArrayExpr(x)),
                 _ => FilterElem(nextEnv)
             }
-        ).Map(x => (Expr)new CallExpr(InbuiltFunction.Filter, [x]));
+        ).Map(x => CallExpr.Inbuilt(InbuiltFunction.Filter, [x]));
 
-        EnvironmentValue<Expr> FilterElem(EnvironmentValue<Expr> expand)
+        EnvironmentValue<EvalExpr> FilterElem(EnvironmentValue<EvalExpr> expand)
         {
             return expand.Value switch
             {
-                ExprValue { Value: DataPath dp }
+                ValueExpr { Value: DataPath dp }
                     => expand.Env.EvaluateData(dp) switch
                     {
                         (var next, { Value: ArrayValue av })
@@ -48,16 +48,16 @@ public class FilterFunctionHandler : FunctionHandler
                                     (e, i) =>
                                         e.WithBasePath(new IndexPath(i, dp))
                                             .ResolveExpr(callableExpr.Args[1])
-                                            .Map(x => new CallExpr(
+                                            .Map(x => CallExpr.Inbuilt(
                                                 InbuiltFunction.IfElse,
                                                 [
                                                     x,
-                                                    new ExprValue(new IndexPath(i, dp)),
-                                                    ExprValue.Null
+                                                    new ValueExpr(new IndexPath(i, dp)),
+                                                    ValueExpr.Null
                                                 ]
                                             ))
                                 )
-                                .Map(x => (Expr)new ArrayExpr(x))
+                                .Map(x => (EvalExpr)new ArrayExpr(x))
                                 .WithBasePath(next.BasePath),
                         var other => throw new NotImplementedException()
                     },

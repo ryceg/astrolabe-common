@@ -1,15 +1,14 @@
-using System.Linq.Expressions;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Astrolabe.Evaluator.Parser;
 
 namespace Astrolabe.Evaluator;
 
-using BinState = (Expr?, ITerminalNode?);
+using BinState = (EvalExpr?, ITerminalNode?);
 
 public class ExprParser
 {
-    public static Expr Parse(string expression)
+    public static EvalExpr Parse(string expression)
     {
         var inputStream = new AntlrInputStream(expression);
         var speakLexer = new AstroExprLexer(inputStream);
@@ -20,26 +19,26 @@ public class ExprParser
         return visitor.Visit(chatContext);
     }
 
-    public class AstroExprVisitor : AstroExprBaseVisitor<Expr>
+    public class AstroExprVisitor : AstroExprBaseVisitor<EvalExpr>
     {
-        public override Expr VisitOrExpr(AstroExprParser.OrExprContext context)
+        public override EvalExpr VisitOrExpr(AstroExprParser.OrExprContext context)
         {
             return DoFunction(_ => InbuiltFunction.Or, context);
         }
 
-        public override Expr VisitMain(AstroExprParser.MainContext context)
+        public override EvalExpr VisitMain(AstroExprParser.MainContext context)
         {
             return Visit(context.expr());
         }
 
-        public override Expr VisitVariableReference(
+        public override EvalExpr VisitVariableReference(
             AstroExprParser.VariableReferenceContext context
         )
         {
             return new VarExpr(context.Identifier().GetText());
         }
 
-        public override Expr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
+        public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
         {
             return new LambdaExpr(
                 Visit(context.variableReference()).AsVar(),
@@ -47,40 +46,39 @@ public class ExprParser
             );
         }
 
-        public override Expr VisitTerminal(ITerminalNode node)
+        public override EvalExpr VisitTerminal(ITerminalNode node)
         {
             return node.Symbol.Type switch
             {
-                AstroExprParser.Identifier
-                    => ExprValue.From(new FieldPath(node.GetText(), DataPath.Empty)),
-                AstroExprParser.Number => ExprValue.From(double.Parse(node.GetText())),
-                AstroExprParser.False => ExprValue.False,
-                AstroExprParser.True => ExprValue.True,
+                AstroExprParser.Identifier => new PathExpr(new FieldPath(node.GetText(), DataPath.Empty)),
+                AstroExprParser.Number => ValueExpr.From(double.Parse(node.GetText())),
+                AstroExprParser.False => ValueExpr.False,
+                AstroExprParser.True => ValueExpr.True,
                 _ => throw new NotImplementedException()
             };
         }
 
-        public override Expr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
+        public override EvalExpr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
         {
             var leftPar = context.LPAR();
             return leftPar != null ? Visit(context.expr()) : base.VisitPrimaryExpr(context);
         }
 
-        public override Expr VisitPredicate(AstroExprParser.PredicateContext context)
+        public override EvalExpr VisitPredicate(AstroExprParser.PredicateContext context)
         {
             return Visit(context.expr());
         }
 
-        public override Expr VisitFilterExpr(AstroExprParser.FilterExprContext context)
+        public override EvalExpr VisitFilterExpr(AstroExprParser.FilterExprContext context)
         {
             var baseExpr = Visit(context.primaryExpr());
             var predicate = context.predicate();
             return predicate != null
-                ? new CallExpr(InbuiltFunction.Filter, [baseExpr, Visit(predicate)])
+                ? CallExpr.Inbuilt(InbuiltFunction.Filter, [baseExpr, Visit(predicate)])
                 : baseExpr;
         }
 
-        public override Expr VisitConditionExpression(
+        public override EvalExpr VisitConditionExpression(
             AstroExprParser.ConditionExpressionContext context
         )
         {
@@ -88,14 +86,14 @@ public class ExprParser
             var thenExpr = context.expr();
             var elseExpr = context.conditionExpression();
             if (thenExpr != null)
-                return new CallExpr(
+                return CallExpr.Inbuilt(
                     InbuiltFunction.IfElse,
                     [ifExpr, Visit(thenExpr), Visit(elseExpr)]
                 );
             return ifExpr;
         }
 
-        public override Expr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
+        public override EvalExpr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
         {
             var variableString = context.variableReference().Identifier().GetText();
             InbuiltFunction? inbuilt = variableString switch
@@ -107,21 +105,21 @@ public class ExprParser
             };
             var args = context.expr().Select(Visit).ToList();
             if (inbuilt != null)
-                return new CallExpr(inbuilt.Value, args);
-            return new CallEnvExpr(variableString, args);
+                return CallExpr.Inbuilt(inbuilt.Value, args);
+            return new CallExpr(variableString, args);
         }
 
-        public override Expr VisitMapExpr(AstroExprParser.MapExprContext context)
+        public override EvalExpr VisitMapExpr(AstroExprParser.MapExprContext context)
         {
             return DoFunction(_ => InbuiltFunction.Map, context);
         }
 
-        public override Expr VisitAndExpr(AstroExprParser.AndExprContext context)
+        public override EvalExpr VisitAndExpr(AstroExprParser.AndExprContext context)
         {
             return DoFunction(_ => InbuiltFunction.And, context);
         }
 
-        public override Expr VisitRelationalExpr(AstroExprParser.RelationalExprContext context)
+        public override EvalExpr VisitRelationalExpr(AstroExprParser.RelationalExprContext context)
         {
             return DoFunction(
                 x =>
@@ -136,7 +134,7 @@ public class ExprParser
             );
         }
 
-        public override Expr VisitEqualityExpr(AstroExprParser.EqualityExprContext context)
+        public override EvalExpr VisitEqualityExpr(AstroExprParser.EqualityExprContext context)
         {
             return DoFunction(
                 t => t.Symbol.Type == AstroExprParser.EQ ? InbuiltFunction.Eq : InbuiltFunction.Ne,
@@ -144,7 +142,7 @@ public class ExprParser
             );
         }
 
-        public override Expr VisitMultiplicativeExpr(
+        public override EvalExpr VisitMultiplicativeExpr(
             AstroExprParser.MultiplicativeExprContext context
         )
         {
@@ -157,7 +155,7 @@ public class ExprParser
             );
         }
 
-        public override Expr VisitAdditiveExpr(AstroExprParser.AdditiveExprContext context)
+        public override EvalExpr VisitAdditiveExpr(AstroExprParser.AdditiveExprContext context)
         {
             return DoFunction(
                 t =>
@@ -168,13 +166,13 @@ public class ExprParser
             );
         }
 
-        public Expr DoFunction(Func<ITerminalNode, InbuiltFunction> func, ParserRuleContext context)
+        public EvalExpr DoFunction(Func<ITerminalNode, InbuiltFunction> func, ParserRuleContext context)
         {
-            return DoBinOps((t, e1, e2) => new CallExpr(func(t), [e1, e2]), context);
+            return DoBinOps((t, e1, e2) => CallExpr.Inbuilt(func(t), [e1, e2]), context);
         }
 
-        public Expr DoBinOps(
-            Func<ITerminalNode, Expr, Expr, Expr> createExpr,
+        public EvalExpr DoBinOps(
+            Func<ITerminalNode, EvalExpr, EvalExpr, EvalExpr> createExpr,
             ParserRuleContext context
         )
         {

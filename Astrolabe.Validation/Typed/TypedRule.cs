@@ -30,7 +30,7 @@ public record TypedPathRule<T>(SingleRule Single) : TypedRule<T>
 
     public TypedPathRule<T> WithProperty(string key, object? value)
     {
-        return WithRuleExpr(r => r.WithProp(ExprValue.From(key), new ExprValue(value)));
+        return WithRuleExpr(r => r.WithProp(ValueExpr.From(key), new ValueExpr(value)));
     }
 
     public TypedExpr<T> Get()
@@ -45,15 +45,15 @@ public record TypedPathRule<T>(SingleRule Single) : TypedRule<T>
 
     public TypedPathRule<T> WithMessage(string message)
     {
-        return WithRuleExpr(r => r.WithMessage(ExprValue.From(message)));
+        return WithRuleExpr(r => r.WithMessage(ValueExpr.From(message)));
     }
 
-    public TypedPathRule<T> Must(Expr mustExpr)
+    public TypedPathRule<T> Must(EvalExpr mustExpr)
     {
         return WithRuleExpr(x => x.AndMust(mustExpr));
     }
 
-    public TypedPathRule<T> When(Expr whenExpr)
+    public TypedPathRule<T> When(EvalExpr whenExpr)
     {
         return WithRuleExpr(x => x.When(whenExpr));
     }
@@ -72,6 +72,6 @@ public static class TypedRuleExtensions
 
     public static TypedPathRule<T> RuleFor<T>(this TypedExpr<T> expr)
     {
-        return new TypedPathRule<T>(new SingleRule(expr.Wrapped, ExprValue.True, ExprValue.True));
+        return new TypedPathRule<T>(new SingleRule(expr.Wrapped, ValueExpr.True, ValueExpr.True));
     }
 }

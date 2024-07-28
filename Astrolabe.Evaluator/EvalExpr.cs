@@ -7,7 +7,7 @@ namespace Astrolabe.Evaluator;
 [JsonString]
 public enum InbuiltFunction
 {
-    [Display(Name = "==")]
+    [Display(Name = "=")]
     Eq,
 
     [Display(Name = "!=")]
@@ -55,30 +55,37 @@ public enum InbuiltFunction
     Filter
 }
 
-public interface Expr;
-
-public record LetExpr(IEnumerable<(VarExpr, Expr)> Vars, Expr In) : Expr
+public static class InbuiltFunctions
 {
-    public static LetExpr AddVar(LetExpr? letExpr, VarExpr varExpr, Expr expr)
+    public static string VariableName(this InbuiltFunction func)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public interface EvalExpr;
+
+public record LetExpr(IEnumerable<(VarExpr, EvalExpr)> Vars, EvalExpr In) : EvalExpr
+{
+    public static LetExpr AddVar(LetExpr? letExpr, VarExpr varExpr, EvalExpr expr)
     {
         var varTuple = (varExpr, expr);
         if (letExpr == null)
-            return new LetExpr([varTuple], ExprValue.Null);
+            return new LetExpr([varTuple], ValueExpr.Null);
         return letExpr with { Vars = letExpr.Vars.Append(varTuple) };
     }
 }
 
-public record LambdaExpr(VarExpr Variable, Expr Value) : Expr;
+public record PathExpr(DataPath Path) : EvalExpr;
 
-public record ResolveEval(Expr Expr) : Expr;
-
-public record ExprValue(object? Value) : Expr
+public record LambdaExpr(VarExpr Variable, EvalExpr Value) : EvalExpr;
+public record ValueExpr(object? Value) : EvalExpr
 {
-    public static ExprValue Null => new((object?)null);
-    public static ExprValue False => new(false);
-    public static ExprValue True => new(true);
+    public static ValueExpr Null => new((object?)null);
+    public static ValueExpr False => new(false);
+    public static ValueExpr True => new(true);
 
-    public static ExprValue EmptyPath => new(DataPath.Empty);
+    public static ValueExpr EmptyPath => new(DataPath.Empty);
 
     public static double AsDouble(object? v)
     {
@@ -125,39 +132,34 @@ public record ExprValue(object? Value) : Expr
         };
     }
 
-    public static ExprValue From(bool? v)
+    public static ValueExpr From(bool? v)
     {
-        return new ExprValue(v);
+        return new ValueExpr(v);
     }
 
-    public static ExprValue From(string? v)
+    public static ValueExpr From(string? v)
     {
-        return new ExprValue(v);
+        return new ValueExpr(v);
     }
 
-    public static ExprValue From(ArrayValue? v)
+    public static ValueExpr From(ArrayValue? v)
     {
-        return new ExprValue(v);
+        return new ValueExpr(v);
     }
 
-    public static ExprValue From(int? v)
+    public static ValueExpr From(int? v)
     {
-        return new ExprValue(v);
+        return new ValueExpr(v);
     }
 
-    public static ExprValue From(double? v)
+    public static ValueExpr From(double? v)
     {
-        return new ExprValue(v);
+        return new ValueExpr(v);
     }
 
-    public static ExprValue From(long? v)
+    public static ValueExpr From(long? v)
     {
-        return new ExprValue(v);
-    }
-
-    public static ExprValue From(DataPath? v)
-    {
-        return new ExprValue(v);
+        return new ValueExpr(v);
     }
 
     public object? ToNative()
@@ -214,7 +216,7 @@ public record ExprValue(object? Value) : Expr
     }
 }
 
-public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr
+public record ArrayExpr(IEnumerable<EvalExpr> ValueExpr) : EvalExpr
 {
     public override string ToString()
     {
@@ -222,40 +224,25 @@ public record ArrayExpr(IEnumerable<Expr> ValueExpr) : Expr
     }
 }
 
-public interface CallableExpr : Expr
-{
-    IList<Expr> Args { get; }
-
-    CallableExpr WithArgs(IEnumerable<Expr> args);
-}
-
-public record CallExpr(InbuiltFunction Function, IList<Expr> Args) : CallableExpr
+public record CallExpr(string Function, IList<EvalExpr> Args) : EvalExpr
 {
     public override string ToString()
     {
         return $"{Function}({string.Join(", ", Args)})";
     }
 
-    public CallableExpr WithArgs(IEnumerable<Expr> args)
+    public CallExpr WithArgs(IEnumerable<EvalExpr> args)
     {
         return this with { Args = args.ToList() };
     }
-}
 
-public record CallEnvExpr(string Function, IList<Expr> Args) : CallableExpr
-{
-    public override string ToString()
+    public static EvalExpr Inbuilt(InbuiltFunction inbuilt, IEnumerable<EvalExpr> args)
     {
-        return $"{Function}({string.Join(", ", Args)})";
-    }
-
-    public CallableExpr WithArgs(IEnumerable<Expr> args)
-    {
-        return this with { Args = args.ToList() };
+        return new CallExpr(inbuilt.VariableName(), args.ToList());
     }
 }
 
-public record VarExpr(string Name) : Expr
+public record VarExpr(string Name) : EvalExpr
 {
     private static int _indexCount;
 
@@ -274,7 +261,7 @@ public record VarExpr(string Name) : Expr
         return new VarExpr(extra + Name);
     }
 
-    public Expr Append(string append)
+    public EvalExpr Append(string append)
     {
         return new VarExpr(Name + append);
     }
@@ -293,52 +280,52 @@ public record ObjectValue(object Object);
 
 public static class ValueExtensions
 {
-    public static bool IsData(this Expr expr)
+    public static bool IsData(this EvalExpr expr)
     {
-        return expr is ExprValue { Value: DataPath dp };
+        return expr is ValueExpr { Value: DataPath dp };
     }
 
-    public static bool IsValue(this Expr expr)
+    public static bool IsValue(this EvalExpr expr)
     {
-        return expr is ExprValue;
+        return expr is ValueExpr;
     }
 
-    public static ExprValue? MaybeValue(this Expr expr)
+    public static ValueExpr? MaybeValue(this EvalExpr expr)
     {
-        return expr as ExprValue;
+        return expr as ValueExpr;
     }
 
-    public static bool IsNull(this Expr expr)
+    public static bool IsNull(this EvalExpr expr)
     {
-        return expr is ExprValue { Value: null };
+        return expr is ValueExpr { Value: null };
     }
 
-    public static bool IsDataPath(this Expr expr, DataPath dataPath)
+    public static bool IsDataPath(this EvalExpr expr, DataPath dataPath)
     {
-        return expr is ExprValue { Value: DataPath dp } && dp.Equals(dataPath);
+        return expr is ValueExpr { Value: DataPath dp } && dp.Equals(dataPath);
     }
 
-    public static ExprValue AsValue(this Expr expr)
+    public static ValueExpr AsValue(this EvalExpr expr)
     {
-        return (ExprValue)expr;
+        return (ValueExpr)expr;
     }
 
-    public static VarExpr AsVar(this Expr expr)
+    public static VarExpr AsVar(this EvalExpr expr)
     {
         return (VarExpr)expr;
     }
 
-    public static ArrayValue AsArray(this ExprValue v)
+    public static ArrayValue AsArray(this ValueExpr v)
     {
         return (v.Value as ArrayValue)!;
     }
 
-    public static bool AsBool(this ExprValue v)
+    public static bool AsBool(this ValueExpr v)
     {
         return (bool)v.Value!;
     }
 
-    public static int AsInt(this ExprValue v)
+    public static int AsInt(this ValueExpr v)
     {
         return v.Value switch
         {
@@ -348,7 +335,7 @@ public static class ValueExtensions
         };
     }
 
-    public static object AsEqualityCheck(this ExprValue v)
+    public static object AsEqualityCheck(this ValueExpr v)
     {
         return v.Value switch
         {
@@ -359,7 +346,7 @@ public static class ValueExtensions
         };
     }
 
-    public static long? MaybeInteger(this ExprValue v)
+    public static long? MaybeInteger(this ValueExpr v)
     {
         return v.Value switch
         {
@@ -369,17 +356,17 @@ public static class ValueExtensions
         };
     }
 
-    public static bool IsEitherNull(this Expr v, Expr other)
+    public static bool IsEitherNull(this EvalExpr v, EvalExpr other)
     {
         return v.IsNull() || other.IsNull();
     }
 
-    public static double AsDouble(this ExprValue v)
+    public static double AsDouble(this ValueExpr v)
     {
-        return ExprValue.AsDouble(v.Value);
+        return ValueExpr.AsDouble(v.Value);
     }
 
-    public static DataPath AsPath(this ExprValue v)
+    public static DataPath AsPath(this ValueExpr v)
     {
         return v.Value switch
         {
@@ -388,45 +375,45 @@ public static class ValueExtensions
         };
     }
 
-    public static bool IsNull(this ExprValue v)
+    public static bool IsNull(this ValueExpr v)
     {
         return v.Value == null;
     }
 
-    public static bool IsTrue(this ExprValue v)
+    public static bool IsTrue(this ValueExpr v)
     {
         return v.Value is true;
     }
 
-    public static bool IsFalse(this ExprValue v)
+    public static bool IsFalse(this ValueExpr v)
     {
         return v.Value is false;
     }
 
-    public static string AsString(this ExprValue v)
+    public static string AsString(this ValueExpr v)
     {
         return (string)v.Value!;
     }
 
-    public static Expr AndExpr(this Expr expr, Expr other)
+    public static EvalExpr AndExpr(this EvalExpr expr, EvalExpr other)
     {
-        return expr is ExprValue(bool b)
+        return expr is ValueExpr(bool b)
             ? b
                 ? other
                 : expr
-            : new CallExpr(InbuiltFunction.And, [expr, other]);
+            : CallExpr.Inbuilt(InbuiltFunction.And, [expr, other]);
     }
 
-    public static Expr DotExpr(this Expr expr, Expr other)
+    public static EvalExpr DotExpr(this EvalExpr expr, EvalExpr other)
     {
         return (expr, other) switch
         {
-            (ExprValue { Value: DataPath ps }, ExprValue v) => ExprValue.From(ApplyDot(ps, v)),
-            _ => new CallExpr(InbuiltFunction.Map, [expr, other])
+            (ValueExpr { Value: DataPath ps }, ValueExpr v) => new PathExpr(ApplyDot(ps, v)),
+            _ => CallExpr.Inbuilt(InbuiltFunction.Map, [expr, other])
         };
     }
 
-    public static DataPath ApplyDot(DataPath basePath, ExprValue segment)
+    public static DataPath ApplyDot(DataPath basePath, ValueExpr segment)
     {
         return segment switch
         {

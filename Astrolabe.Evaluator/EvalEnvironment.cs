@@ -3,27 +3,23 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Astrolabe.Evaluator;
 
-using EvaluatedExpr = EnvironmentValue<ExprValue>;
+using EvaluatedExpr = EnvironmentValue<ValueExpr>;
 
 public interface EvalEnvironment
 {
     EvaluatedExpr EvaluateData(DataPath dataPath);
     DataPath BasePath { get; }
-    Expr? GetReplacement(Expr expr);
-    EvalEnvironment WithReplacement(Expr expr, Expr? value);
-    EvalEnvironment MapReplacement(Expr expr, Func<Expr?, Expr> mapValue);
-
-    EnvironmentValue<ExprValue> EvaluateCall(CallableExpr callEnvExpr);
-
-    EnvironmentValue<Expr> ResolveCall(CallableExpr callEnvExpr);
+    EvalExpr? GetReplacement(EvalExpr expr);
+    EvalEnvironment WithReplacement(EvalExpr expr, EvalExpr? value);
+    EvalEnvironment MapReplacement(EvalExpr expr, Func<EvalExpr?, EvalExpr> mapValue);
     EvalEnvironment WithBasePath(DataPath indexPath);
 }
 
 public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
 {
-    public ExprValue AsValue()
+    public ValueExpr AsValue()
     {
-        return (ExprValue)(object)Value!;
+        return (ValueExpr)(object)Value!;
     }
 
     public EnvironmentValue<T2> Map<T2>(Func<T, EvalEnvironment, T2> select)
@@ -63,15 +59,15 @@ public static class EvalEnvironmentExtensions
         return evalList.Aggregate(env, evalFunc);
     }
 
-    public static EvalEnvironment WithReplacement(this EnvironmentValue<Expr> ev, Expr variable)
+    public static EvalEnvironment WithReplacement(this EnvironmentValue<EvalExpr> ev, EvalExpr variable)
     {
         return ev.Env.WithReplacement(variable, ev.Value);
     }
 
-    public static EnvironmentValue<Expr> AsExpr<T>(this EnvironmentValue<T> ev)
-        where T : Expr
+    public static EnvironmentValue<EvalExpr> AsExpr<T>(this EnvironmentValue<T> ev)
+        where T : EvalExpr
     {
-        return ev.Map(x => (Expr)x);
+        return ev.Map(x => (EvalExpr)x);
     }
 
     public static EnvironmentValue<IEnumerable<T>> SingleOrEmpty<T>(
@@ -85,8 +81,8 @@ public static class EvalEnvironmentExtensions
 
     public static EnvironmentValue<T> WithReplacement<T>(
         this EnvironmentValue<T> evalExpr,
-        Expr expr,
-        Expr? value
+        EvalExpr expr,
+        EvalExpr? value
     )
     {
         return evalExpr with { Env = evalExpr.Env.WithReplacement(expr, value) };
@@ -97,24 +93,24 @@ public static class EvalEnvironmentExtensions
         return evalExpr.Map<IEnumerable<object?>>(x => [x.Value]);
     }
 
-    public static EvaluatedExpr IfElse(this EvaluatedExpr evalExpr, Expr trueExpr, Expr falseExpr)
+    public static EvaluatedExpr IfElse(this EvaluatedExpr evalExpr, EvalExpr trueExpr, EvalExpr falseExpr)
     {
         return evalExpr.Value.IsNull()
             ? evalExpr
             : evalExpr.Env.Evaluate(evalExpr.Value.AsBool() ? trueExpr : falseExpr);
     }
 
-    public static EnvironmentValue<IEnumerable<ExprValue>> AppendTo(
+    public static EnvironmentValue<IEnumerable<ValueExpr>> AppendTo(
         this EvaluatedExpr acc,
-        EnvironmentValue<IEnumerable<ExprValue>> other
+        EnvironmentValue<IEnumerable<ValueExpr>> other
     )
     {
         return acc.Env.WithValue(other.Value.Append(acc.Value));
     }
 
-    public static EnvironmentValue<List<ExprValue>> EvaluateAllExpr(
+    public static EnvironmentValue<List<ValueExpr>> EvaluateAllExpr(
         this EvalEnvironment env,
-        IEnumerable<Expr> evalList
+        IEnumerable<EvalExpr> evalList
     )
     {
         return env.EvaluateAll(evalList, (env2, e) => env2.Evaluate(e).Single())
@@ -163,19 +159,19 @@ public static class EvalEnvironmentExtensions
         return new EnvironmentValue<IEnumerable<T>>(env, []);
     }
 
-    public static EvaluatedExpr WithExprValue(this EvalEnvironment env, ExprValue value)
+    public static EvaluatedExpr WithExprValue(this EvalEnvironment env, ValueExpr value)
     {
         return new EvaluatedExpr(env, value);
     }
 
-    public static EnvironmentValue<Expr> WithExpr(this EvalEnvironment env, Expr value)
+    public static EnvironmentValue<EvalExpr> WithExpr(this EvalEnvironment env, EvalExpr value)
     {
-        return new EnvironmentValue<Expr>(env, value);
+        return new EnvironmentValue<EvalExpr>(env, value);
     }
 
     public static EvaluatedExpr WithNull(this EvalEnvironment env)
     {
-        return new EvaluatedExpr(env, ExprValue.Null);
+        return new EvaluatedExpr(env, ValueExpr.Null);
     }
 
     public static EnvironmentValue<IEnumerable<T>> AppendTo<T>(

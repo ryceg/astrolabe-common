@@ -21,7 +21,7 @@ public static class Interpreter
         var resetEnv = valEnv with
         {
             Properties = ImmutableDictionary<string, object?>.Empty,
-            Message = ExprValue.Null,
+            Message = ValueExpr.Null,
             Failures = [],
             FailedData = result.IsFalse() ? valEnv.FailedData.Add(rule.Path) : valEnv.FailedData
         };
@@ -38,7 +38,7 @@ public static class Interpreter
             .Map((v, e) => ValidatorEnvironment.FromEnv(e).Rules);
     }
 
-    private static Expr ToExpr(Rule rule)
+    private static EvalExpr ToExpr(Rule rule)
     {
         return rule switch
         {
@@ -47,25 +47,25 @@ public static class Interpreter
             MultiRule multi => DoMultiRule(multi)
         };
 
-        Expr DoMultiRule(MultiRule multiRule)
+        EvalExpr DoMultiRule(MultiRule multiRule)
         {
             return new ArrayExpr(multiRule.Rules.Select(ToExpr));
         }
 
-        Expr DoPathRule(SingleRule pathRule)
+        EvalExpr DoPathRule(SingleRule pathRule)
         {
-            return new CallEnvExpr(
+            return new CallExpr(
                 ValidatorEnvironment.RuleFunction,
                 [pathRule.Path, pathRule.Must, pathRule.Props]
             );
         }
 
-        Expr DoRulesForEach(ForEachRule rules)
+        EvalExpr DoRulesForEach(ForEachRule rules)
         {
             var ruleExpr = ToExpr(rules.Rule);
             if (rules.Variables != null)
                 ruleExpr = rules.Variables with { In = ruleExpr };
-            return new CallExpr(
+            return CallExpr.Inbuilt(
                 InbuiltFunction.Map,
                 [rules.Path, new LambdaExpr(rules.Index, ruleExpr)]
             );

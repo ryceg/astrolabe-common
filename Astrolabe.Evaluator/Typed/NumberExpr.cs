@@ -1,14 +1,9 @@
 namespace Astrolabe.Evaluator.Typed;
 
-public class NumberExpr(Expr expr) : TypedExpr<int>, TypedExpr<double>, TypedExpr<long>
+public class NumberExpr(EvalExpr expr) : TypedExpr<int>, TypedExpr<double>, TypedExpr<long>
 {
-    public Expr Wrapped => expr;
-
-    public NumberExpr Resolve()
-    {
-        return new NumberExpr(new ResolveEval(expr));
-    }
-
+    public EvalExpr Wrapped => expr;
+    
     public override string ToString()
     {
         return $"Number({Wrapped})";
@@ -16,17 +11,17 @@ public class NumberExpr(Expr expr) : TypedExpr<int>, TypedExpr<double>, TypedExp
 
     public static implicit operator NumberExpr(int from)
     {
-        return new NumberExpr(ExprValue.From(from));
+        return new NumberExpr(ValueExpr.From(from));
     }
 
     public static NumberExpr BinOp(InbuiltFunction func, NumberExpr e1, NumberExpr e2)
     {
-        return new NumberExpr(new CallExpr(func, [e1.Wrapped, e2.Wrapped]));
+        return new NumberExpr(CallExpr.Inbuilt(func, [e1.Wrapped, e2.Wrapped]));
     }
 
     public static BoolExpr BinBoolOp(InbuiltFunction func, NumberExpr e1, NumberExpr e2)
     {
-        return new BoolExpr(new CallExpr(func, [e1.Wrapped, e2.Wrapped]));
+        return new BoolExpr(CallExpr.Inbuilt(func, [e1.Wrapped, e2.Wrapped]));
     }
 
     public static NumberExpr operator +(NumberExpr e1, NumberExpr e2)

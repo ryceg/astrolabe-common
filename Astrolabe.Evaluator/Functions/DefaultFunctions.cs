@@ -4,18 +4,18 @@ using BoolNumberOp = NumberOp<bool, bool>;
 
 public interface FunctionHandler
 {
-    EnvironmentValue<(ExprValue, List<ExprValue>)> Evaluate(
-        IList<Expr> args,
+    EnvironmentValue<(ValueExpr, List<ValueExpr>)> Evaluate(
+        IList<EvalExpr> args,
         EvalEnvironment environment
     );
 
-    EnvironmentValue<Expr> Resolve(CallableExpr callExpr, EvalEnvironment environment);
+    EnvironmentValue<EvalExpr> Resolve(CallExpr callExpr, EvalEnvironment environment);
 }
 
 public abstract class ResolveFirst : FunctionHandler
 {
-    public EnvironmentValue<(ExprValue, List<ExprValue>)> Evaluate(
-        IList<Expr> args,
+    public EnvironmentValue<(ValueExpr, List<ValueExpr>)> Evaluate(
+        IList<EvalExpr> args,
         EvalEnvironment env
     )
     {
@@ -24,9 +24,9 @@ public abstract class ResolveFirst : FunctionHandler
         return nextEnv.WithValue((DoEvaluate(argsEval), argsEval));
     }
 
-    public abstract ExprValue DoEvaluate(IList<ExprValue> evalArgs);
+    public abstract ValueExpr DoEvaluate(IList<ValueExpr> evalArgs);
 
-    public virtual EnvironmentValue<Expr> Resolve(CallableExpr callableExpr, EvalEnvironment env)
+    public virtual EnvironmentValue<EvalExpr> Resolve(CallExpr callableExpr, EvalEnvironment env)
     {
         var (nextEnv, evalArgs) = env.EvaluateEach(
                 callableExpr.Args,
@@ -38,27 +38,27 @@ public abstract class ResolveFirst : FunctionHandler
         );
     }
 
-    public abstract Expr? DoResolve(IList<Expr> args);
+    public abstract EvalExpr? DoResolve(IList<EvalExpr> args);
 }
 
 public abstract class BinOp : ResolveFirst
 {
-    public override ExprValue DoEvaluate(IList<ExprValue> evalArgs)
+    public override ValueExpr DoEvaluate(IList<ValueExpr> evalArgs)
     {
         var a1 = evalArgs[0];
         var a2 = evalArgs[1];
-        return a1.IsEitherNull(a2) ? ExprValue.Null : EvalBin(a1, a2);
+        return a1.IsEitherNull(a2) ? ValueExpr.Null : EvalBin(a1, a2);
     }
 
-    public abstract ExprValue EvalBin(ExprValue a1, ExprValue a2);
+    public abstract ValueExpr EvalBin(ValueExpr a1, ValueExpr a2);
 
-    public override Expr? DoResolve(IList<Expr> args)
+    public override EvalExpr? DoResolve(IList<EvalExpr> args)
     {
         var a1 = args[0];
         var a2 = args[1];
         if (a1.IsEitherNull(a2))
-            return ExprValue.Null;
-        if (a1 is ExprValue ev1 && !ev1.IsData() && a2 is ExprValue ev2 && !ev2.IsData())
+            return ValueExpr.Null;
+        if (a1 is ValueExpr ev1 && !ev1.IsData() && a2 is ValueExpr ev2 && !ev2.IsData())
             return EvalBin(ev1, ev2);
         return null;
     }
@@ -66,9 +66,9 @@ public abstract class BinOp : ResolveFirst
 
 public class EqualityFunc(bool not) : BinOp
 {
-    public override ExprValue EvalBin(ExprValue a1, ExprValue a2)
+    public override ValueExpr EvalBin(ValueExpr a1, ValueExpr a2)
     {
-        return ExprValue.From(not ^ a1.AsEqualityCheck().Equals(a2.AsEqualityCheck()));
+        return ValueExpr.From(not ^ a1.AsEqualityCheck().Equals(a2.AsEqualityCheck()));
     }
 }
 
@@ -77,14 +77,14 @@ public class NumberOp<TOutD, TOutL>(
     Func<long, long, TOutL> longOp
 ) : BinOp
 {
-    public override ExprValue EvalBin(ExprValue o1, ExprValue o2)
+    public override ValueExpr EvalBin(ValueExpr o1, ValueExpr o2)
     {
         if ((o1.MaybeInteger(), o2.MaybeInteger()) is ({ } l1, { } l2))
         {
-            return new ExprValue(longOp(l1, l2));
+            return new ValueExpr(longOp(l1, l2));
         }
 
-        return new ExprValue(
+        return new ValueExpr(
             (o1.MaybeDouble(), o2.MaybeDouble()) switch
             {
                 ({ } d1, { } d2) => doubleOp(d1, d2),
@@ -96,19 +96,19 @@ public class NumberOp<TOutD, TOutL>(
 
 public class AndOp : BinOp
 {
-    public override ExprValue EvalBin(ExprValue a1, ExprValue a2)
+    public override ValueExpr EvalBin(ValueExpr a1, ValueExpr a2)
     {
-        return ExprValue.From(a1.AsBool() && a2.AsBool());
+        return ValueExpr.From(a1.AsBool() && a2.AsBool());
     }
 
-    public override Expr? DoResolve(IList<Expr> args)
+    public override EvalExpr? DoResolve(IList<EvalExpr> args)
     {
         return (args[0], args[1]) switch
         {
-            (ExprValue { Value: true }, _) => args[1],
-            (_, ExprValue { Value: true }) => args[0],
-            (ExprValue { Value: false }, _) => ExprValue.False,
-            (_, ExprValue { Value: false }) => ExprValue.False,
+            (ValueExpr { Value: true }, _) => args[1],
+            (_, ValueExpr { Value: true }) => args[0],
+            (ValueExpr { Value: false }, _) => ValueExpr.False,
+            (_, ValueExpr { Value: false }) => ValueExpr.False,
             _ => base.DoResolve(args)
         };
     }
@@ -116,43 +116,43 @@ public class AndOp : BinOp
 
 public class OrOp : BinOp
 {
-    public override ExprValue EvalBin(ExprValue a1, ExprValue a2)
+    public override ValueExpr EvalBin(ValueExpr a1, ValueExpr a2)
     {
-        return ExprValue.From(a1.AsBool() || a2.AsBool());
+        return ValueExpr.From(a1.AsBool() || a2.AsBool());
     }
 }
 
 public class NotOp : ResolveFirst
 {
-    public override ExprValue DoEvaluate(IList<ExprValue> args)
+    public override ValueExpr DoEvaluate(IList<ValueExpr> args)
     {
-        return args[0].IsNull() ? ExprValue.Null : ExprValue.From(!args[0].AsBool());
+        return args[0].IsNull() ? ValueExpr.Null : ValueExpr.From(!args[0].AsBool());
     }
 
-    public override Expr? DoResolve(IList<Expr> args)
+    public override EvalExpr? DoResolve(IList<EvalExpr> args)
     {
-        return args[0] is ExprValue { Value: bool b } ? ExprValue.From(!b) : null;
+        return args[0] is ValueExpr { Value: bool b } ? ValueExpr.From(!b) : null;
     }
 }
 
 public class IfElseOp : ResolveFirst
 {
-    public override ExprValue DoEvaluate(IList<ExprValue> args)
+    public override ValueExpr DoEvaluate(IList<ValueExpr> args)
     {
         var ifE = args[0];
         return ifE.IsNull()
-            ? ExprValue.Null
+            ? ValueExpr.Null
             : ifE.AsBool()
                 ? args[1]
                 : args[2];
     }
 
-    public override Expr? DoResolve(IList<Expr> args)
+    public override EvalExpr? DoResolve(IList<EvalExpr> args)
     {
         var ifE = args[0];
         if (ifE.IsNull())
-            return ExprValue.Null;
-        return ifE is ExprValue { Value: bool b }
+            return ValueExpr.Null;
+        return ifE is ValueExpr { Value: bool b }
             ? b
                 ? args[1]
                 : args[2]
@@ -162,7 +162,7 @@ public class IfElseOp : ResolveFirst
 
 public abstract class ResolveIfValue : ResolveFirst
 {
-    public override Expr? DoResolve(IList<Expr> args)
+    public override EvalExpr? DoResolve(IList<EvalExpr> args)
     {
         if (args[0].MaybeValue() is { Value: not DataPath } v)
         {
@@ -174,51 +174,51 @@ public abstract class ResolveIfValue : ResolveFirst
 
 public abstract class ArrayOp : ResolveIfValue
 {
-    public override ExprValue DoEvaluate(IList<ExprValue> args)
+    public override ValueExpr DoEvaluate(IList<ValueExpr> args)
     {
         var asList = args[0].AsList();
         return EvalArray(asList);
     }
 
-    private ExprValue EvalArray(IList<object?> asList)
+    private ValueExpr EvalArray(IList<object?> asList)
     {
         if (asList.Any(x => x is ArrayValue))
         {
-            return ExprValue.From(
-                ArrayValue.From(asList.Select(x => EvalArray(ExprValue.ToList(x)).Value))
+            return ValueExpr.From(
+                ArrayValue.From(asList.Select(x => EvalArray(ValueExpr.ToList(x)).Value))
             );
         }
 
         return EvalArrayOp(asList);
     }
 
-    protected abstract ExprValue EvalArrayOp(IList<object?> arrayValues);
+    protected abstract ValueExpr EvalArrayOp(IList<object?> arrayValues);
 }
 
 public class AggregateNumberOp(NumberOp<double, long> aggregate) : ArrayOp
 {
-    protected override ExprValue EvalArrayOp(IList<object?> values)
+    protected override ValueExpr EvalArrayOp(IList<object?> values)
     {
         return values.Aggregate(
-            ExprValue.From(0d),
-            (a, b) => aggregate.EvalBin(a, new ExprValue(b))
+            ValueExpr.From(0d),
+            (a, b) => aggregate.EvalBin(a, new ValueExpr(b))
         );
     }
 }
 
 public class CountOp : ArrayOp
 {
-    protected override ExprValue EvalArrayOp(IList<object?> asList)
+    protected override ValueExpr EvalArrayOp(IList<object?> asList)
     {
-        return ExprValue.From(asList.Count);
+        return ValueExpr.From(asList.Count);
     }
 }
 
 public class StringOp : ResolveIfValue
 {
-    public override ExprValue DoEvaluate(IList<ExprValue> args)
+    public override ValueExpr DoEvaluate(IList<ValueExpr> args)
     {
-        return ExprValue.From(ToString(args[0].Value));
+        return ValueExpr.From(ToString(args[0].Value));
     }
 
     public static string ToString(object? value)
@@ -226,7 +226,7 @@ public class StringOp : ResolveIfValue
         return value switch
         {
             null => "",
-            ArrayValue av => string.Join("", ExprValue.ToList(av).Select(ToString)),
+            ArrayValue av => string.Join("", ValueExpr.ToList(av).Select(ToString)),
             ObjectValue => "{}",
             _ => value.ToString() ?? ""
         };

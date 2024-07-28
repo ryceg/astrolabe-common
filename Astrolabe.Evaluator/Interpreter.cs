@@ -1,29 +1,31 @@
+using Astrolabe.Evaluator.Functions;
+
 namespace Astrolabe.Evaluator;
 
-using EvaluatedExprValue = EnvironmentValue<ExprValue>;
+using EvaluatedExprValue = EnvironmentValue<ValueExpr>;
 
 public static class Interpreter
 {
-    public static EnvironmentValue<Expr> ResolveExpr(this EnvironmentValue<Expr> environment)
+    public static EnvironmentValue<EvalExpr> ResolveExpr(this EnvironmentValue<EvalExpr> environment)
     {
         return environment.Env.ResolveExpr(environment.Value);
     }
 
-    public static EnvironmentValue<Expr> ResolveExpr(this EvalEnvironment environment, Expr expr)
+    public static EnvironmentValue<EvalExpr> ResolveExpr(this EvalEnvironment environment, EvalExpr expr)
     {
         var already = environment.GetReplacement(expr);
         if (already != null)
             return environment.WithValue(already);
         return expr switch
         {
-            ExprValue { Value: DataPath dp }
-                => environment.WithExpr(new ExprValue(environment.BasePath.Concat(dp))),
+            ValueExpr { Value: DataPath dp }
+                => environment.WithExpr(new ValueExpr(environment.BasePath.Concat(dp))),
             LambdaExpr lambdaExpr => DoLambda(lambdaExpr),
-            ExprValue or VarExpr or LambdaExpr => environment.WithExpr(expr),
+            ValueExpr or VarExpr or LambdaExpr => environment.WithExpr(expr),
             ArrayExpr ae
                 => environment
                     .EvaluateEach(ae.ValueExpr, ResolveExpr)
-                    .Map(x => (Expr)new ArrayExpr(x.ToList())),
+                    .Map(x => (EvalExpr)new ArrayExpr(x.ToList())),
             LetExpr v
                 => environment
                     .EvaluateForEach(
@@ -34,58 +36,54 @@ public static class Interpreter
                                 .Env
                     )
                     .ResolveExpr(v.In),
-            ResolveEval resolveExpr
-                => environment.ResolveExpr(resolveExpr.Expr).Evaluate().AsExpr(),
-            CallableExpr callExpr => environment.ResolveCall(callExpr),
+            CallExpr callExpr => (environment.GetReplacement(new VarExpr(callExpr.Function)).AsValue().Value as FunctionHandler).Resolve(callExpr, environment),
         };
 
-        EnvironmentValue<Expr> DoLambda(LambdaExpr lambdaExpr)
+        EnvironmentValue<EvalExpr> DoLambda(LambdaExpr lambdaExpr)
         {
             return environment.BasePath switch
             {
                 IndexPath ip
                     => environment
-                        .WithReplacement(lambdaExpr.Variable, ExprValue.From(ip.Index))
+                        .WithReplacement(lambdaExpr.Variable, ValueExpr.From(ip.Index))
                         .ResolveExpr(lambdaExpr.Value)
             };
         }
     }
 
-    public static EvaluatedExprValue Evaluate(this EnvironmentValue<Expr> envExpr)
+    public static EvaluatedExprValue Evaluate(this EnvironmentValue<EvalExpr> envExpr)
     {
         return envExpr.Env.Evaluate(envExpr.Value);
     }
 
-    public static EvaluatedExprValue ResolveAndEvaluate(this EvalEnvironment env, Expr expr)
+    public static EvaluatedExprValue ResolveAndEvaluate(this EvalEnvironment env, EvalExpr expr)
     {
         return env.ResolveExpr(expr).Evaluate();
     }
 
-    public static EvaluatedExprValue Evaluate(this EvalEnvironment environment, Expr expr)
+    public static EvaluatedExprValue Evaluate(this EvalEnvironment environment, EvalExpr expr)
     {
         var already = environment.GetReplacement(expr);
         if (already != null)
             return environment.WithValue(already.AsValue());
         return expr switch
         {
-            ExprValue { Value: DataPath dp } => environment.EvaluateData(dp),
-            CallExpr callExpr => environment.EvaluateCall(callExpr),
-            CallEnvExpr callEnvExpr => environment.EvaluateCall(callEnvExpr),
+            ValueExpr { Value: DataPath dp } => environment.EvaluateData(dp),
             ArrayExpr arrayExpr => EvalArray(arrayExpr),
-            ExprValue v => environment.WithValue(v),
+            ValueExpr v => environment.WithValue(v),
             _ => throw new ArgumentOutOfRangeException(expr.ToString())
         };
 
         EvaluatedExprValue EvalArray(ArrayExpr arrayExpr)
         {
             var elements = arrayExpr.ValueExpr.Aggregate(
-                environment.WithEmpty<ExprValue>(),
+                environment.WithEmpty<ValueExpr>(),
                 (acc, e) => acc.Env.Evaluate(e).AppendTo(acc)
             );
             return elements.Map(x =>
             {
                 var rawElements = ArrayValue.From(x.Select(v => v.Value));
-                return ExprValue.From(rawElements);
+                return ValueExpr.From(rawElements);
             });
         }
     }

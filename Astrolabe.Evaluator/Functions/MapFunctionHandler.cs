@@ -2,34 +2,28 @@ namespace Astrolabe.Evaluator.Functions;
 
 public class MapFunctionHandler : FunctionHandler
 {
-    public EnvironmentValue<(ExprValue, List<ExprValue>)> Evaluate(
-        IList<Expr> args,
+    public EnvironmentValue<(ValueExpr, List<ValueExpr>)> Evaluate(
+        IList<EvalExpr> args,
         EvalEnvironment environment
     )
     {
         throw new NotImplementedException();
     }
 
-    public EnvironmentValue<Expr> Resolve(CallableExpr callableExpr, EvalEnvironment environment)
+    public EnvironmentValue<EvalExpr> Resolve(CallExpr callableExpr, EvalEnvironment environment)
     {
         var nextEnv = environment.ResolveExpr(callableExpr.Args[0]);
         return MapElem(nextEnv);
 
-        EnvironmentValue<Expr> MapElem(EnvironmentValue<Expr> expand)
+        EnvironmentValue<EvalExpr> MapElem(EnvironmentValue<EvalExpr> expand)
         {
             return expand.Value switch
             {
-                CallExpr { Function: InbuiltFunction.Filter, Args: [var arg1] }
-                    => MapElem(expand.Env.WithValue(arg1))
-                        .Map(x => (Expr)new CallExpr(InbuiltFunction.Filter, [x])),
-                CallExpr { Function: InbuiltFunction.IfElse, Args: [var arg1, var arg2, var arg3] }
-                    => MapElem(expand.Env.WithValue(arg2))
-                        .Map(x => (Expr)new CallExpr(InbuiltFunction.IfElse, [arg1, x, arg3])),
                 ArrayExpr ae
                     => nextEnv
                         .Env.EvaluateEach(ae.ValueExpr, (e, expr) => MapElem(e.WithValue(expr)))
-                        .Map(x => (Expr)new ArrayExpr(x)),
-                ExprValue ev when ev.MaybeDataPath() is { } dp
+                        .Map(x => (EvalExpr)new ArrayExpr(x)),
+                ValueExpr ev when ev.MaybeDataPath() is { } dp
                     => expand.Env.EvaluateData(dp) switch
                     {
                         (var next, { Value: ArrayValue av })
@@ -39,7 +33,7 @@ public class MapFunctionHandler : FunctionHandler
                                         e.WithBasePath(new IndexPath(i, dp))
                                             .ResolveExpr(callableExpr.Args[1])
                                 )
-                                .Map(x => (Expr)new ArrayExpr(x))
+                                .Map(x => (EvalExpr)new ArrayExpr(x))
                                 .WithBasePath(next.BasePath),
                         (var next, { Value: ObjectValue ov })
                             => next.WithBasePath(dp)
