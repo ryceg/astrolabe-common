@@ -12,20 +12,26 @@ public static class Interpreter
     {
         var (outEnv, result) = environment.Evaluate(rule.Must);
         RuleFailure? failure = null;
-        var valEnv = ValidatorEnvironment.FromEnv(outEnv);
+        var valEnv = outEnv.GetValidatorState();
         if (result.IsFalse())
         {
             failure = new RuleFailure(valEnv.Failures, valEnv.Message.AsString(), rule);
         }
 
+        var failedData = result.IsFalse() ? valEnv.FailedData.Add(rule.Path) : valEnv.FailedData;
         var resetEnv = valEnv with
         {
             Properties = ImmutableDictionary<string, object?>.Empty,
             Message = ValueExpr.Null,
             Failures = [],
-            FailedData = result.IsFalse() ? valEnv.FailedData.Add(rule.Path) : valEnv.FailedData
+            FailedData = failedData
         };
-        return resetEnv.WithValue(failure);
+        return (
+            outEnv.UpdateValidatorState(_ => resetEnv) with
+            {
+                ValidData = dp => !failedData.Contains(dp)
+            }
+        ).WithValue(failure);
     }
 
     public static EnvironmentValue<IEnumerable<ResolvedRule>> EvaluateRule(
@@ -33,9 +39,7 @@ public static class Interpreter
         Rule rule
     )
     {
-        return environment
-            .ResolveExpr(ToExpr(rule))
-            .Map((v, e) => ValidatorEnvironment.FromEnv(e).Rules);
+        return environment.ResolveExpr(ToExpr(rule)).Map((v, e) => e.GetValidatorState().Rules);
     }
 
     private static EvalExpr ToExpr(Rule rule)
@@ -67,7 +71,7 @@ public static class Interpreter
                 ruleExpr = rules.Variables with { In = ruleExpr };
             return CallExpr.Inbuilt(
                 InbuiltFunction.Map,
-                [rules.Path, new LambdaExpr(rules.Index, ruleExpr)]
+                [rules.Path, new LambdaExpr(rules.Index.Name, ruleExpr)]
             );
         }
     }

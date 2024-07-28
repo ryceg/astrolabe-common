@@ -6,22 +6,27 @@ using EvaluatedExprValue = EnvironmentValue<ValueExpr>;
 
 public static class Interpreter
 {
-    public static EnvironmentValue<EvalExpr> ResolveExpr(this EnvironmentValue<EvalExpr> environment)
+    public static EnvironmentValue<EvalExpr> ResolveExpr(
+        this EnvironmentValue<EvalExpr> environment
+    )
     {
         return environment.Env.ResolveExpr(environment.Value);
     }
 
-    public static EnvironmentValue<EvalExpr> ResolveExpr(this EvalEnvironment environment, EvalExpr expr)
+    public static EnvironmentValue<EvalExpr> ResolveExpr(
+        this EvalEnvironment environment,
+        EvalExpr expr
+    )
     {
-        var already = environment.GetReplacement(expr);
-        if (already != null)
-            return environment.WithValue(already);
         return expr switch
         {
-            ValueExpr { Value: DataPath dp }
-                => environment.WithExpr(new ValueExpr(environment.BasePath.Concat(dp))),
+            PathExpr { Path: var dp } => ResolvePath(dp),
             LambdaExpr lambdaExpr => DoLambda(lambdaExpr),
-            ValueExpr or VarExpr or LambdaExpr => environment.WithExpr(expr),
+            VarExpr varExpr
+                => environment.GetVariable(varExpr.Name) is { } e
+                    ? environment.WithValue(e)
+                    : throw new ArgumentException("Unknown variable: " + varExpr.Name),
+            ValueExpr => environment.WithExpr(expr),
             ArrayExpr ae
                 => environment
                     .EvaluateEach(ae.ValueExpr, ResolveExpr)
@@ -32,12 +37,33 @@ public static class Interpreter
                         v.Vars,
                         (acc, nextVar) =>
                             acc.ResolveExpr(nextVar.Item2)
-                                .Then(e => e.WithReplacement(nextVar.Item1, e.Value))
+                                .Then(e => e.WithReplacement(nextVar.Item1.Name, e.Value))
                                 .Env
                     )
                     .ResolveExpr(v.In),
-            CallExpr callExpr => (environment.GetReplacement(new VarExpr(callExpr.Function)).AsValue().Value as FunctionHandler).Resolve(callExpr, environment),
+            CallExpr { Function: var func } ce
+                => environment.GetVariable(func) is ValueExpr { Value: FunctionHandler handler }
+                    ? handler.Resolve(environment, ce)
+                    : throw new ArgumentException("No function: " + func),
+            _ => throw new ArgumentException("Could not resolve: " + expr)
         };
+
+        EnvironmentValue<EvalExpr> ResolvePath(DataPath dp)
+        {
+            var resolvedPath = environment.BasePath.Concat(dp);
+            return environment.GetData(resolvedPath) switch
+            {
+                ArrayValue av
+                    => environment.WithExpr(
+                        new ArrayExpr(
+                            Enumerable
+                                .Range(0, av.Count)
+                                .Select(x => new PathExpr(new IndexPath(x, resolvedPath)))
+                        )
+                    ),
+                var v => environment.WithExpr(new PathExpr(resolvedPath))
+            };
+        }
 
         EnvironmentValue<EvalExpr> DoLambda(LambdaExpr lambdaExpr)
         {
@@ -45,7 +71,7 @@ public static class Interpreter
             {
                 IndexPath ip
                     => environment
-                        .WithReplacement(lambdaExpr.Variable, ValueExpr.From(ip.Index))
+                        .WithVariable(lambdaExpr.Variable, ValueExpr.From(ip.Index))
                         .ResolveExpr(lambdaExpr.Value)
             };
         }
@@ -63,14 +89,15 @@ public static class Interpreter
 
     public static EvaluatedExprValue Evaluate(this EvalEnvironment environment, EvalExpr expr)
     {
-        var already = environment.GetReplacement(expr);
-        if (already != null)
-            return environment.WithValue(already.AsValue());
         return expr switch
         {
-            ValueExpr { Value: DataPath dp } => environment.EvaluateData(dp),
             ArrayExpr arrayExpr => EvalArray(arrayExpr),
             ValueExpr v => environment.WithValue(v),
+            CallExpr { Function: var func, Args: var args } callExpr
+                when environment.GetVariable(func) is ValueExpr { Value: FunctionHandler handler }
+                => handler.Evaluate(environment, callExpr),
+            PathExpr { Path: var dp }
+                => environment.WithValue(new ValueExpr(environment.GetData(dp))),
             _ => throw new ArgumentOutOfRangeException(expr.ToString())
         };
 

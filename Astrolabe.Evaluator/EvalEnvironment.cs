@@ -1,18 +1,38 @@
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Astrolabe.Evaluator;
 
 using EvaluatedExpr = EnvironmentValue<ValueExpr>;
 
-public interface EvalEnvironment
+public record EvalEnvironment(
+    Func<DataPath, object?> GetDataFunc,
+    Func<DataPath, bool>? ValidData,
+    DataPath BasePath,
+    ImmutableDictionary<string, EvalExpr> Variables
+)
 {
-    EvaluatedExpr EvaluateData(DataPath dataPath);
-    DataPath BasePath { get; }
-    EvalExpr? GetReplacement(EvalExpr expr);
-    EvalEnvironment WithReplacement(EvalExpr expr, EvalExpr? value);
-    EvalEnvironment MapReplacement(EvalExpr expr, Func<EvalExpr?, EvalExpr> mapValue);
-    EvalEnvironment WithBasePath(DataPath indexPath);
+    public object? GetData(DataPath dataPath)
+    {
+        return ValidData == null || ValidData(dataPath) ? GetDataFunc(dataPath) : null;
+    }
+
+    public EvalExpr? GetVariable(string name)
+    {
+        return CollectionExtensions.GetValueOrDefault(Variables, name);
+    }
+
+    public EvalEnvironment WithVariable(string name, EvalExpr? value)
+    {
+        return this with
+        {
+            Variables = value == null ? Variables.Remove(name) : Variables.SetItem(name, value)
+        };
+    }
+
+    public EvalEnvironment WithBasePath(DataPath basePath)
+    {
+        return this with { BasePath = basePath };
+    }
 }
 
 public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
@@ -59,11 +79,6 @@ public static class EvalEnvironmentExtensions
         return evalList.Aggregate(env, evalFunc);
     }
 
-    public static EvalEnvironment WithReplacement(this EnvironmentValue<EvalExpr> ev, EvalExpr variable)
-    {
-        return ev.Env.WithReplacement(variable, ev.Value);
-    }
-
     public static EnvironmentValue<EvalExpr> AsExpr<T>(this EnvironmentValue<T> ev)
         where T : EvalExpr
     {
@@ -81,11 +96,11 @@ public static class EvalEnvironmentExtensions
 
     public static EnvironmentValue<T> WithReplacement<T>(
         this EnvironmentValue<T> evalExpr,
-        EvalExpr expr,
+        string name,
         EvalExpr? value
     )
     {
-        return evalExpr with { Env = evalExpr.Env.WithReplacement(expr, value) };
+        return evalExpr with { Env = evalExpr.Env.WithVariable(name, value) };
     }
 
     public static EnvironmentValue<IEnumerable<object?>> Singleton(this EvaluatedExpr evalExpr)
@@ -93,7 +108,11 @@ public static class EvalEnvironmentExtensions
         return evalExpr.Map<IEnumerable<object?>>(x => [x.Value]);
     }
 
-    public static EvaluatedExpr IfElse(this EvaluatedExpr evalExpr, EvalExpr trueExpr, EvalExpr falseExpr)
+    public static EvaluatedExpr IfElse(
+        this EvaluatedExpr evalExpr,
+        EvalExpr trueExpr,
+        EvalExpr falseExpr
+    )
     {
         return evalExpr.Value.IsNull()
             ? evalExpr

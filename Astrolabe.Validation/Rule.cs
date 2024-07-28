@@ -108,7 +108,7 @@ public static class RuleExtensions
         {
             switch (e)
             {
-                case ValueExpr { Value: DataPath fp }:
+                case PathExpr { Path: var fp }:
                     AddRules(fp, ruleLookup[fp]);
                     break;
                 case CallExpr { Args: var args }:

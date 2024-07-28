@@ -1,16 +1,16 @@
 namespace Astrolabe.Evaluator.Functions;
 
-public class MapFunctionHandler : FunctionHandler
+public static class MapFunctionHandler
 {
-    public EnvironmentValue<(ValueExpr, List<ValueExpr>)> Evaluate(
-        IList<EvalExpr> args,
-        EvalEnvironment environment
-    )
-    {
-        throw new NotImplementedException();
-    }
+    public static FunctionHandler Instance = new FunctionHandler(
+        Resolve,
+        (e, x) => throw new NotImplementedException()
+    );
 
-    public EnvironmentValue<EvalExpr> Resolve(CallExpr callableExpr, EvalEnvironment environment)
+    public static EnvironmentValue<EvalExpr> Resolve(
+        EvalEnvironment environment,
+        CallExpr callableExpr
+    )
     {
         var nextEnv = environment.ResolveExpr(callableExpr.Args[0]);
         return MapElem(nextEnv);
@@ -20,26 +20,16 @@ public class MapFunctionHandler : FunctionHandler
             return expand.Value switch
             {
                 ArrayExpr ae
-                    => nextEnv
+                    => expand
                         .Env.EvaluateEach(ae.ValueExpr, (e, expr) => MapElem(e.WithValue(expr)))
                         .Map(x => (EvalExpr)new ArrayExpr(x)),
-                ValueExpr ev when ev.MaybeDataPath() is { } dp
-                    => expand.Env.EvaluateData(dp) switch
-                    {
-                        (var next, { Value: ArrayValue av })
-                            => next.EvaluateEach(
-                                    Enumerable.Range(0, av.Count),
-                                    (e, i) =>
-                                        e.WithBasePath(new IndexPath(i, dp))
-                                            .ResolveExpr(callableExpr.Args[1])
-                                )
-                                .Map(x => (EvalExpr)new ArrayExpr(x))
-                                .WithBasePath(next.BasePath),
-                        (var next, { Value: ObjectValue ov })
-                            => next.WithBasePath(dp)
-                                .ResolveExpr(callableExpr.Args[1])
-                                .WithBasePath(next.BasePath)
-                    },
+                PathExpr { Path: var dp } when expand.Env.GetData(dp) is var data
+                    => data == null
+                        ? expand.Env.WithExpr(ValueExpr.Null)
+                        : expand
+                            .Env.WithBasePath(dp)
+                            .ResolveExpr(callableExpr.Args[1])
+                            .WithBasePath(expand.Env.BasePath),
                 _ => throw new NotImplementedException()
             };
         }

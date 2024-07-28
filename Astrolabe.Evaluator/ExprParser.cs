@@ -41,7 +41,7 @@ public class ExprParser
         public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
         {
             return new LambdaExpr(
-                Visit(context.variableReference()).AsVar(),
+                Visit(context.variableReference()).AsVar().Name,
                 Visit(context.expr())
             );
         }
@@ -50,7 +50,8 @@ public class ExprParser
         {
             return node.Symbol.Type switch
             {
-                AstroExprParser.Identifier => new PathExpr(new FieldPath(node.GetText(), DataPath.Empty)),
+                AstroExprParser.Identifier
+                    => new PathExpr(new FieldPath(node.GetText(), DataPath.Empty)),
                 AstroExprParser.Number => ValueExpr.From(double.Parse(node.GetText())),
                 AstroExprParser.False => ValueExpr.False,
                 AstroExprParser.True => ValueExpr.True,
@@ -166,7 +167,10 @@ public class ExprParser
             );
         }
 
-        public EvalExpr DoFunction(Func<ITerminalNode, InbuiltFunction> func, ParserRuleContext context)
+        public EvalExpr DoFunction(
+            Func<ITerminalNode, InbuiltFunction> func,
+            ParserRuleContext context
+        )
         {
             return DoBinOps((t, e1, e2) => CallExpr.Inbuilt(func(t), [e1, e2]), context);
         }

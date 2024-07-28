@@ -59,7 +59,27 @@ public static class InbuiltFunctions
 {
     public static string VariableName(this InbuiltFunction func)
     {
-        throw new NotImplementedException();
+        return func switch
+        {
+            InbuiltFunction.Eq => "=",
+            InbuiltFunction.Lt => "<",
+            InbuiltFunction.LtEq => "<=",
+            InbuiltFunction.Gt => ">",
+            InbuiltFunction.GtEq => ">=",
+            InbuiltFunction.Ne => "!=",
+            InbuiltFunction.And => "and",
+            InbuiltFunction.Or => "or",
+            InbuiltFunction.Add => "+",
+            InbuiltFunction.Minus => "-",
+            InbuiltFunction.Multiply => "*",
+            InbuiltFunction.Divide => "/",
+            InbuiltFunction.Map => ".",
+            InbuiltFunction.IfElse => "?",
+            InbuiltFunction.Count => "count",
+            InbuiltFunction.String => "string",
+            InbuiltFunction.Sum => "sum",
+            _ => throw new ArgumentException("Not an Inbuilt:" + func)
+        };
     }
 }
 
@@ -78,7 +98,34 @@ public record LetExpr(IEnumerable<(VarExpr, EvalExpr)> Vars, EvalExpr In) : Eval
 
 public record PathExpr(DataPath Path) : EvalExpr;
 
-public record LambdaExpr(VarExpr Variable, EvalExpr Value) : EvalExpr;
+public record LambdaExpr(string Variable, EvalExpr Value) : EvalExpr;
+
+public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
+
+public record FunctionHandler(CallHandler<EvalExpr> Resolve, CallHandler<ValueExpr> Evaluate)
+{
+    public static FunctionHandler ResolveOnly(CallHandler<EvalExpr> resolve) =>
+        new(resolve, (e, x) => throw new NotImplementedException());
+
+    public static FunctionHandler DefaultResolve(CallHandler<ValueExpr> eval) =>
+        new(ResolveArgs, eval);
+
+    public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
+        new(
+            ResolveArgs,
+            (e, call) =>
+                e.EvaluateEach(call.Args, (e2, x) => e2.Evaluate(x))
+                    .Map(args => new ValueExpr(eval(args.Select(x => x.Value).ToList())))
+        );
+
+    public static EnvironmentValue<EvalExpr> ResolveArgs(EvalEnvironment env, CallExpr callExpr)
+    {
+        return env.EvaluateEach(callExpr.Args, (e, x) => e.ResolveExpr(x))
+            .Map(callExpr.WithArgs)
+            .AsExpr();
+    }
+}
+
 public record ValueExpr(object? Value) : EvalExpr
 {
     public static ValueExpr Null => new((object?)null);
@@ -98,20 +145,12 @@ public record ValueExpr(object? Value) : EvalExpr
         };
     }
 
-    public DataPath? MaybeDataPath()
-    {
-        return MaybeDataPath(Value);
-    }
-
-    public static DataPath? MaybeDataPath(object? v)
+    public static long? MaybeInteger(object? v)
     {
         return v switch
         {
-            DataPath dp => dp,
-            int i => new IndexPath(i, DataPath.Empty),
-            long l => new IndexPath((int)l, DataPath.Empty),
-            double d => new IndexPath((int)d, DataPath.Empty),
-            string s => new FieldPath(s, DataPath.Empty),
+            int i => i,
+            long l => l,
             _ => null
         };
     }
@@ -302,7 +341,7 @@ public static class ValueExtensions
 
     public static bool IsDataPath(this EvalExpr expr, DataPath dataPath)
     {
-        return expr is ValueExpr { Value: DataPath dp } && dp.Equals(dataPath);
+        return expr is PathExpr { Path: var dp } && dp.Equals(dataPath);
     }
 
     public static ValueExpr AsValue(this EvalExpr expr)
@@ -313,6 +352,11 @@ public static class ValueExtensions
     public static VarExpr AsVar(this EvalExpr expr)
     {
         return (VarExpr)expr;
+    }
+
+    public static DataPath AsPath(this EvalExpr expr)
+    {
+        return ((PathExpr)expr).Path;
     }
 
     public static ArrayValue AsArray(this ValueExpr v)
@@ -335,44 +379,9 @@ public static class ValueExtensions
         };
     }
 
-    public static object AsEqualityCheck(this ValueExpr v)
-    {
-        return v.Value switch
-        {
-            int i => (double)i,
-            long l => (double)l,
-            { } o => o,
-            _ => throw new ArgumentException("Cannot be compared: " + v)
-        };
-    }
-
-    public static long? MaybeInteger(this ValueExpr v)
-    {
-        return v.Value switch
-        {
-            int i => i,
-            long l => l,
-            _ => null
-        };
-    }
-
-    public static bool IsEitherNull(this EvalExpr v, EvalExpr other)
-    {
-        return v.IsNull() || other.IsNull();
-    }
-
     public static double AsDouble(this ValueExpr v)
     {
         return ValueExpr.AsDouble(v.Value);
-    }
-
-    public static DataPath AsPath(this ValueExpr v)
-    {
-        return v.Value switch
-        {
-            string s => new FieldPath(s, DataPath.Empty),
-            DataPath dp => dp
-        };
     }
 
     public static bool IsNull(this ValueExpr v)
