@@ -9,11 +9,15 @@ export type Path = EmptyPath | SegmentPath;
 
 export const EmptyPath: EmptyPath = { segment: null };
 
-export function pathExpr(path: Path | string | number): PathExpr {
+export function pathExpr(
+  path: Path | string | number,
+  resolved?: boolean,
+): PathExpr {
   return {
     type: "path",
     path:
       typeof path === "object" ? path : { segment: path, parent: EmptyPath },
+    resolved: !!resolved,
   };
 }
 
@@ -66,6 +70,7 @@ export interface ValueExpr {
 export interface PathExpr {
   type: "path";
   path: Path;
+  resolved: boolean;
 }
 
 export interface LambdaExpr {
@@ -87,6 +92,7 @@ export abstract class EvalEnv {
   abstract getVariable(name: string): EvalExpr;
   abstract getData(path: Path): any;
   abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
+  abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
   abstract withBasePath(path: Path): EvalEnv;
 }
 
@@ -150,31 +156,40 @@ export function resolve(env: EvalEnv, expr: EvalExpr): EnvValue<EvalExpr> {
     case "value":
       return [env, expr];
     case "let":
-      return resolve(env.withVariables(expr.variables), expr.expr);
+      const envWithVars = expr.variables.reduce(
+        (e, [name, x]) =>
+          withEnvValue(resolve(e, x), (e2, x2) => e2.withVariable(name, x2)),
+        env,
+      );
+      return resolve(envWithVars, expr.expr);
     case "call":
       const funcCall = env.getVariable(expr.function);
       if (funcCall == null)
         throw new Error("Unknown function " + expr.function);
       return (funcCall as FunctionExpr).resolve(env, expr);
     case "path":
+      if (expr.resolved) return [env, expr];
       const fullPath = concatPath(env.basePath, expr.path);
       const pathData = env.getData(fullPath);
       if (Array.isArray(pathData)) {
         return [
           env,
           arrayExpr(
-            pathData.map((x, i) => pathExpr({ segment: i, parent: fullPath })),
+            pathData.map((x, i) =>
+              pathExpr({ segment: i, parent: fullPath }, true),
+            ),
           ),
         ];
       }
-      return [env, pathExpr(fullPath)];
+      return [env, pathExpr(fullPath, true)];
     case "lambda":
       return resolve(
         env.withVariables([[expr.variable, valueExpr(env.basePath.segment)]]),
         expr.expr,
       );
     default:
-      return [env, expr];
+      debugger;
+      throw new Error("Don't know how to resolve:" + expr.type);
   }
 }
 
@@ -234,6 +249,13 @@ export function flatmapEnv<T, T2>(
   return func(envVal[0], envVal[1]);
 }
 
+export function withEnvValue<T, T2>(
+  env: EnvValue<T>,
+  func: (e: EvalEnv, t: T) => T2,
+): T2 {
+  return func(env[0], env[1]);
+}
+
 export function envEffect<T>(env: EnvValue<T>, func: (t: T) => any): EvalEnv {
   func(env[1]);
   return env[0];
@@ -265,7 +287,9 @@ class BasicEvalEnv extends EvalEnv {
   }
   getData(path: Path): any {
     if (path.segment == null) return this.data;
-    return this.getData(path.parent)[path.segment];
+    const parentObject = this.getData(path.parent);
+    if (parentObject == null) debugger;
+    return parentObject[path.segment];
   }
   withVariables(vars: [string, EvalExpr][]): EvalEnv {
     return new BasicEvalEnv(
@@ -274,6 +298,13 @@ class BasicEvalEnv extends EvalEnv {
       Object.fromEntries(Object.entries(this.vars).concat(vars)),
     );
   }
+
+  withVariable(name: string, expr: EvalExpr): EvalEnv {
+    const outVars = { ...this.vars };
+    outVars[name] = expr;
+    return new BasicEvalEnv(this.data, this.basePath, outVars);
+  }
+
   withBasePath(path: Path): EvalEnv {
     return new BasicEvalEnv(this.data, path, this.vars);
   }
