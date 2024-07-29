@@ -159,7 +159,43 @@ public static class DefaultFunctions
             { "count", ArrayOp(vals => vals.Count) },
             { "array", FunctionHandler.DefaultEval(args => ArrayValue.From(args).Flatten()) },
             { "string", StringOp },
+            {
+                "resolve",
+                FunctionHandler.ResolveOnly(
+                    (e, call) => e.ResolveAndEvaluate(call.Args[0]).Map(x => (EvalExpr)x)
+                )
+            },
+            {
+                "which",
+                FunctionHandler.ResolveOnly(
+                    (e, call) =>
+                    {
+                        return e.ResolveExpr(
+                            call.Args.Aggregate(
+                                new WhichState(ValueExpr.Null, null, null),
+                                (s, x) => s.Next(x)
+                            ).Current
+                        );
+                    }
+                )
+            },
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
         };
+
+    record WhichState(EvalExpr Current, EvalExpr? Compare, EvalExpr? ToExpr)
+    {
+        public WhichState Next(EvalExpr expr)
+        {
+            if (Compare is null)
+                return this with { Compare = expr };
+            if (ToExpr is null)
+                return this with { ToExpr = expr };
+            return this with
+            {
+                Current = new CallExpr("?", [new CallExpr("=", [Compare, ToExpr]), expr, Current]),
+                ToExpr = null
+            };
+        }
+    }
 }
