@@ -9,9 +9,14 @@ export type Path = EmptyPath | SegmentPath;
 
 export const EmptyPath: EmptyPath = { segment: null };
 
-export function pathExpr(path: Path): PathExpr {
-  return { type: "path", path };
+export function pathExpr(path: Path | string | number): PathExpr {
+  return {
+    type: "path",
+    path:
+      typeof path === "object" ? path : { segment: path, parent: EmptyPath },
+  };
 }
+
 export function segmentPath(segment: string | number, parent?: Path) {
   return { segment, parent: parent ?? EmptyPath };
 }
@@ -94,6 +99,11 @@ export function varExpr(variable: string): VarExpr {
   return { type: "var", variable };
 }
 
+export type VarAssign = [string, EvalExpr];
+export function letExpr(variables: VarAssign[], expr: EvalExpr): LetExpr {
+  return { type: "let", variables, expr };
+}
+
 export function valueExpr(value: any): ValueExpr {
   return { type: "value", value };
 }
@@ -117,6 +127,10 @@ export function callExpr(name: string, args: EvalExpr[]): CallExpr {
   return { type: "call", function: name, args };
 }
 
+export function mapExpr(left: EvalExpr, right: EvalExpr) {
+  return callExpr(".", [left, right]);
+}
+
 export function resolveAndEval(
   env: EvalEnv,
   expr: EvalExpr,
@@ -124,11 +138,15 @@ export function resolveAndEval(
   return flatmapEnv(resolve(env, expr), evaluate);
 }
 export function resolve(env: EvalEnv, expr: EvalExpr): EnvValue<EvalExpr> {
+  if (expr == null) debugger;
   switch (expr.type) {
     case "array":
       return mapEnv(mapAllEnv(env, expr.values, resolve), (x) => arrayExpr(x));
     case "var":
-      return resolve(env, env.getVariable(expr.variable));
+      const varExpr = env.getVariable(expr.variable);
+      if (varExpr == null)
+        throw new Error("Missing variable: " + expr.variable);
+      return resolve(env, varExpr);
     case "value":
       return [env, expr];
     case "let":
