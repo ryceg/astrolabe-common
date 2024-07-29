@@ -105,7 +105,9 @@ public static class DefaultFunctions
         (args) =>
             args switch
             {
-                [bool b, var thenVal, var elseVal] => b ? thenVal : elseVal
+                [bool b, var thenVal, var elseVal] => b ? thenVal : elseVal,
+                [null, _, _] => null,
+                _ => throw new ArgumentException("Bad conditional: " + args),
             }
     );
 
@@ -115,17 +117,18 @@ public static class DefaultFunctions
 
     public static FunctionHandler ArrayOp(Func<IList<object?>, object?> arrayFunc)
     {
-        return FunctionHandler.DefaultEval(
-            (args) =>
-                args switch
-                {
-                    [ArrayValue av] => CheckValues(ValueExpr.ToList(av)),
-                    _ => CheckValues(args)
-                }
+        return FunctionHandler.DefaultEval(args =>
+            args switch
+            {
+                [ArrayValue av] => CheckValues(ValueExpr.ToList(av)),
+                _ => CheckValues(args)
+            }
         );
 
         object? CheckValues(IList<object?> values)
         {
+            if (values.Any(x => x == null))
+                return null;
             return values.Any(x => x is ArrayValue)
                 ? ArrayValue.From(values.Select(x => CheckValues(ValueExpr.ToList(x))))
                 : arrayFunc(values);
@@ -154,6 +157,7 @@ public static class DefaultFunctions
                 ArrayOp(vals => vals.Select(ValueExpr.AsDouble).Aggregate(0d, (a, b) => a + b))
             },
             { "count", ArrayOp(vals => vals.Count) },
+            { "array", FunctionHandler.DefaultEval(args => ArrayValue.From(args).Flatten()) },
             { "string", StringOp },
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },

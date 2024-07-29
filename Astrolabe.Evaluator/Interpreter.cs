@@ -22,10 +22,7 @@ public static class Interpreter
         {
             PathExpr { Path: var dp } => ResolvePath(dp),
             LambdaExpr lambdaExpr => DoLambda(lambdaExpr),
-            VarExpr varExpr
-                => environment.GetVariable(varExpr.Name) is { } e
-                    ? environment.WithValue(e)
-                    : throw new ArgumentException("Unknown variable: " + varExpr.Name),
+            VarExpr varExpr => ResolveVar(varExpr),
             ValueExpr => environment.WithExpr(expr),
             ArrayExpr ae
                 => environment
@@ -47,6 +44,14 @@ public static class Interpreter
                     : throw new ArgumentException("No function: " + func),
             _ => throw new ArgumentException("Could not resolve: " + expr)
         };
+
+        EnvironmentValue<EvalExpr> ResolveVar(VarExpr varExpr)
+        {
+            var evalExpr = environment.GetVariable(varExpr.Name);
+            if (evalExpr == null)
+                throw new ArgumentException("Unknown variable: " + varExpr.Name);
+            return environment.WithValue(evalExpr);
+        }
 
         EnvironmentValue<EvalExpr> ResolvePath(DataPath dp)
         {

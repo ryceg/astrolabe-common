@@ -216,11 +216,6 @@ public record ValueExpr(object? Value) : EvalExpr
         };
     }
 
-    public object? Flatten()
-    {
-        return Flatten(Value);
-    }
-
     public static object? Flatten(object? v)
     {
         return v switch
@@ -312,6 +307,21 @@ public record ArrayValue(int Count, IEnumerable Values)
     {
         var l = enumerable.ToList();
         return new ArrayValue(l.Count, l);
+    }
+
+    public ArrayValue Flatten()
+    {
+        return From(
+            Values
+                .Cast<object?>()
+                .SelectMany(v =>
+                    ValueExpr.Flatten(v) switch
+                    {
+                        IEnumerable<object?> res => res,
+                        var o => [o]
+                    }
+                )
+        );
     }
 }
 
