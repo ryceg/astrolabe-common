@@ -116,6 +116,13 @@ export function optionalExpr(
 export function callExpr(name: string, args: EvalExpr[]): CallExpr {
   return { type: "call", function: name, args };
 }
+
+export function resolveAndEval(
+  env: EvalEnv,
+  expr: EvalExpr,
+): EnvValue<unknown> {
+  return flatmapEnv(resolve(env, expr), evaluate);
+}
 export function resolve(env: EvalEnv, expr: EvalExpr): EnvValue<EvalExpr> {
   switch (expr.type) {
     case "array":
@@ -209,11 +216,11 @@ export function flatmapEnv<T, T2>(
   return func(envVal[0], envVal[1]);
 }
 
-function envEffect<T>(env: EnvValue<T>, func: (t: T) => any): EvalEnv {
+export function envEffect<T>(env: EnvValue<T>, func: (t: T) => any): EvalEnv {
   func(env[1]);
   return env[0];
 }
-function mapAllEnv<T, T2>(
+export function mapAllEnv<T, T2>(
   env: EvalEnv,
   array: T[],
   func: (env: EvalEnv, value: T, ind: number) => EnvValue<T2>,
@@ -273,15 +280,51 @@ export function basicEnv(data: any): EvalEnv {
       ">=": binFunction((a, b) => a >= b),
       "=": binFunction((a, b) => a == b),
       "!=": binFunction((a, b) => a != b),
-      flat: flatFunction,
+      array: flatFunction,
       string: stringFunction,
       sum: sumFunction,
       count: countFunction,
+      which: whichFunction,
       ".": mapFunction,
       "[": filterFunction,
     },
   );
 }
+
+interface WhichState {
+  current: EvalExpr;
+  compare?: EvalExpr;
+  toExpr?: EvalExpr;
+}
+export const whichFunction: FunctionExpr = {
+  type: "func",
+  resolve: (e, x) => {
+    return resolve(
+      e,
+      x.args.reduce(
+        (acc, a) =>
+          !acc.compare
+            ? { ...acc, compare: a }
+            : !acc.toExpr
+              ? { ...acc, toExpr: a }
+              : {
+                  compare: acc.compare,
+                  current: callExpr("?", [
+                    callExpr("=", [acc.compare, acc.toExpr]),
+                    a,
+                    acc.current,
+                  ]),
+                },
+        {
+          current: valueExpr(null),
+        } as WhichState,
+      ).current,
+    );
+  },
+  evaluate: () => {
+    throw new Error("No eval");
+  },
+};
 
 function resolveCall(env: EvalEnv, callExpr: CallExpr): EnvValue<CallExpr> {
   return mapEnv(mapAllEnv(env, callExpr.args, resolve), (args) => ({

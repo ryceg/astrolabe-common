@@ -1,5 +1,3 @@
-using Astrolabe.Evaluator.Functions;
-
 namespace Astrolabe.Evaluator;
 
 using EvaluatedExprValue = EnvironmentValue<ValueExpr>;
