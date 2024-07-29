@@ -3,7 +3,7 @@ using Astrolabe.Evaluator;
 
 namespace Astrolabe.Validation;
 
-public static class Interpreter
+public static class RuleEvaluation
 {
     public static EnvironmentValue<RuleFailure?> EvaluateFailures(
         this EvalEnvironment environment,
