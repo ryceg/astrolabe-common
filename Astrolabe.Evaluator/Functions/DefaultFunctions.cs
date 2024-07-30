@@ -156,6 +156,18 @@ public static class DefaultFunctions
                 "sum",
                 ArrayOp(vals => vals.Select(ValueExpr.AsDouble).Aggregate(0d, (a, b) => a + b))
             },
+            {
+                "min",
+                ArrayOp(vals =>
+                    vals.Select(ValueExpr.AsDouble).Aggregate(double.MaxValue, Math.Min)
+                )
+            },
+            {
+                "max",
+                ArrayOp(vals =>
+                    vals.Select(ValueExpr.AsDouble).Aggregate(double.MinValue, Math.Max)
+                )
+            },
             { "count", ArrayOp(vals => vals.Count) },
             { "array", FunctionHandler.DefaultEval(args => ArrayValue.From(args).Flatten()) },
             {

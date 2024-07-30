@@ -316,7 +316,7 @@ export function basicEnv(data: any): EvalEnv {
     { segment: null },
     {
       "?": condFunction,
-      "!": notFunction,
+      "!": evalFunction((a) => !a[0]),
       and: binFunction((a, b) => a && b),
       or: binFunction((a, b) => a || b),
       "+": binFunction((a, b) => a + b),
@@ -331,8 +331,11 @@ export function basicEnv(data: any): EvalEnv {
       "!=": binFunction((a, b) => a != b),
       array: flatFunction,
       string: stringFunction,
-      sum: sumFunction,
-      count: countFunction,
+      sum: aggFunction(0, (acc, b) => acc + (b as number)),
+      count: aggFunction(0, (acc, b) => acc + 1),
+      min: aggFunction(Number.MAX_VALUE, (a, b) => Math.min(a, b as number)),
+      max: aggFunction(Number.MIN_VALUE, (a, b) => Math.max(a, b as number)),
+      notEmpty: evalFunction((a) => !!a[0]),
       which: whichFunction,
       ".": mapFunction,
       "[": filterFunction,
@@ -394,11 +397,13 @@ export function binFunction(func: (a: any, b: any) => unknown): FunctionExpr {
   };
 }
 
-export const notFunction: FunctionExpr = {
-  type: "func",
-  resolve: resolveCall,
-  evaluate: (e, args) => [e, !args[0]],
-};
+export function evalFunction(run: (args: unknown[]) => unknown): FunctionExpr {
+  return {
+    type: "func",
+    resolve: resolveCall,
+    evaluate: (e, args) => [e, run(args)],
+  };
+}
 
 function resolveElem(
   elem: EnvValue<EvalExpr>,
@@ -478,34 +483,22 @@ function asArray(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [v];
 }
 
-function aggFunction<A>(
-  v: unknown[],
-  init: A,
-  op: (acc: A, x: unknown) => A,
-): any {
-  function recurse(v: unknown[]): any {
+function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): FunctionExpr {
+  function recurse(v: unknown[]): unknown {
     if (v.some(Array.isArray)) {
       return v.map((x) => recurse(asArray(x)));
     }
     return v.reduce(op, init);
   }
-  if (v.length == 1) return recurse(v[0] as unknown[]);
-  return recurse(v);
+  return {
+    type: "func",
+    resolve: resolveCall,
+    evaluate: (e, v) => {
+      if (v.length == 1) return [e, recurse(v[0] as unknown[])];
+      return [e, recurse(v)];
+    },
+  };
 }
-const sumFunction: FunctionExpr = {
-  type: "func",
-  resolve: resolveCall,
-  evaluate: (e, vals) => [
-    e,
-    aggFunction(vals, 0, (acc, b) => acc + (b as number)),
-  ],
-};
-
-const countFunction: FunctionExpr = {
-  type: "func",
-  resolve: resolveCall,
-  evaluate: (e, vals) => [e, aggFunction(vals, 0, (acc, b) => acc + 1)],
-};
 
 function toString(v: unknown): string {
   switch (typeof v) {
