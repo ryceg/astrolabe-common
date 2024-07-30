@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Immutable;
+using System.Text.Json.Nodes;
 using Astrolabe.Evaluator;
 using Astrolabe.Evaluator.Functions;
 
@@ -148,6 +150,30 @@ public static class ValidatorEnvironment
                 }
             )
             .WithExpr(ValueExpr.Null);
+    }
+
+    public static List<RuleFailure> ValidateJson(
+        JsonNode data,
+        Rule rule,
+        LetExpr? variables,
+        Func<DataPath, IEnumerable<ResolvedRule>, IEnumerable<ResolvedRule>> adjustRules
+    )
+    {
+        var baseEnv = FromData(JsonDataLookup.FromObject(data));
+        var ruleEnv = variables != null ? baseEnv.ResolveAndEvaluate(variables).Env : baseEnv;
+        var ruleList = ruleEnv.EvaluateRule(rule);
+        var allRules = ruleList.Value.ToList();
+        var byPath = allRules.ToLookup(x => x.Path);
+        var dataOrder = allRules.GetDataOrder();
+        var validationResult = ruleEnv.EvaluateAll(
+            dataOrder,
+            (de, p) =>
+                de.EvaluateAll(
+                    adjustRules(p, byPath[p]),
+                    (e, r) => e.EvaluateFailures(r).SingleOrEmpty()
+                )
+        );
+        return validationResult.Value.ToList();
     }
 }
 
