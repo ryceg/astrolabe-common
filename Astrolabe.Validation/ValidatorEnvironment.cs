@@ -63,7 +63,7 @@ public static class ValidatorEnvironment
     {
         var funcValue = func.Key switch
         {
-            "=" or "!=" or ">" or "<" or ">=" or "<=" => WrapFunc(func.Value),
+            "=" or "!=" or ">" or "<" or ">=" or "<=" or "notEmpty" => WrapFunc(func.Value),
             _ => func.Value
         };
         return new KeyValuePair<string, EvalExpr>(func.Key, new ValueExpr(funcValue));
@@ -149,70 +149,6 @@ public static class ValidatorEnvironment
             )
             .WithExpr(ValueExpr.Null);
     }
-
-    // public ValidatorEnvironment WithFailedPath(DataPath rulePath)
-    // {
-    //     return this with { FailedData = FailedData.Add(rulePath) };
-    // }
-    //
-    // public EvalExpr? GetVariable(string expr)
-    // {
-    //     return CollectionExtensions.GetValueOrDefault(Replacements, expr);
-    // }
-    //
-    // public EvalEnvironment WithVariable(string name, EvalExpr? value)
-    // {
-    //     return this with
-    //     {
-    //         Replacements =
-    //             value == null ? Replacements.Remove(name) : Replacements.SetItem(name, value)
-    //     };
-    // }
-
-    // public EnvironmentValue<ValueExpr> EvaluateCall(CallExpr callExpr)
-    // {
-    //     if (callExpr is CallExpr callEnvExpr)
-    //         return EvaluateValCall(callEnvExpr);
-    //     if (callExpr is not CallExpr ce)
-    //         return this.WithNull();
-    //     var envResult = DefaultFunctions
-    //         .FunctionHandlers[ce.Function]
-    //         .Evaluate(callExpr.Args, this);
-    //     var result = envResult.Value.Item1;
-    //     if (
-    //         result.IsFalse()
-    //         && ce.Function
-    //             is InbuiltFunction.Eq
-    //                 or InbuiltFunction.Ne
-    //                 or InbuiltFunction.Gt
-    //                 or InbuiltFunction.Lt
-    //                 or InbuiltFunction.GtEq
-    //                 or InbuiltFunction.LtEq
-    //     )
-    //     {
-    //         return (
-    //             FromEnv(envResult.Env) with
-    //             {
-    //                 Failures = Failures.Append(new Failure(ce, envResult.Value.Item2))
-    //             }
-    //         ).WithExprValue(ValueExpr.False);
-    //     }
-    //     return envResult.Env.WithValue(result);
-    // }
-    //
-    // public EnvironmentValue<EvalExpr> ResolveCall(CallExpr callExpr)
-    // {
-    //     if (callExpr is CallExpr callEnvExpr)
-    //         return ResolveValCall(callEnvExpr);
-    //     if (callExpr is not CallExpr ce)
-    //         return this.WithExpr(callExpr);
-    //     return DefaultFunctions.FunctionHandlers[ce.Function].Resolve(callExpr, this);
-    // }
-
-    // public EvalEnvironment WithBasePath(DataPath basePath)
-    // {
-    //     return this with { BasePath = basePath };
-    // }
 }
 
 public record Failure(CallExpr Call, IList<ValueExpr> EvaluatedArgs);

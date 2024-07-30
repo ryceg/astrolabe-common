@@ -158,6 +158,17 @@ public static class DefaultFunctions
             },
             { "count", ArrayOp(vals => vals.Count) },
             { "array", FunctionHandler.DefaultEval(args => ArrayValue.From(args).Flatten()) },
+            {
+                "notEmpty",
+                FunctionHandler.DefaultEval(x =>
+                    x[0] switch
+                    {
+                        string s => !string.IsNullOrWhiteSpace(s),
+                        null => false,
+                        _ => true
+                    }
+                )
+            },
             { "string", StringOp },
             {
                 "resolve",

@@ -65,7 +65,13 @@ public record ForEachRule(EvalExpr Path, VarExpr Index, LetExpr? Variables, Rule
     }
 }
 
-public record ResolvedRule(DataPath Path, EvalExpr Must, IDictionary<string, object?> Properties);
+public record ResolvedRule(DataPath Path, EvalExpr Must, IDictionary<string, object?> Properties)
+{
+    public T GetProperty<T>(string key)
+    {
+        return Properties.TryGetValue(key, out var v) ? (T)v! : default!;
+    }
+}
 
 public static class RuleExtensions
 {
