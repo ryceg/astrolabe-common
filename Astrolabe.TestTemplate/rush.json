@@ -478,6 +478,11 @@
       "projectFolder": "../astrolabe-evaluator",
       "shouldPublish": true
     },
+    {
+      "packageName": "@astroapps/codemirror-evaluator",
+      "projectFolder": "../astrolabe-codemirror-evaluator",
+      "shouldPublish": true
+    },
 //    {
 //      "packageName": "@react-typed-forms/core",
 //      "projectFolder": "../react-typed-forms/packages/core"

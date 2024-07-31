@@ -16,6 +16,8 @@ import React from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client/hooks/useApiClient";
 import { Client } from "../../client";
+import { basicSetup, EditorView } from "codemirror";
+import { Evaluator } from "@astroapps/codemirror-evaluator";
 
 export default function EvalPage() {
   const client = useApiClient(Client);
@@ -34,7 +36,6 @@ export default function EvalPage() {
       try {
         if (sm) {
           const result = await client.eval({ expression: v, data: dv });
-          console.log(result);
           output.value = result;
         } else {
           const exprTree = parseEval(v);
@@ -61,11 +62,7 @@ export default function EvalPage() {
         <Fcheckbox control={serverMode} /> Server Mode
       </div>
       <div className="flex grow">
-        <textarea
-          className="grow"
-          value={input.value}
-          onChange={(e) => (input.value = e.target.value)}
-        />
+        <div className="grow" ref={setupEditor} />
         <textarea
           className="grow"
           value={dataText.value}
@@ -78,4 +75,14 @@ export default function EvalPage() {
       </div>
     </div>
   );
+
+  function setupEditor(elem: HTMLElement | null) {
+    if (elem) {
+      const editor = new EditorView({
+        doc: "",
+        extensions: [basicSetup, Evaluator()],
+        parent: elem,
+      });
+    }
+  }
 }
