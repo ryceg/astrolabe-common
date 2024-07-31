@@ -2,10 +2,7 @@ namespace Astrolabe.Evaluator.Functions;
 
 public static class MapFunctionHandler
 {
-    public static FunctionHandler Instance = new FunctionHandler(
-        Resolve,
-        (e, x) => throw new NotImplementedException()
-    );
+    public static readonly FunctionHandler Instance = FunctionHandler.ResolveOnly(Resolve);
 
     public static EnvironmentValue<EvalExpr> MapElem(
         EnvironmentValue<EvalExpr> expand,
@@ -31,7 +28,7 @@ public static class MapFunctionHandler
         };
     }
 
-    public static EnvironmentValue<EvalExpr> Resolve(
+    private static EnvironmentValue<EvalExpr> Resolve(
         EvalEnvironment environment,
         CallExpr callableExpr
     )

@@ -21,18 +21,6 @@ public static class FilterFunctionHandler
                                 .Map(x => new ArrayExpr(x))
                     }
             };
-
-            // const [left, right] = call.args;
-            // const [nextEnv, leftValue] = resolve(env, left);
-            // if (leftValue.type === "array") {
-            //     const filteredArray = mapAllEnv(nextEnv, leftValue.values, (e, v) =>
-            //             mapEnv(resolveElem([e, v], right), (x) => optionalExpr(v, x)),
-            //     );
-            //     return mapEnv(filteredArray, (x) => arrayExpr(x));
-            // }
-            // throw new Error(
-            //     "Function not implemented." + JSON.stringify(leftValue.type),
-            // );
         }
     );
 
