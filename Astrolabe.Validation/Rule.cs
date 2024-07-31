@@ -4,7 +4,6 @@ using Astrolabe.Evaluator;
 
 namespace Astrolabe.Validation;
 
-[JsonString]
 public enum RuleType
 {
     Single,
@@ -12,9 +11,6 @@ public enum RuleType
     ForEach
 }
 
-[JsonBaseType("type", typeof(SingleRule))]
-[JsonSubType("Rule", typeof(SingleRule))]
-[JsonSubType("Rules", typeof(MultiRule))]
 public abstract record Rule(RuleType Type);
 
 public record SingleRule(EvalExpr Path, EvalExpr Props, EvalExpr Must) : Rule(RuleType.Single)
