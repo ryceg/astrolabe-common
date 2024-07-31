@@ -76,7 +76,7 @@ public static class RuleValidator
             {
                 Evaluate = (e, call) =>
                 {
-                    var (env, args) = e.EvaluateEach(call.Args, (e2, x) => e2.Evaluate(x));
+                    var (env, args) = e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x));
                     var argValuesValue = args.ToList();
                     var result = handler.Evaluate(env, call.WithArgs(argValuesValue));
                     var resultValue = result.Value;
@@ -102,9 +102,8 @@ public static class RuleValidator
         CallExpr callExpr
     )
     {
-        var (evalEnvironment, argList) = environment.EvaluateAllExpr(
-            [callExpr.Args[0], callExpr.Args[1]]
-        );
+        var (evalEnvironment, args) = environment.EvalSelect(callExpr.Args, Interpreter.Evaluate);
+        var argList = args.ToList();
         return evalEnvironment
             .UpdateValidatorState(valEnv =>
                 valEnv with
@@ -149,7 +148,7 @@ public static class RuleValidator
                     Properties = ImmutableDictionary<string, object?>.Empty,
                 }
             )
-            .WithExpr(ValueExpr.Null);
+            .WithNull();
     }
 
     public static List<RuleFailure> ValidateJson(
@@ -165,10 +164,11 @@ public static class RuleValidator
         var allRules = ruleList.Value.ToList();
         var byPath = allRules.ToLookup(x => x.Path);
         var dataOrder = allRules.GetDataOrder();
-        var validationResult = ruleEnv.EvaluateAll(
+        var validationResult = ruleEnv.EvalConcat(
             dataOrder,
             (de, p) =>
-                de.EvaluateAll(
+                EvalEnvironmentExtensions.EvalConcat(
+                    de,
                     adjustRules(p, byPath[p]),
                     (e, r) => e.EvaluateFailures(r).SingleOrEmpty()
                 )

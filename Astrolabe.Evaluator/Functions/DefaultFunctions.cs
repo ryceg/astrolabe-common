@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Astrolabe.Evaluator.Functions;
 
 public static class DefaultFunctions
@@ -205,6 +207,21 @@ public static class DefaultFunctions
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
         };
+
+    public static EvalEnvironment CreateEnvironment(Func<DataPath, object?> getData)
+    {
+        return new EvalEnvironment(
+            getData,
+            null,
+            DataPath.Empty,
+            ImmutableDictionary.CreateRange(
+                FunctionHandlers.Select(x => new KeyValuePair<string, EvalExpr>(
+                    x.Key,
+                    new ValueExpr(x.Value)
+                ))
+            )
+        );
+    }
 
     record WhichState(EvalExpr Current, EvalExpr? Compare, EvalExpr? ToExpr)
     {

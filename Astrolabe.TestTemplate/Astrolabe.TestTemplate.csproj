@@ -8,13 +8,15 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.9"/>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="Astrolabe.JSON" Version="1.1.0" />
         <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.Evaluator\Astrolabe.Evaluator.csproj" />
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+      <ProjectReference Include="..\Astrolabe.Validation\Astrolabe.Validation.csproj" />
       <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
     </ItemGroup>
 

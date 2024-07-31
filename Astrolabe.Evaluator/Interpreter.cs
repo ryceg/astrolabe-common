@@ -21,19 +21,18 @@ public static class Interpreter
             PathExpr { Path: var dp } => ResolvePath(dp),
             LambdaExpr lambdaExpr => DoLambda(lambdaExpr),
             VarExpr varExpr => ResolveVar(varExpr),
-            ValueExpr => environment.WithExpr(expr),
+            ValueExpr => environment.WithValue(expr),
             ArrayExpr ae
                 => environment
-                    .EvaluateEach(ae.ValueExpr, ResolveExpr)
-                    .Map(x => (EvalExpr)new ArrayExpr(x.ToList())),
+                    .EvalSelect(ae.Values, ResolveExpr)
+                    .Map(x => new ArrayExpr(x.ToList())),
             LetExpr v
                 => environment
-                    .EvaluateForEach(
+                    .EvalForEach(
                         v.Vars,
                         (acc, nextVar) =>
                             acc.ResolveExpr(nextVar.Item2)
-                                .Then(e => e.WithReplacement(nextVar.Item1.Name, e.Value))
-                                .Env
+                                .Run((e) => e.Env.WithVariable(nextVar.Item1.Name, e.Value))
                     )
                     .ResolveExpr(v.In),
             CallExpr { Function: var func } ce
@@ -57,14 +56,14 @@ public static class Interpreter
             return environment.GetData(resolvedPath) switch
             {
                 ArrayValue av
-                    => environment.WithExpr(
+                    => environment.WithValue(
                         new ArrayExpr(
                             Enumerable
                                 .Range(0, av.Count)
                                 .Select(x => new PathExpr(new IndexPath(x, resolvedPath)))
                         )
                     ),
-                var v => environment.WithExpr(new PathExpr(resolvedPath))
+                var v => environment.WithValue(new PathExpr(resolvedPath))
             };
         }
 
@@ -90,6 +89,24 @@ public static class Interpreter
         return env.ResolveExpr(expr).Evaluate();
     }
 
+    private static EvaluatedExprValue EvaluateOptional(
+        EvalEnvironment env,
+        EvalExpr expr,
+        int index
+    )
+    {
+        return expr switch
+        {
+            OptionalExpr optional when env.Evaluate(optional.Condition) is var cond
+                => cond.Run(x =>
+                    (x.Value.MaybeDouble() is { } i ? index == (int)i : x.Value.AsBool())
+                        ? x.Env.Evaluate(optional.Value)
+                        : x.Env.WithValue(ValueExpr.Undefined)
+                ),
+            _ => env.Evaluate(expr)
+        };
+    }
+
     public static EvaluatedExprValue Evaluate(this EvalEnvironment environment, EvalExpr expr)
     {
         return expr switch
@@ -106,11 +123,15 @@ public static class Interpreter
 
         EvaluatedExprValue EvalArray(ArrayExpr arrayExpr)
         {
-            var elements = arrayExpr.ValueExpr.Aggregate(
-                environment.WithEmpty<ValueExpr>(),
-                (acc, e) => acc.Env.Evaluate(e).AppendTo(acc)
+            var elements = arrayExpr.Values.Aggregate(
+                (environment.WithEmpty<ValueExpr>(), 0),
+                (acc, e) =>
+                    (
+                        EvaluateOptional(acc.Item1.Env, e, acc.Item2).AppendTo(acc.Item1),
+                        acc.Item2 + 1
+                    )
             );
-            return elements.Map(x =>
+            return elements.Item1.Map(x =>
             {
                 var rawElements = ArrayValue.From(x.Select(v => v.Value));
                 return ValueExpr.From(rawElements);

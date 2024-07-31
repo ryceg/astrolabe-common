@@ -22,7 +22,7 @@ public static class PrintExpr
             LetExpr letExpr
                 => $"let {string.Join(", ", letExpr.Vars.Select(x => $"{x.Item1.Print()} = {x.Item2.Print()}"))} in {letExpr.In.Print()}",
             ArrayExpr arrayExpr
-                => $"[{string.Join(", ", arrayExpr.ValueExpr.Select(x => x.Print()))}]",
+                => $"[{string.Join(", ", arrayExpr.Values.Select(x => x.Print()))}]",
             CallExpr { Function: "[", Args: var a } when a.ToList() is [var first, var t]
                 => $"{first.Print()}[{t.Print()}]",
             CallExpr { Function: "?", Args: var a } when a.ToList() is [var ifE, var t, var f]

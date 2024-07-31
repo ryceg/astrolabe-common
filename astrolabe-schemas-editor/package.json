@@ -16,7 +16,7 @@
     "prepack": "npm run build",
     "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
     "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "genschemas": "h get http://localhost:5000/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
+    "genschemas": "h get http://localhost:5000/api/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
   },
   "dependencies": {
     "@react-typed-forms/core": "^3.5.2",

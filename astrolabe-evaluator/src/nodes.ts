@@ -288,7 +288,7 @@ class BasicEvalEnv extends EvalEnv {
   getData(path: Path): any {
     if (path.segment == null) return this.data;
     const parentObject = this.getData(path.parent);
-    if (parentObject == null) debugger;
+    if (parentObject == null) return null;
     return parentObject[path.segment];
   }
   withVariables(vars: [string, EvalExpr][]): EvalEnv {

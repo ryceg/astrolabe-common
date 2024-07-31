@@ -35,7 +35,19 @@ public record EvalEnvironment(
     }
 }
 
-public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
+public interface EnvironmentValue<out T>
+{
+    EvalEnvironment Env { get; }
+    T Value { get; }
+
+    EnvironmentValue<T2> Map<T2>(Func<T, EvalEnvironment, T2> select);
+
+    EnvironmentValue<T2> Map<T2>(Func<T, T2> select);
+
+    EnvironmentValue<T> EnvMap(Func<EvalEnvironment, EvalEnvironment> envFunc);
+}
+
+public record BasicEnvironmentValue<T>(EvalEnvironment Env, T Value) : EnvironmentValue<T>
 {
     public ValueExpr AsValue()
     {
@@ -47,42 +59,54 @@ public record EnvironmentValue<T>(EvalEnvironment Env, T Value)
         return Env.WithValue(select(Value, Env));
     }
 
-    public EnvironmentValue<T2> Then<T2>(Func<EnvironmentValue<T>, EnvironmentValue<T2>> select)
-    {
-        return select(this);
-    }
-
     public EnvironmentValue<T2> Map<T2>(Func<T, T2> select)
     {
         return Env.WithValue(select(Value));
     }
 
-    public EnvironmentValue<IEnumerable<T>> Single()
+    public EnvironmentValue<T> EnvMap(Func<EvalEnvironment, EvalEnvironment> envFunc)
     {
-        return Env.WithValue<IEnumerable<T>>([Value]);
-    }
-
-    public EnvironmentValue<T> WithBasePath(DataPath basePath)
-    {
-        return Env.WithBasePath(basePath).WithValue(Value);
+        return this with { Env = envFunc(Env) };
     }
 }
 
 public static class EvalEnvironmentExtensions
 {
-    public static EvalEnvironment EvaluateForEach<T>(
+    public static void Deconstruct<T>(
+        this EnvironmentValue<T> ev,
+        out EvalEnvironment env,
+        out T value
+    )
+    {
+        env = ev.Env;
+        value = ev.Value;
+    }
+
+    public static EnvironmentValue<IEnumerable<T>> Single<T>(this EnvironmentValue<T> ev)
+    {
+        return ev.Map<IEnumerable<T>>(x => [x]);
+    }
+
+    public static T2 Run<T, T2>(this EnvironmentValue<T> ev, Func<EnvironmentValue<T>, T2> select)
+    {
+        return select(ev);
+    }
+
+    public static EnvironmentValue<T> WithBasePath<T>(
+        this EnvironmentValue<T> ev,
+        DataPath basePath
+    )
+    {
+        return ev.EnvMap(x => x.WithBasePath(basePath));
+    }
+
+    public static EvalEnvironment EvalForEach<T>(
         this EvalEnvironment env,
         IEnumerable<T> evalList,
         Func<EvalEnvironment, T, EvalEnvironment> evalFunc
     )
     {
         return evalList.Aggregate(env, evalFunc);
-    }
-
-    public static EnvironmentValue<EvalExpr> AsExpr<T>(this EnvironmentValue<T> ev)
-        where T : EvalExpr
-    {
-        return ev.Map(x => (EvalExpr)x);
     }
 
     public static EnvironmentValue<IEnumerable<T>> SingleOrEmpty<T>(
@@ -92,15 +116,6 @@ public static class EvalEnvironmentExtensions
         return evalResult.Env.WithValue<IEnumerable<T>>(
             evalResult.Value != null ? [evalResult.Value] : []
         );
-    }
-
-    public static EnvironmentValue<T> WithReplacement<T>(
-        this EnvironmentValue<T> evalExpr,
-        string name,
-        EvalExpr? value
-    )
-    {
-        return evalExpr with { Env = evalExpr.Env.WithVariable(name, value) };
     }
 
     public static EnvironmentValue<IEnumerable<object?>> Singleton(this EvaluatedExpr evalExpr)
@@ -124,19 +139,12 @@ public static class EvalEnvironmentExtensions
         EnvironmentValue<IEnumerable<ValueExpr>> other
     )
     {
-        return acc.Env.WithValue(other.Value.Append(acc.Value));
+        return acc.Env.WithValue(
+            acc.Value != ValueExpr.Undefined ? other.Value.Append(acc.Value) : other.Value
+        );
     }
 
-    public static EnvironmentValue<List<ValueExpr>> EvaluateAllExpr(
-        this EvalEnvironment env,
-        IEnumerable<EvalExpr> evalList
-    )
-    {
-        return env.EvaluateAll(evalList, (env2, e) => env2.Evaluate(e).Single())
-            .Map(x => x.ToList());
-    }
-
-    public static EnvironmentValue<IEnumerable<TResult>> EvaluateEach<T, TResult>(
+    public static EnvironmentValue<IEnumerable<TResult>> EvalSelect<T, TResult>(
         this EvalEnvironment env,
         IEnumerable<T> evalList,
         Func<EvalEnvironment, T, EnvironmentValue<TResult>> evalFunc
@@ -152,7 +160,7 @@ public static class EvalEnvironmentExtensions
         );
     }
 
-    public static EnvironmentValue<IEnumerable<TResult>> EvaluateAll<T, TResult>(
+    public static EnvironmentValue<IEnumerable<TResult>> EvalConcat<T, TResult>(
         this EvalEnvironment env,
         IEnumerable<T> evalList,
         Func<EvalEnvironment, T, EnvironmentValue<IEnumerable<TResult>>> evalFunc
@@ -170,27 +178,17 @@ public static class EvalEnvironmentExtensions
 
     public static EnvironmentValue<T> WithValue<T>(this EvalEnvironment env, T result)
     {
-        return new EnvironmentValue<T>(env, result);
+        return new BasicEnvironmentValue<T>(env, result);
     }
 
     public static EnvironmentValue<IEnumerable<T>> WithEmpty<T>(this EvalEnvironment env)
     {
-        return new EnvironmentValue<IEnumerable<T>>(env, []);
-    }
-
-    public static EvaluatedExpr WithExprValue(this EvalEnvironment env, ValueExpr value)
-    {
-        return new EvaluatedExpr(env, value);
-    }
-
-    public static EnvironmentValue<EvalExpr> WithExpr(this EvalEnvironment env, EvalExpr value)
-    {
-        return new EnvironmentValue<EvalExpr>(env, value);
+        return env.WithValue<IEnumerable<T>>([]);
     }
 
     public static EvaluatedExpr WithNull(this EvalEnvironment env)
     {
-        return new EvaluatedExpr(env, ValueExpr.Null);
+        return env.WithValue(ValueExpr.Null);
     }
 
     public static EnvironmentValue<IEnumerable<T>> AppendTo<T>(
@@ -198,6 +196,6 @@ public static class EvalEnvironmentExtensions
         EnvironmentValue<IEnumerable<T>> other
     )
     {
-        return envResult with { Value = other.Value.Concat(envResult.Value) };
+        return envResult.Map<IEnumerable<T>>(x => other.Value.Concat(x));
     }
 }

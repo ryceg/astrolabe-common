@@ -64,6 +64,8 @@ public record PathExpr(DataPath Path) : EvalExpr;
 
 public record LambdaExpr(string Variable, EvalExpr Value) : EvalExpr;
 
+public record OptionalExpr(EvalExpr Value, EvalExpr Condition) : EvalExpr;
+
 public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
 
 public record FunctionHandler(CallHandler<EvalExpr> Resolve, CallHandler<ValueExpr> Evaluate)
@@ -78,25 +80,27 @@ public record FunctionHandler(CallHandler<EvalExpr> Resolve, CallHandler<ValueEx
         new(
             ResolveArgs,
             (e, call) =>
-                e.EvaluateEach(call.Args, (e2, x) => e2.Evaluate(x))
+                e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
                     .Map(args => new ValueExpr(eval(args.Select(x => x.Value).ToList())))
         );
 
     public static EnvironmentValue<EvalExpr> ResolveArgs(EvalEnvironment env, CallExpr callExpr)
     {
-        return env.EvaluateEach(callExpr.Args, (e, x) => e.ResolveExpr(x))
-            .Map(callExpr.WithArgs)
-            .AsExpr();
+        return env.EvalSelect(callExpr.Args, (e, x) => e.ResolveExpr(x)).Map(callExpr.WithArgs);
     }
 }
 
 public record ValueExpr(object? Value) : EvalExpr
 {
-    public static ValueExpr Null => new((object?)null);
-    public static ValueExpr False => new(false);
-    public static ValueExpr True => new(true);
+    public static readonly ValueExpr Null = new((object?)null);
 
-    public static ValueExpr EmptyPath => new(DataPath.Empty);
+    public static readonly ValueExpr False = new(false);
+
+    public static readonly ValueExpr True = new(true);
+
+    public static readonly ValueExpr Undefined = new((object?)null);
+
+    public static readonly ValueExpr EmptyPath = new(DataPath.Empty);
 
     public static double AsDouble(object? v)
     {
@@ -107,6 +111,11 @@ public record ValueExpr(object? Value) : EvalExpr
             double d => d,
             _ => throw new ArgumentException("Value is not a number: " + (v ?? "null"))
         };
+    }
+
+    public long? MaybeInteger()
+    {
+        return MaybeInteger(Value);
     }
 
     public static long? MaybeInteger(object? v)
@@ -214,11 +223,11 @@ public record ValueExpr(object? Value) : EvalExpr
     }
 }
 
-public record ArrayExpr(IEnumerable<EvalExpr> ValueExpr) : EvalExpr
+public record ArrayExpr(IEnumerable<EvalExpr> Values) : EvalExpr
 {
     public override string ToString()
     {
-        return $"ArrayExpr [{string.Join(", ", ValueExpr)}]";
+        return $"ArrayExpr [{string.Join(", ", Values)}]";
     }
 }
 
