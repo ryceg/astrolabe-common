@@ -31,10 +31,7 @@ public record SingleRule(EvalExpr Path, EvalExpr Props, EvalExpr Must) : Rule(Ru
 
     public SingleRule When(EvalExpr whenExpr)
     {
-        return this with
-        {
-            Must = CallExpr.Inbuilt(InbuiltFunction.IfElse, [whenExpr, Must, ValueExpr.Null,])
-        };
+        return this with { Must = new CallExpr("?", [whenExpr, Must, ValueExpr.Null,]) };
     }
 
     public SingleRule WithMessage(EvalExpr message)

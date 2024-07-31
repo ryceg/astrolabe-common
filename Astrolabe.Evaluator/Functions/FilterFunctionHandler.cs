@@ -20,7 +20,7 @@ public static class FilterFunctionHandler
                         .Map(x => (EvalExpr)new ArrayExpr(x)),
                 _ => FilterElem(nextEnv)
             }
-        ).Map(x => CallExpr.Inbuilt(InbuiltFunction.Filter, [x]));
+        ).Map(x => (EvalExpr)new CallExpr("[", [x]));
 
         EnvironmentValue<EvalExpr> FilterElem(EnvironmentValue<EvalExpr> expand)
         {

@@ -23,7 +23,7 @@ public class ExprParser
     {
         public override EvalExpr VisitOrExpr(AstroExprParser.OrExprContext context)
         {
-            return DoFunction(_ => InbuiltFunction.Or, context);
+            return DoFunction(_ => "or", context);
         }
 
         public override EvalExpr VisitMain(AstroExprParser.MainContext context)
@@ -76,9 +76,7 @@ public class ExprParser
         {
             var baseExpr = Visit(context.primaryExpr());
             var predicate = context.predicate();
-            return predicate != null
-                ? CallExpr.Inbuilt(InbuiltFunction.Filter, [baseExpr, Visit(predicate)])
-                : baseExpr;
+            return predicate != null ? new CallExpr("[", [baseExpr, Visit(predicate)]) : baseExpr;
         }
 
         public override EvalExpr VisitConditionExpression(
@@ -89,37 +87,25 @@ public class ExprParser
             var thenExpr = context.expr();
             var elseExpr = context.conditionExpression();
             if (thenExpr != null)
-                return CallExpr.Inbuilt(
-                    InbuiltFunction.IfElse,
-                    [ifExpr, Visit(thenExpr), Visit(elseExpr)]
-                );
+                return new CallExpr("?", [ifExpr, Visit(thenExpr), Visit(elseExpr)]);
             return ifExpr;
         }
 
         public override EvalExpr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
         {
             var variableString = context.variableReference().Identifier().GetText();
-            InbuiltFunction? inbuilt = variableString switch
-            {
-                "sum" => InbuiltFunction.Sum,
-                "count" => InbuiltFunction.Count,
-                "string" => InbuiltFunction.String,
-                _ => null
-            };
             var args = context.expr().Select(Visit).ToList();
-            if (inbuilt != null)
-                return CallExpr.Inbuilt(inbuilt.Value, args);
             return new CallExpr(variableString, args);
         }
 
         public override EvalExpr VisitMapExpr(AstroExprParser.MapExprContext context)
         {
-            return DoFunction(_ => InbuiltFunction.Map, context);
+            return DoFunction(_ => ".", context);
         }
 
         public override EvalExpr VisitAndExpr(AstroExprParser.AndExprContext context)
         {
-            return DoFunction(_ => InbuiltFunction.And, context);
+            return DoFunction(_ => "and", context);
         }
 
         public override EvalExpr VisitRelationalExpr(AstroExprParser.RelationalExprContext context)
@@ -128,10 +114,10 @@ public class ExprParser
                 x =>
                     x.Symbol.Type switch
                     {
-                        AstroExprParser.LESS => InbuiltFunction.Lt,
-                        AstroExprParser.MORE_ => InbuiltFunction.Gt,
-                        AstroExprParser.LE => InbuiltFunction.LtEq,
-                        AstroExprParser.GE => InbuiltFunction.GtEq,
+                        AstroExprParser.LESS => "<",
+                        AstroExprParser.MORE_ => ">",
+                        AstroExprParser.LE => "<=",
+                        AstroExprParser.GE => ">=",
                     },
                 context
             );
@@ -139,42 +125,24 @@ public class ExprParser
 
         public override EvalExpr VisitEqualityExpr(AstroExprParser.EqualityExprContext context)
         {
-            return DoFunction(
-                t => t.Symbol.Type == AstroExprParser.EQ ? InbuiltFunction.Eq : InbuiltFunction.Ne,
-                context
-            );
+            return DoFunction(t => t.Symbol.Type == AstroExprParser.EQ ? "=" : "!=", context);
         }
 
         public override EvalExpr VisitMultiplicativeExpr(
             AstroExprParser.MultiplicativeExprContext context
         )
         {
-            return DoFunction(
-                t =>
-                    t.Symbol.Type == AstroExprParser.MUL
-                        ? InbuiltFunction.Multiply
-                        : InbuiltFunction.Divide,
-                context
-            );
+            return DoFunction(t => t.Symbol.Type == AstroExprParser.MUL ? "*" : "/", context);
         }
 
         public override EvalExpr VisitAdditiveExpr(AstroExprParser.AdditiveExprContext context)
         {
-            return DoFunction(
-                t =>
-                    t.Symbol.Type == AstroExprParser.PLUS
-                        ? InbuiltFunction.Add
-                        : InbuiltFunction.Minus,
-                context
-            );
+            return DoFunction(t => t.Symbol.Type == AstroExprParser.PLUS ? "+" : "-", context);
         }
 
-        public EvalExpr DoFunction(
-            Func<ITerminalNode, InbuiltFunction> func,
-            ParserRuleContext context
-        )
+        public EvalExpr DoFunction(Func<ITerminalNode, string> func, ParserRuleContext context)
         {
-            return DoBinOps((t, e1, e2) => CallExpr.Inbuilt(func(t), [e1, e2]), context);
+            return DoBinOps((t, e1, e2) => new CallExpr(func(t), [e1, e2]), context);
         }
 
         public EvalExpr DoBinOps(

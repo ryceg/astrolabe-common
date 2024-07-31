@@ -25,34 +25,8 @@ public enum InbuiltFunction
     [Display(Name = ">=")]
     GtEq,
 
-    [Display(Name = "and")]
-    And,
-
-    [Display(Name = "or")]
-    Or,
-
-    [Display(Name = "!")]
-    Not,
-
-    [Display(Name = "+")]
-    Add,
-
-    [Display(Name = "-")]
-    Minus,
-
-    [Display(Name = "*")]
-    Multiply,
-
-    [Display(Name = "/")]
-    Divide,
-
-    [Display(Name = "?")]
-    IfElse,
-    Sum,
-    Count,
-    String,
-    Map,
-    Filter
+    [Display(Name = "NotEmpty")]
+    NotEmpty,
 }
 
 public static class InbuiltFunctions
@@ -67,17 +41,7 @@ public static class InbuiltFunctions
             InbuiltFunction.Gt => ">",
             InbuiltFunction.GtEq => ">=",
             InbuiltFunction.Ne => "!=",
-            InbuiltFunction.And => "and",
-            InbuiltFunction.Or => "or",
-            InbuiltFunction.Add => "+",
-            InbuiltFunction.Minus => "-",
-            InbuiltFunction.Multiply => "*",
-            InbuiltFunction.Divide => "/",
-            InbuiltFunction.Map => ".",
-            InbuiltFunction.IfElse => "?",
-            InbuiltFunction.Count => "count",
-            InbuiltFunction.String => "string",
-            InbuiltFunction.Sum => "sum",
+            InbuiltFunction.NotEmpty => "notEmpty",
             _ => throw new ArgumentException("Not an Inbuilt:" + func)
         };
     }
@@ -274,6 +238,16 @@ public record CallExpr(string Function, IList<EvalExpr> Args) : EvalExpr
     {
         return new CallExpr(inbuilt.VariableName(), args.ToList());
     }
+
+    public static EvalExpr And(EvalExpr expr, EvalExpr other)
+    {
+        return new CallExpr("and", [expr, other]);
+    }
+
+    public static EvalExpr Map(EvalExpr expr, EvalExpr other)
+    {
+        return new CallExpr(".", [expr, other]);
+    }
 }
 
 public record VarExpr(string Name) : EvalExpr
@@ -420,7 +394,7 @@ public static class ValueExtensions
             ? b
                 ? other
                 : expr
-            : CallExpr.Inbuilt(InbuiltFunction.And, [expr, other]);
+            : CallExpr.And(expr, other);
     }
 
     public static EvalExpr DotExpr(this EvalExpr expr, EvalExpr other)
@@ -428,7 +402,7 @@ public static class ValueExtensions
         return (expr, other) switch
         {
             (ValueExpr { Value: DataPath ps }, ValueExpr v) => new PathExpr(ApplyDot(ps, v)),
-            _ => CallExpr.Inbuilt(InbuiltFunction.Map, [expr, other])
+            _ => CallExpr.Map(expr, other)
         };
     }
 
