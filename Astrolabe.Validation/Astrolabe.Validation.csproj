@@ -15,12 +15,6 @@
     </PropertyGroup>
     
     <ItemGroup>
-      <PackageReference Include="Astrolabe.Annotation" Version="1.1.0" />
-      <PackageReference Include="CsvHelper" Version="33.0.1" />
-      <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
-    </ItemGroup>
-    
-    <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Evaluator\Astrolabe.Evaluator.csproj" />
     </ItemGroup>
     
