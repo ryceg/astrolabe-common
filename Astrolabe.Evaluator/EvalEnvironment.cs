@@ -8,7 +8,8 @@ public record EvalEnvironment(
     Func<DataPath, object?> GetDataFunc,
     Func<DataPath, bool>? ValidData,
     DataPath BasePath,
-    ImmutableDictionary<string, EvalExpr> Variables
+    ImmutableDictionary<string, EvalExpr> Variables,
+    IEnumerable<EvalError> Errors
 )
 {
     public object? GetData(DataPath dataPath)
@@ -29,9 +30,30 @@ public record EvalEnvironment(
         };
     }
 
+    public EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
+    {
+        return this with { Variables = Variables.AddRange(vars) };
+    }
+
     public EvalEnvironment WithBasePath(DataPath basePath)
     {
         return this with { BasePath = basePath };
+    }
+
+    public EvalEnvironment WithError(string message)
+    {
+        return this with { Errors = Errors.Append(new EvalError(message)) };
+    }
+
+    public static EvalEnvironment DataFrom(Func<DataPath, object?> data)
+    {
+        return new EvalEnvironment(
+            data,
+            null,
+            DataPath.Empty,
+            ImmutableDictionary<string, EvalExpr>.Empty,
+            []
+        );
     }
 }
 
@@ -199,3 +221,5 @@ public static class EvalEnvironmentExtensions
         return envResult.Map<IEnumerable<T>>(x => other.Value.Concat(x));
     }
 }
+
+public record EvalError(string Message);

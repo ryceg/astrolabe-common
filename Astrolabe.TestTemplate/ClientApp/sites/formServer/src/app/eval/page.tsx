@@ -62,7 +62,7 @@ export default function EvalPage() {
         <Fcheckbox control={serverMode} /> Server Mode
       </div>
       <div className="flex grow">
-        <div className="grow" ref={setupEditor} />
+        <div className="w-80 grow" ref={setupEditor} />
         <textarea
           className="grow"
           value={dataText.value}
@@ -78,9 +78,15 @@ export default function EvalPage() {
 
   function setupEditor(elem: HTMLElement | null) {
     if (elem) {
+      let updateListenerExtension = EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          input.value = update.state.doc.toString();
+        }
+      });
+
       const editor = new EditorView({
         doc: "",
-        extensions: [basicSetup, Evaluator()],
+        extensions: [basicSetup, Evaluator(), updateListenerExtension],
         parent: elem,
       });
     }

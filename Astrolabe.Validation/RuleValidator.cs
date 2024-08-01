@@ -43,20 +43,25 @@ public static class RuleValidator
 
     public static EvalEnvironment FromData(Func<DataPath, object?> data)
     {
-        return new EvalEnvironment(
-            data,
-            null,
-            DataPath.Empty,
-            ImmutableDictionary<string, EvalExpr>
-                .Empty.AddRange(DefaultFunctions.FunctionHandlers.Select(ToVariable))
-                .Add("$ValidatorState", new ValueExpr(ValidatorState.Empty))
-                .Add(RuleFunction, new ValueExpr(FunctionHandler.ResolveOnly(ResolveValidation)))
-                .Add("WithMessage", new ValueExpr(FunctionHandler.DefaultResolve(EvalWithMessage)))
-                .Add(
-                    "WithProperty",
-                    new ValueExpr(FunctionHandler.DefaultResolve(EvalWithProperty))
-                )
-        );
+        return EvalEnvironment
+            .DataFrom(data)
+            .WithVariables(
+                ImmutableDictionary<string, EvalExpr>
+                    .Empty.AddRange(DefaultFunctions.FunctionHandlers.Select(ToVariable))
+                    .Add("$ValidatorState", new ValueExpr(ValidatorState.Empty))
+                    .Add(
+                        RuleFunction,
+                        new ValueExpr(FunctionHandler.ResolveOnly(ResolveValidation))
+                    )
+                    .Add(
+                        "WithMessage",
+                        new ValueExpr(FunctionHandler.DefaultResolve(EvalWithMessage))
+                    )
+                    .Add(
+                        "WithProperty",
+                        new ValueExpr(FunctionHandler.DefaultResolve(EvalWithProperty))
+                    )
+            );
     }
 
     private static KeyValuePair<string, EvalExpr> ToVariable(

@@ -13,9 +13,9 @@ public class EvalController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<JsonElement>> Eval([FromBody] EvalData evalData)
     {
-        var env = DefaultFunctions.CreateEnvironment(
-            JsonDataLookup.FromObject(JsonSerializer.SerializeToNode(evalData.Data))
-        );
+        var env = JsonDataLookup
+            .EnvironmentFor(JsonSerializer.SerializeToNode(evalData.Data))
+            .AddDefaultFunctions();
         return Ok(env.ResolveAndEvaluate(ExprParser.Parse(evalData.Expression)).Value.ToNative());
     }
 }

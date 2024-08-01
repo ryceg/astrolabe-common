@@ -208,18 +208,12 @@ public static class DefaultFunctions
             { ".", MapFunctionHandler.Instance },
         };
 
-    public static EvalEnvironment CreateEnvironment(Func<DataPath, object?> getData)
+    public static EvalEnvironment AddDefaultFunctions(this EvalEnvironment eval)
     {
-        return new EvalEnvironment(
-            getData,
-            null,
-            DataPath.Empty,
-            ImmutableDictionary.CreateRange(
-                FunctionHandlers.Select(x => new KeyValuePair<string, EvalExpr>(
-                    x.Key,
-                    new ValueExpr(x.Value)
-                ))
-            )
+        return eval.WithVariables(
+            FunctionHandlers
+                .Select(x => new KeyValuePair<string, EvalExpr>(x.Key, new ValueExpr(x.Value)))
+                .ToList()
         );
     }
 
@@ -237,5 +231,10 @@ public static class DefaultFunctions
                 ToExpr = null
             };
         }
+    }
+
+    public static object CreateEnvironment(Func<DataPath, object?> fromObject)
+    {
+        throw new NotImplementedException();
     }
 }

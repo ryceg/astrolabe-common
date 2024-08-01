@@ -1,10 +1,22 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Astrolabe.Evaluator;
 
-public class JsonDataLookup
+public static class JsonDataLookup
 {
+    public static EvalEnvironment EnvironmentFor(JsonNode? data)
+    {
+        return new EvalEnvironment(
+            FromObject(data),
+            null,
+            DataPath.Empty,
+            ImmutableDictionary<string, EvalExpr>.Empty,
+            []
+        );
+    }
+
     public static Func<DataPath, object?> FromObject(JsonNode? data)
     {
         Dictionary<DataPath, JsonNode?> cache = new();
