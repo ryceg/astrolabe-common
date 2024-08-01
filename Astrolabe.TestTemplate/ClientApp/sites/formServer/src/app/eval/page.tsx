@@ -12,7 +12,7 @@ import {
   useControlEffect,
   useDebounced,
 } from "@react-typed-forms/core";
-import React from "react";
+import React, { useCallback } from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client/hooks/useApiClient";
 import { Client } from "../../client";
@@ -26,6 +26,7 @@ export default function EvalPage() {
   const data = useControl(sample);
   const dataText = useControl(() => JSON.stringify(sample, null, 2));
   const output = useControl<any>();
+  const editor = useControl<EditorView>();
   useControlEffect(
     () => dataText.value,
     (v) => (data.value = JSON.parse(v)),
@@ -56,13 +57,14 @@ export default function EvalPage() {
       }
     }, 1000),
   );
+  const editorRef = useCallback(setupEditor, [editor]);
   return (
     <div className="h-screen flex flex-col">
       <div>
         <Fcheckbox control={serverMode} /> Server Mode
       </div>
       <div className="flex grow">
-        <div className="w-80 grow" ref={setupEditor} />
+        <div className="w-80 grow" ref={editorRef} />
         <textarea
           className="grow"
           value={dataText.value}
@@ -84,11 +86,13 @@ export default function EvalPage() {
         }
       });
 
-      const editor = new EditorView({
-        doc: "",
+      editor.value = new EditorView({
+        doc: input.value,
         extensions: [basicSetup, Evaluator(), updateListenerExtension],
         parent: elem,
       });
+    } else {
+      editor.value?.destroy();
     }
   }
 }
