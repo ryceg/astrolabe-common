@@ -117,6 +117,7 @@ export const DataGridRenderer = createDataRenderer(
       childDefinitions,
       toArrayProps,
       className,
+      readonly,
     } = pareProps;
 
     const constantColumns: ColumnDefInit<Control<any>>[] =
@@ -166,6 +167,7 @@ export const DataGridRenderer = createDataRenderer(
         columns={allColumns}
         arrayProps={toArrayProps!()}
         className={className}
+        readonly={readonly}
       />
     );
   },
@@ -179,6 +181,7 @@ interface DataGridRendererProps {
   control: Control<any[] | undefined | null>;
   className?: string;
   renderAction: (action: ActionRendererProps) => ReactNode;
+  readonly: boolean;
 }
 
 function DataGridControlRenderer({
@@ -188,8 +191,12 @@ function DataGridControlRenderer({
   control,
   className,
   renderAction,
+  readonly,
 }: DataGridRendererProps) {
-  const { removeAction, addAction } = applyArrayLengthRestrictions(arrayProps);
+  const { removeAction, addAction } = applyArrayLengthRestrictions(
+    arrayProps,
+    readonly,
+  );
 
   const allColumns = columnDefinitions<Control<any>>(...columns, {
     id: "deleteCheck",
