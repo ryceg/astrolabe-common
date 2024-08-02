@@ -38,16 +38,14 @@ public static class Interpreter
             CallExpr { Function: var func } ce
                 => environment.GetVariable(func) is ValueExpr { Value: FunctionHandler handler }
                     ? handler.Resolve(environment, ce)
-                    : throw new ArgumentException("No function: " + func),
+                    : environment.WithError("No function: " + func).WithNull(),
             _ => throw new ArgumentException("Could not resolve: " + expr)
         };
 
         EnvironmentValue<EvalExpr> ResolveVar(VarExpr varExpr)
         {
             var evalExpr = environment.GetVariable(varExpr.Name);
-            if (evalExpr == null)
-                throw new ArgumentException("Unknown variable: " + varExpr.Name);
-            return environment.WithValue(evalExpr);
+            return evalExpr == null ? environment.WithError("Unknown variable: " + varExpr.Name).WithNull() : environment.WithValue(evalExpr);
         }
 
         EnvironmentValue<EvalExpr> ResolvePath(DataPath dp)
