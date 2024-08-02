@@ -10,6 +10,7 @@
       <Path>astrolabe-datagrid</Path>
       <Path>astrolabe-evaluator</Path>
       <Path>astrolabe-quill-editor</Path>
+      <Path>astrolabe-schemas-datagrid</Path>
       <Path>astrolabe-schemas-editor</Path>
       <Path>astrolabe-storybook</Path>
       <Path>astrolabe-ui</Path>

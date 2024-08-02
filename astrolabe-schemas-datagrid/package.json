@@ -1,0 +1,40 @@
+{
+  "name": "@astroapps/schemas-datagrid",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "author": "Astrolabe Enterprises",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "@react-typed-forms/core": "^3.2.0",
+    "@react-typed-forms/schemas": "workspace:^11.0.0",
+    "@astroapps/datagrid": "workspace:*"
+  },
+  "devDependencies": {
+    "@react-typed-forms/transform": "^0.2.0",
+    "@babel/core": "^7.23.7",
+    "@babel/cli": "^7.23.4",
+    "@babel/preset-env": "^7.23.8",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
+    "microbundle": "^0.15.1",
+    "rimraf": "^5.0.5",
+    "typescript": "5.2.2",
+    "@types/react": "^18.2.37",
+    "prettier": "^3.0.3"
+  }
+}

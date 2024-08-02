@@ -155,11 +155,11 @@ importers:
       rollup-plugin-ts: ^3.0.2
       typescript: ^4.3.4
     dependencies:
+      '@astroapps/evaluator': link:../astrolabe-evaluator
       '@codemirror/language': 6.10.2
       '@lezer/highlight': 1.2.0
       '@lezer/lr': 1.4.2
     devDependencies:
-      '@astroapps/evaluator': link:../astrolabe-evaluator
       '@lezer/generator': 1.7.1
       mocha: 9.2.2
       rollup: 2.79.1
@@ -227,6 +227,41 @@ importers:
       '@react-typed-forms/schemas': link:../schemas
       react: 18.3.1
       react-quill: 2.0.0_react@18.3.1
+    devDependencies:
+      '@babel/cli': 7.24.8_@babel+core@7.25.2
+      '@babel/core': 7.25.2
+      '@babel/preset-env': 7.25.2_@babel+core@7.25.2
+      '@babel/preset-react': 7.24.7_@babel+core@7.25.2
+      '@babel/preset-typescript': 7.24.7_@babel+core@7.25.2
+      '@react-typed-forms/transform': 0.2.0
+      '@types/react': 18.3.3
+      microbundle: 0.15.1
+      prettier: 3.3.3
+      rimraf: 5.0.9
+      typescript: 5.2.2
+
+  ../../../astrolabe-schemas-datagrid:
+    specifiers:
+      '@astroapps/datagrid': workspace:*
+      '@babel/cli': ^7.23.4
+      '@babel/core': ^7.23.7
+      '@babel/preset-env': ^7.23.8
+      '@babel/preset-react': ^7.23.3
+      '@babel/preset-typescript': ^7.23.3
+      '@react-typed-forms/core': ^3.2.0
+      '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/transform': ^0.2.0
+      '@types/react': ^18.2.37
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18.2.0
+      rimraf: ^5.0.5
+      typescript: 5.2.2
+    dependencies:
+      '@astroapps/datagrid': link:../astrolabe-datagrid
+      '@react-typed-forms/core': 3.6.0
+      '@react-typed-forms/schemas': link:../schemas
+      react: 18.3.1
     devDependencies:
       '@babel/cli': 7.24.8_@babel+core@7.25.2
       '@babel/core': 7.25.2
