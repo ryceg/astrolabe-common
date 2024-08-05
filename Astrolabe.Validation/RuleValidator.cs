@@ -164,6 +164,16 @@ public static class RuleValidator
     )
     {
         var baseEnv = FromData(JsonDataLookup.FromObject(data));
+        return ValidateRules(baseEnv, rule, variables, adjustRules).Value.ToList();
+    }
+
+    public static EnvironmentValue<IEnumerable<RuleFailure>> ValidateRules(
+        EvalEnvironment baseEnv,
+        Rule rule,
+        LetExpr? variables,
+        Func<DataPath, IEnumerable<ResolvedRule>, IEnumerable<ResolvedRule>> adjustRules
+    )
+    {
         var ruleEnv = variables != null ? baseEnv.ResolveAndEvaluate(variables).Env : baseEnv;
         var ruleList = ruleEnv.EvaluateRule(rule);
         var allRules = ruleList.Value.ToList();
@@ -172,13 +182,12 @@ public static class RuleValidator
         var validationResult = ruleEnv.EvalConcat(
             dataOrder,
             (de, p) =>
-                EvalEnvironmentExtensions.EvalConcat(
-                    de,
+                de.EvalConcat(
                     adjustRules(p, byPath[p]),
                     (e, r) => e.EvaluateFailures(r).SingleOrEmpty()
                 )
         );
-        return validationResult.Value.ToList();
+        return validationResult;
     }
 
     public static EnvironmentValue<RuleFailure?> EvaluateFailures(
