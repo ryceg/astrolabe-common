@@ -153,6 +153,11 @@ export function resolve(env: EvalEnv, expr: EvalExpr): EnvValue<EvalExpr> {
       if (varExpr == null)
         throw new Error("Missing variable: " + expr.variable);
       return resolve(env, varExpr);
+    case "optional":
+      return mapEnv(
+        mapAllEnv(env, [expr.value, expr.condition], resolve),
+        ([x1, x2]) => optionalExpr(x1, x2),
+      );
     case "value":
       return [env, expr];
     case "let":
