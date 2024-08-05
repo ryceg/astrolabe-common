@@ -98,7 +98,9 @@ public record ValueExpr(object? Value) : EvalExpr
 
     public static readonly ValueExpr True = new(true);
 
-    public static readonly ValueExpr Undefined = new((object?)null);
+    private static readonly object UndefinedValue = new();
+
+    public static readonly ValueExpr Undefined = new(UndefinedValue);
 
     public static readonly ValueExpr EmptyPath = new(DataPath.Empty);
 

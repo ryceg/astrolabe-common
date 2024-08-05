@@ -493,7 +493,10 @@ function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): FunctionExpr {
     if (v.some(Array.isArray)) {
       return v.map((x) => recurse(asArray(x)));
     }
-    return v.reduce(op, init);
+    return v.reduce(
+      (a, b) => (a != null && b != null ? op(a as A, b) : null),
+      init,
+    );
   }
   return {
     type: "func",

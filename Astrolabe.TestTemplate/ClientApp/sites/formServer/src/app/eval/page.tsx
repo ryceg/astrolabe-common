@@ -29,7 +29,13 @@ export default function EvalPage() {
   const editor = useControl<EditorView>();
   useControlEffect(
     () => dataText.value,
-    (v) => (data.value = JSON.parse(v)),
+    (v) => {
+      try {
+        data.value = JSON.parse(v);
+      } catch (e) {
+        console.error(e);
+      }
+    },
   );
   useControlEffect(
     () => [input.value, data.value, serverMode.value] as const,
@@ -42,10 +48,7 @@ export default function EvalPage() {
           const exprTree = parseEval(v);
           let result;
           try {
-            result = flatmapEnv(
-              resolve(basicEnv(sample), exprTree),
-              evaluate,
-            )[1];
+            result = flatmapEnv(resolve(basicEnv(dv), exprTree), evaluate)[1];
           } catch (e) {
             console.error(e);
             result = e?.toString();
