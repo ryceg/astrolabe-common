@@ -193,17 +193,14 @@ function DataGridControlRenderer({
   renderAction,
   readonly,
 }: DataGridRendererProps) {
-  const { removeAction, addAction } = applyArrayLengthRestrictions(
-    arrayProps,
-    readonly,
-  );
+  const { removeAction, addAction } = applyArrayLengthRestrictions(arrayProps);
 
   const allColumns = columnDefinitions<Control<any>>(...columns, {
     id: "deleteCheck",
     columnTemplate: "1em",
     render: (r, rowIndex) => (
       <div className="flex items-center h-full pl-1">
-        {removeAction && renderAction(removeAction(rowIndex))}
+        {removeAction && !readonly && renderAction(removeAction(rowIndex))}
       </div>
     ),
   });
@@ -231,7 +228,7 @@ function DataGridControlRenderer({
         }
       />
       <div className="flex justify-center mt-2">
-        {addAction && renderAction(addAction)}
+        {addAction && !readonly && renderAction(addAction)}
       </div>
     </>
   );
