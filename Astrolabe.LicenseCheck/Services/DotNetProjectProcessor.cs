@@ -9,10 +9,10 @@ public class DotNetProjectProcessor : IProjectProcessor
     private readonly ExternalToolRunner _toolRunner;
     private readonly NugetRegistryService _nugetRegistryService;
 
-    public DotNetProjectProcessor(ExternalToolRunner toolRunner)
+    public DotNetProjectProcessor(ExternalToolRunner toolRunner, string? cacheDirectory = null)
     {
         _toolRunner = toolRunner;
-        _nugetRegistryService = new NugetRegistryService();
+        _nugetRegistryService = new NugetRegistryService(cacheDirectory);
     }
 
     public bool CanProcess(string filePath)

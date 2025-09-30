@@ -80,6 +80,14 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
         [CommandOption("-i|--interactive")]
         [Description("Enable interactive mode to review and configure problematic packages")]
         public bool Interactive { get; set; }
+
+        [CommandOption("--cache-dir")]
+        [Description("Directory for caching package metadata (useful for CI/CD). If not specified, uses temp directory.")]
+        public string? CacheDirectory { get; set; }
+
+        [CommandOption("--no-cache")]
+        [Description("Disable caching and fetch all package data fresh from registries")]
+        public bool NoCache { get; set; }
     }
 
     public override int Execute(CommandContext context, Settings settings)
@@ -150,7 +158,8 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
             var config = configService.LoadConfig(Environment.CurrentDirectory, settings);
 
             // Process files
-            var processors = CreateProcessors(toolRunner);
+            var cacheDir = settings.NoCache ? null : settings.CacheDirectory;
+            var processors = CreateProcessors(toolRunner, cacheDir);
             var reports = new List<LicenseReport>();
 
             await AnsiConsole
@@ -199,6 +208,8 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
                         AnsiConsole.MarkupLine("\n[blue]Re-running license check...[/]\n");
 
                         // Reload config and re-run validation
+                        // Note: We reuse the existing reports list, which preserves PublishDate
+                        // and other fetched data, avoiding redundant API calls
                         config = configService.LoadConfig(Environment.CurrentDirectory, settings);
                         var validator = new LicenseValidatorService(config);
 
@@ -211,12 +222,12 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
 
                             foreach (var license in report.Licenses)
                             {
-                                // Reset validation state
+                                // Reset validation state (but preserve PublishDate and AgeStatus)
                                 license.IsProblematic = false;
                                 license.IsSafelisted = false;
                                 license.ProblemReason = null;
 
-                                // Re-validate
+                                // Re-validate with updated config
                                 validator.Validate(license);
                             }
                         }
@@ -331,13 +342,13 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
         AnsiConsole.MarkupLine("[green]✓ nuget-license is available[/]");
     }
 
-    private List<IProjectProcessor> CreateProcessors(ExternalToolRunner toolRunner)
+    private List<IProjectProcessor> CreateProcessors(ExternalToolRunner toolRunner, string? cacheDirectory)
     {
         return new List<IProjectProcessor>
         {
-            new DotNetProjectProcessor(toolRunner),
-            new RushProjectProcessor(toolRunner),
-            new NpmProjectProcessor(toolRunner),
+            new DotNetProjectProcessor(toolRunner, cacheDirectory),
+            new RushProjectProcessor(toolRunner, cacheDirectory),
+            new NpmProjectProcessor(toolRunner, cacheDirectory),
         };
     }
 

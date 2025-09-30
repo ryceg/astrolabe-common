@@ -9,10 +9,10 @@ public class RushProjectProcessor : IProjectProcessor
     private readonly NpmLicenseExtractor _licenseExtractor;
     private readonly NpmRegistryService _npmRegistryService;
 
-    public RushProjectProcessor(ExternalToolRunner toolRunner)
+    public RushProjectProcessor(ExternalToolRunner toolRunner, string? cacheDirectory = null)
     {
         _licenseExtractor = new NpmLicenseExtractor();
-        _npmRegistryService = new NpmRegistryService();
+        _npmRegistryService = new NpmRegistryService(cacheDirectory);
     }
 
     public bool CanProcess(string filePath)

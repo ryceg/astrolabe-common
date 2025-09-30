@@ -11,19 +11,30 @@ public class NpmRegistryService
     private readonly SemaphoreSlim _rateLimiter;
     private readonly string _cacheFilePath;
 
-    public NpmRegistryService()
+    public NpmRegistryService(string? cacheDirectory = null)
     {
         _httpClient = new HttpClient();
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Astrolabe-LicenseCheck/1.0.0");
         _packageDateCache = new Dictionary<string, DateTime>();
         _rateLimiter = new SemaphoreSlim(5, 5); // Limit concurrent requests
 
-        // Use a cache file in temp directory
-        var cacheDir = Path.Combine(Path.GetTempPath(), "astrolabe-license-check");
-        Directory.CreateDirectory(cacheDir);
-        _cacheFilePath = Path.Combine(cacheDir, "npm-package-dates-cache.json");
+        // If cacheDirectory is explicitly null, disable caching entirely
+        if (cacheDirectory == null)
+        {
+            _cacheFilePath = string.Empty;
+        }
+        else
+        {
+            // Use specified cache directory or temp directory as fallback
+            var cacheDir = string.IsNullOrEmpty(cacheDirectory)
+                ? Path.Combine(Path.GetTempPath(), "astrolabe-license-check")
+                : Path.GetFullPath(cacheDirectory);
 
-        LoadCacheFromDisk();
+            Directory.CreateDirectory(cacheDir);
+            _cacheFilePath = Path.Combine(cacheDir, "npm-package-dates-cache.json");
+
+            LoadCacheFromDisk();
+        }
     }
 
     private void LoadCacheFromDisk()
@@ -51,6 +62,9 @@ public class NpmRegistryService
 
     private void SaveCacheToDisk()
     {
+        if (string.IsNullOrEmpty(_cacheFilePath))
+            return; // Caching disabled
+
         try
         {
             var json = JsonSerializer.Serialize(_packageDateCache, new JsonSerializerOptions

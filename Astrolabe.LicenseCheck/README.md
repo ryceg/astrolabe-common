@@ -35,24 +35,26 @@ If no input files are specified, the tool will automatically search the current 
 
 ### Options
 
-| Option                       | Description                                                                                                           | Default                              |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `-o`, `--output-dir`         | The directory where license reports will be saved.                                                                    | `./license-reports`                  |
-| `-t`, `--include-transitive` | Includes transitive dependencies in the scan.                                                                         | `false`                              |
-| `--json`                     | Generate JSON output.                                                                                                 | `false`                              |
-| `--csv`                      | Generate CSV output.                                                                                                  | `true` (default)                     |
-| `--xlsx`                     | Generate Excel output.                                                                                                | `false`                              |
-| `--production`               | (npm/Rush only) Only include production dependencies.                                                                 | `false`                              |
-| `--development`              | (npm/Rush only) Only include development dependencies.                                                                | `false`                              |
-| `--exclude-private-packages` | (npm/Rush only) Exclude packages marked as private.                                                                   | `false`                              |
-| `--nested-search-path`       | A glob pattern for discovering nested `package.json` files (e.g., `**/frontend/**`). Can be specified multiple times. | |
-| `--allowed-license`          | License identifier to allow (e.g., `MIT`, `Apache-2.0`). Can be specified multiple times. Overrides config file.      |                                      |
-| `--disallowed-license`       | License identifier to explicitly disallow (e.g., `GPL-3.0`). Can be specified multiple times.                         |                                      |
-| `--skiplist`                 | Package name to skip during scanning (e.g., `my-internal-package`). Can be specified multiple times.                  |                                      |
-| `--safelist`                 | Package name to safelist, format: `package-name=reason`. Can be specified multiple times.                             |                                      |
-| `-i`, `--interactive`        | Enable interactive mode to review and configure problematic packages.                                                 | `false`                              |
-| `-v`, `--verbose`            | Enable verbose output for more detailed logging.                                                                      | `false`                              |
-| `-h`, `--help`               | Show help information.                                                                                                |                                      |
+| Option                       | Description                                                                                                           | Default             |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `-o`, `--output-dir`         | The directory where license reports will be saved.                                                                    | `./license-reports` |
+| `-t`, `--include-transitive` | Includes transitive dependencies in the scan.                                                                         | `false`             |
+| `--json`                     | Generate JSON output.                                                                                                 | `false`             |
+| `--csv`                      | Generate CSV output.                                                                                                  | `true` (default)    |
+| `--xlsx`                     | Generate Excel output.                                                                                                | `false`             |
+| `--production`               | (npm/Rush only) Only include production dependencies.                                                                 | `false`             |
+| `--development`              | (npm/Rush only) Only include development dependencies.                                                                | `false`             |
+| `--exclude-private-packages` | (npm/Rush only) Exclude packages marked as private.                                                                   | `false`             |
+| `--nested-search-path`       | A glob pattern for discovering nested `package.json` files (e.g., `**/frontend/**`). Can be specified multiple times. |                     |
+| `--allowed-license`          | License identifier to allow (e.g., `MIT`, `Apache-2.0`). Can be specified multiple times. Overrides config file.      |                     |
+| `--disallowed-license`       | License identifier to explicitly disallow (e.g., `GPL-3.0`). Can be specified multiple times.                         |                     |
+| `--skiplist`                 | Package name to skip during scanning (e.g., `my-internal-package`). Can be specified multiple times.                  |                     |
+| `--safelist`                 | Package name to safelist, format: `package-name=reason`. Can be specified multiple times.                             |                     |
+| `-i`, `--interactive`        | Enable interactive mode to review and configure problematic packages.                                                 | `false`             |
+| `--cache-dir`                | Directory for caching package metadata (useful for CI/CD). If not specified, uses temp directory.                     |                     |
+| `--no-cache`                 | Disable caching and fetch all package data fresh from registries.                                                     | `false`             |
+| `-v`, `--verbose`            | Enable verbose output for more detailed logging.                                                                      | `false`             |
+| `-h`, `--help`               | Show help information.                                                                                                |                     |
 
 ### Examples
 
@@ -117,6 +119,7 @@ astrolabe-license-check --interactive
 ```
 
 This will scan your project and, if problematic licenses are found, prompt you interactively to:
+
 - Safelist specific packages with documented reasons
 - Add licenses to the allowed or disallowed lists
 - Skip packages from future scans
@@ -132,49 +135,6 @@ Interactive mode (`--interactive` or `-i`) provides a guided experience for hand
 3. **Guide you through decisions** for each package with context-aware prompts
 4. **Save your configuration** to `license-check.json` after review
 5. **Optionally re-run** the scan with the updated configuration to verify compliance
-
-### Interactive Mode Workflow
-
-When you run with `--interactive`, you'll see:
-
-```
-Found 3 package(s) with problematic licenses.
-Would you like to review them interactively? [Y/n]
-
-┌─ Problematic Package ──────────────────────┐
-│ some-gpl-package v2.3.1                    │
-│ License: GPL-3.0                           │
-│ Reason: License 'GPL-3.0' is explicitly... │
-│ Published: 2023-05-15                      │
-└────────────────────────────────────────────┘
-
-What would you like to do?
-> Safelist this package (won't fail build)
-  Allow 'GPL-3.0' license globally
-  Disallow 'GPL-3.0' license globally
-  Skip this package in future scans
-  View more details
-  Skip decision (keep as problematic)
-  Quit interactive mode
-```
-
-After reviewing all packages, you'll see a summary and can save your changes:
-
-```
-┌─ Summary of Changes ───────────────────────┐
-│ Safelisted packages: 2                     │
-│   • some-gpl-package: Approved by legal... │
-│   • old-library: Legacy support until...  │
-│                                            │
-│ Allowed licenses: 1                        │
-│   • LGPL-2.1                               │
-└────────────────────────────────────────────┘
-
-Save these changes to license-check.json? [Y/n]
-✓ Configuration saved to license-check.json
-
-Re-run license check with new configuration? [Y/n]
-```
 
 ## Configuration
 
@@ -224,7 +184,61 @@ The reports include the following columns:
 
 The tool is designed for use in CI/CD pipelines. It will exit with a non-zero exit code (specifically, `2`) if it finds any packages that are marked as `Problematic` but are not `Safelisted`. You can use this exit code to fail your build or pipeline step.
 
-**Example (generic CI script):**
+### Caching in CI/CD
+
+To speed up license checks in CI/CD pipelines, use the `--cache-dir` option to persist package metadata between runs. This dramatically reduces API calls to package registries.
+
+**GitHub Actions Example:**
+
+```yaml
+- name: Cache License Data
+  uses: actions/cache@v3
+  with:
+    path: .license-cache
+    key: license-cache-${{ hashFiles('**/packages.lock.json', '**/package-lock.json') }}
+    restore-keys: |
+      license-cache-
+
+- name: Run License Check
+  run: astrolabe-license-check --cache-dir .license-cache
+```
+
+**GitLab CI Example:**
+
+```yaml
+license-check:
+  cache:
+    key: license-cache
+    paths:
+      - .license-cache/
+  script:
+    - astrolabe-license-check --cache-dir .license-cache
+```
+
+**Azure Pipelines Example:**
+
+```yaml
+- task: Cache@2
+  inputs:
+    key: 'license-cache | "$(Agent.OS)"'
+    path: .license-cache
+  displayName: Cache license metadata
+
+- script: astrolabe-license-check --cache-dir .license-cache
+  displayName: Run license check
+```
+
+### Disabling Cache
+
+To force fresh data from registries (useful for troubleshooting or when you suspect stale cache data):
+
+```bash
+astrolabe-license-check --no-cache
+```
+
+This disables both in-memory and disk caching, ensuring all package metadata is fetched fresh from NuGet and npm registries.
+
+**Example (without caching):**
 
 ```yaml
 - name: Run License Check

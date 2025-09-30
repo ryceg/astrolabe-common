@@ -8,10 +8,10 @@ public class NpmProjectProcessor : IProjectProcessor
     private readonly NpmLicenseExtractor _licenseExtractor;
     private readonly NpmRegistryService _npmRegistryService;
 
-    public NpmProjectProcessor(ExternalToolRunner toolRunner)
+    public NpmProjectProcessor(ExternalToolRunner toolRunner, string? cacheDirectory = null)
     {
         _licenseExtractor = new NpmLicenseExtractor();
-        _npmRegistryService = new NpmRegistryService();
+        _npmRegistryService = new NpmRegistryService(cacheDirectory);
     }
 
     public bool CanProcess(string filePath)
