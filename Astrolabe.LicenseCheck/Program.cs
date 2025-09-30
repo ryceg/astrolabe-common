@@ -10,10 +10,8 @@ app.Configure(config =>
     config.AddExample(new[] { "--output-dir", "./reports" });
     config.AddExample(new[] { "--include-transitive", "MyProject.sln" });
     config.AddExample(new[] { "MyProject.csproj", "ClientApp/rush.json" });
-
-    // Add new examples
     config.AddExample(Array.Empty<string>()); // Represents running with no arguments
-    config.AddExample(new[] { "--format", "Csv" });
+    config.AddExample(new[] { "--json", "--xlsx" });
     config.AddExample(new[] { "--include-transitive", "--verbose" });
     config.AddExample(new[] { "ClientApp/package.json", "--output-dir", "./client-licenses" });
 

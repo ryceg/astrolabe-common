@@ -29,10 +29,17 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
         [Description("Include transitive dependencies")]
         public bool IncludeTransitive { get; set; }
 
-        [CommandOption("--format")]
-        [Description("Output format")]
-        [DefaultValue(OutputFormat.All)]
-        public OutputFormat Format { get; set; } = OutputFormat.All;
+        [CommandOption("--json")]
+        [Description("Generate JSON output")]
+        public bool OutputJson { get; set; }
+
+        [CommandOption("--csv")]
+        [Description("Generate CSV output (default)")]
+        public bool OutputCsv { get; set; }
+
+        [CommandOption("--xlsx")]
+        [Description("Generate Excel output")]
+        public bool OutputExcel { get; set; }
 
         [CommandOption("-v|--verbose")]
         [Description("Enable verbose output")]
@@ -53,6 +60,26 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
         [CommandOption("--nested-search-path")]
         [Description("A glob pattern to use for discovering nested package.json files (e.g., '**/ClientApp/**'). Can be specified multiple times.")]
         public string[]? NestedSearchPaths { get; set; }
+
+        [CommandOption("--allowed-license")]
+        [Description("License identifier to allow (e.g., 'MIT', 'Apache-2.0'). Can be specified multiple times. Overrides config file.")]
+        public string[]? AllowedLicenses { get; set; }
+
+        [CommandOption("--disallowed-license")]
+        [Description("License identifier to explicitly disallow (e.g., 'GPL-3.0'). Can be specified multiple times.")]
+        public string[]? DisallowedLicenses { get; set; }
+
+        [CommandOption("--skiplist")]
+        [Description("Package name to skip during scanning (e.g., 'my-internal-package'). Can be specified multiple times.")]
+        public string[]? Skiplist { get; set; }
+
+        [CommandOption("--safelist")]
+        [Description("Package name to safelist, format: 'package-name=reason'. Can be specified multiple times.")]
+        public string[]? Safelist { get; set; }
+
+        [CommandOption("-i|--interactive")]
+        [Description("Enable interactive mode to review and configure problematic packages")]
+        public bool Interactive { get; set; }
     }
 
     public override int Execute(CommandContext context, Settings settings)
@@ -66,11 +93,23 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
         {
             AnsiConsole.Write(new FigletText("License Check").LeftJustified().Color(Color.Blue));
 
+            // If no output format is specified, default to CSV
+            var outputJson = settings.OutputJson;
+            var outputCsv = settings.OutputCsv;
+            var outputExcel = settings.OutputExcel;
+
+            if (!outputJson && !outputCsv && !outputExcel)
+            {
+                outputCsv = true;
+            }
+
             var options = new ReportOptions
             {
                 OutputDirectory = Path.GetFullPath(settings.OutputDirectory),
                 IncludeTransitive = settings.IncludeTransitive,
-                Format = settings.Format,
+                OutputJson = outputJson,
+                OutputCsv = outputCsv,
+                OutputExcel = outputExcel,
                 Verbose = settings.Verbose,
                 ExcludePrivatePackages = settings.ExcludePrivatePackages,
                 ProductionOnly = settings.ProductionOnly,
@@ -108,7 +147,7 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
 
             // Load configuration
             var configService = new ConfigurationService();
-            var config = configService.LoadConfig(Environment.CurrentDirectory);
+            var config = configService.LoadConfig(Environment.CurrentDirectory, settings);
 
             // Process files
             var processors = CreateProcessors(toolRunner);
@@ -148,22 +187,69 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
 
             if (problematicPackages.Any())
             {
-                AnsiConsole.MarkupLine("[red]Found packages with problematic licenses that are not safelisted:[/]");
-
-                var table = new Table();
-                table.AddColumn("Package ID");
-                table.AddColumn("Version");
-                table.AddColumn("License");
-                table.AddColumn("Reason");
-
-                foreach (var pkg in problematicPackages)
+                if (settings.Interactive)
                 {
-                    table.AddRow(pkg.PackageId, pkg.PackageVersion, pkg.License ?? "N/A", pkg.ProblemReason ?? "N/A");
+                    var interactiveService = new InteractiveModeService(config, configService);
+                    var result = await interactiveService.ReviewProblematicPackagesAsync(
+                        problematicPackages
+                    );
+
+                    if (result.ConfigUpdated && result.ShouldRerun)
+                    {
+                        AnsiConsole.MarkupLine("\n[blue]Re-running license check...[/]\n");
+
+                        // Reload config and re-run validation
+                        config = configService.LoadConfig(Environment.CurrentDirectory, settings);
+                        var validator = new LicenseValidatorService(config);
+
+                        foreach (var report in reports)
+                        {
+                            // Filter out skipped packages
+                            report.Licenses = report.Licenses
+                                .Where(l => !config.Skiplist.Contains(l.PackageId))
+                                .ToList();
+
+                            foreach (var license in report.Licenses)
+                            {
+                                // Reset validation state
+                                license.IsProblematic = false;
+                                license.IsSafelisted = false;
+                                license.ProblemReason = null;
+
+                                // Re-validate
+                                validator.Validate(license);
+                            }
+                        }
+
+                        // Re-generate outputs with updated validation
+                        await GenerateOutputsAsync(reports, options);
+
+                        // Check again for problematic packages
+                        problematicPackages = reports
+                            .SelectMany(r => r.Licenses)
+                            .Where(l => l.IsProblematic && !l.IsSafelisted)
+                            .ToList();
+
+                        if (problematicPackages.Any())
+                        {
+                            AnsiConsole.MarkupLine(
+                                $"[yellow]Still found {problematicPackages.Count} problematic package(s) after configuration update.[/]"
+                            );
+                            DisplayProblematicPackagesTable(problematicPackages);
+                            return 2;
+                        }
+                    }
+                    else if (!result.ConfigUpdated)
+                    {
+                        DisplayProblematicPackagesTable(problematicPackages);
+                        return 2;
+                    }
                 }
-
-                AnsiConsole.Write(table);
-
-                return 2;
+                else
+                {
+                    DisplayProblematicPackagesTable(problematicPackages);
+                    return 2;
+                }
             }
 
             AnsiConsole.MarkupLine("[green]✓ License checking completed successfully![/]");
@@ -203,30 +289,23 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
             }
         }
 
-        var matcher = new Matcher();
-        matcher.AddExclude("**/node_modules/**");
-
-        var searchPatterns = new List<string>();
         if (settings.NestedSearchPaths?.Any() == true)
         {
-            searchPatterns.AddRange(settings.NestedSearchPaths);
-        }
-        else
-        {
-            searchPatterns.Add(Path.Combine("**", "ClientApp", "sites", "**", "package.json"));
-        }
+            var matcher = new Matcher();
+            matcher.AddExclude("**/node_modules/**");
 
-        foreach (var pattern in searchPatterns)
-        {
-            matcher.AddInclude(pattern);
-        }
+            foreach (var pattern in settings.NestedSearchPaths)
+            {
+                matcher.AddInclude(pattern);
+            }
 
-        var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(".")));
-        var matchedFiles = result.Files.Select(f => Path.GetFullPath(f.Path));
+            var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(".")));
+            var matchedFiles = result.Files.Select(f => Path.GetFullPath(f.Path));
 
-        foreach (var file in matchedFiles)
-        {
-            filesToProcess.Add(file);
+            foreach (var file in matchedFiles)
+            {
+                filesToProcess.Add(file);
+            }
         }
 
         return filesToProcess.ToList();
@@ -269,20 +348,45 @@ public class LicenseCheckCommand : Command<LicenseCheckCommand.Settings>
 
     private async Task GenerateOutputsAsync(List<LicenseReport> reports, ReportOptions options)
     {
-        var generators = new List<IOutputGenerator>
+        if (options.OutputJson)
         {
-            new JsonOutputGenerator(),
-            new CsvOutputGenerator(),
-            new ExcelOutputGenerator(),
-        };
-
-        foreach (var generator in generators)
-        {
-            if (generator.SupportsFormat(options.Format))
-            {
-                await generator.GenerateAsync(reports, options);
-            }
+            await new JsonOutputGenerator().GenerateAsync(reports, options);
         }
+
+        if (options.OutputCsv)
+        {
+            await new CsvOutputGenerator().GenerateAsync(reports, options);
+        }
+
+        if (options.OutputExcel)
+        {
+            await new ExcelOutputGenerator().GenerateAsync(reports, options);
+        }
+    }
+
+    private void DisplayProblematicPackagesTable(List<LicenseInfo> problematicPackages)
+    {
+        AnsiConsole.MarkupLine(
+            "[red]Found packages with problematic licenses that are not safelisted:[/]"
+        );
+
+        var table = new Table();
+        table.AddColumn("Package ID");
+        table.AddColumn("Version");
+        table.AddColumn("License");
+        table.AddColumn("Reason");
+
+        foreach (var pkg in problematicPackages)
+        {
+            table.AddRow(
+                pkg.PackageId,
+                pkg.PackageVersion,
+                pkg.License ?? "N/A",
+                pkg.ProblemReason ?? "N/A"
+            );
+        }
+
+        AnsiConsole.Write(table);
     }
 }
 

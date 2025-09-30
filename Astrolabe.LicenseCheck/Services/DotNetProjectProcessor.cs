@@ -28,7 +28,7 @@ public class DotNetProjectProcessor : IProjectProcessor
         ProgressContext? context = null
     )
     {
-        var outputPath = Path.Combine(options.OutputDirectory, "nuget-licenses.json");
+        var tempOutputPath = Path.Combine(Path.GetTempPath(), $"nuget-licenses-{Guid.NewGuid()}.json");
 
         if (options.Verbose)
         {
@@ -38,7 +38,7 @@ public class DotNetProjectProcessor : IProjectProcessor
         var result = await _toolRunner.RunNugetLicenseAsync(
             filePath,
             options.IncludeTransitive,
-            outputPath
+            tempOutputPath
         );
 
         if (result.ExitCode != 0)
@@ -49,7 +49,13 @@ public class DotNetProjectProcessor : IProjectProcessor
         }
 
         // Parse the output
-        var licenses = await ParseNugetLicenseOutputAsync(outputPath);
+        var licenses = await ParseNugetLicenseOutputAsync(tempOutputPath);
+
+        // Clean up temp file
+        if (File.Exists(tempOutputPath))
+        {
+            File.Delete(tempOutputPath);
+        }
 
         var validator = new LicenseValidatorService(config);
         licenses.ForEach(validator.Validate);

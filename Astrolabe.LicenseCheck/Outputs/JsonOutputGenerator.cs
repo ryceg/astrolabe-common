@@ -6,11 +6,6 @@ namespace Astrolabe.LicenseCheck.Outputs;
 
 public class JsonOutputGenerator : IOutputGenerator
 {
-    public bool SupportsFormat(OutputFormat format)
-    {
-        return format == OutputFormat.Json || format == OutputFormat.All;
-    }
-
     public async Task GenerateAsync(List<LicenseReport> reports, ReportOptions options)
     {
         var dotNetReports = reports.Where(r => r.ProjectType == ProjectType.DotNet).ToList();

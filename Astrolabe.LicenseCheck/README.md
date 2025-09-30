@@ -35,43 +35,145 @@ If no input files are specified, the tool will automatically search the current 
 
 ### Options
 
-| Option                       | Description                                                                 | Default           |
-| ---------------------------- | --------------------------------------------------------------------------- | ----------------- |
-| `-o`, `--output-dir`         | The directory where license reports will be saved.                          | `./license-reports` |
-| `-t`, `--include-transitive` | Includes transitive dependencies in the scan.                               | `false`           |
-| `--format`                   | The output format for the report (`Json`, `Csv`, `Excel`, `All`).           | `All`             |
-| `--production`               | (npm/Rush only) Only include production dependencies.                       | `false`           |
-| `--development`              | (npm/Rush only) Only include development dependencies.                      | `false`           |
-| `--exclude-private-packages` | (npm/Rush only) Exclude packages marked as private.                         | `false`           |
-| `--nested-search-path`       | A glob pattern for discovering nested `package.json` files (e.g., `**/frontend/**`). Can be specified multiple times. | `**/ClientApp/sites/**/package.json` |
-| `-v`, `--verbose`            | Enable verbose output for more detailed logging.                            | `false`           |
-| `-h`, `--help`               | Show help information.                                                      |                   |
+| Option                       | Description                                                                                                           | Default                              |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `-o`, `--output-dir`         | The directory where license reports will be saved.                                                                    | `./license-reports`                  |
+| `-t`, `--include-transitive` | Includes transitive dependencies in the scan.                                                                         | `false`                              |
+| `--json`                     | Generate JSON output.                                                                                                 | `false`                              |
+| `--csv`                      | Generate CSV output.                                                                                                  | `true` (default)                     |
+| `--xlsx`                     | Generate Excel output.                                                                                                | `false`                              |
+| `--production`               | (npm/Rush only) Only include production dependencies.                                                                 | `false`                              |
+| `--development`              | (npm/Rush only) Only include development dependencies.                                                                | `false`                              |
+| `--exclude-private-packages` | (npm/Rush only) Exclude packages marked as private.                                                                   | `false`                              |
+| `--nested-search-path`       | A glob pattern for discovering nested `package.json` files (e.g., `**/frontend/**`). Can be specified multiple times. | |
+| `--allowed-license`          | License identifier to allow (e.g., `MIT`, `Apache-2.0`). Can be specified multiple times. Overrides config file.      |                                      |
+| `--disallowed-license`       | License identifier to explicitly disallow (e.g., `GPL-3.0`). Can be specified multiple times.                         |                                      |
+| `--skiplist`                 | Package name to skip during scanning (e.g., `my-internal-package`). Can be specified multiple times.                  |                                      |
+| `--safelist`                 | Package name to safelist, format: `package-name=reason`. Can be specified multiple times.                             |                                      |
+| `-i`, `--interactive`        | Enable interactive mode to review and configure problematic packages.                                                 | `false`                              |
+| `-v`, `--verbose`            | Enable verbose output for more detailed logging.                                                                      | `false`                              |
+| `-h`, `--help`               | Show help information.                                                                                                |                                      |
 
 ### Examples
 
 **Run on the current directory (auto-detects solution or project files):**
+
 ```sh
 astrolabe-license-check
 ```
 
 **Scan a specific solution and include transitive dependencies:**
+
 ```sh
 astrolabe-license-check MySolution.sln --include-transitive
 ```
 
-**Generate a CSV report for an npm project:**
+**Generate JSON and Excel reports (CSV is generated by default):**
+
 ```sh
-astrolabe-license-check client/package.json --format Csv
+astrolabe-license-check --json --xlsx
+```
+
+**Generate only JSON output:**
+
+```sh
+astrolabe-license-check client/package.json --json
 ```
 
 **Scan only production dependencies for a Rush monorepo:**
+
 ```sh
 astrolabe-license-check rush.json --production
 ```
 
 **Discover `package.json` files using a wildcard pattern:**
+
 ```sh
 astrolabe-license-check --nested-search-path "**/frontend/**/package.json"
+```
+
+**Allow only specific licenses via command line:**
+
+```sh
+astrolabe-license-check --allowed-license MIT --allowed-license Apache-2.0 --allowed-license BSD-3-Clause
+```
+
+**Disallow specific licenses:**
+
+```sh
+astrolabe-license-check --disallowed-license GPL-3.0 --disallowed-license AGPL-3.0
+```
+
+**Skip and safelist packages:**
+
+```sh
+astrolabe-license-check --skiplist my-internal-package --safelist "legacy-package=Approved until Q4 2025"
+```
+
+**Use interactive mode to review problematic packages:**
+
+```sh
+astrolabe-license-check --interactive
+```
+
+This will scan your project and, if problematic licenses are found, prompt you interactively to:
+- Safelist specific packages with documented reasons
+- Add licenses to the allowed or disallowed lists
+- Skip packages from future scans
+- View detailed package information
+- Automatically save configuration changes to `license-check.json`
+
+## Interactive Mode
+
+Interactive mode (`--interactive` or `-i`) provides a guided experience for handling packages with problematic licenses. When enabled, the tool will:
+
+1. **Scan your project** as normal and identify any packages with non-compliant licenses
+2. **Present each problematic package** with detailed information and a menu of options
+3. **Guide you through decisions** for each package with context-aware prompts
+4. **Save your configuration** to `license-check.json` after review
+5. **Optionally re-run** the scan with the updated configuration to verify compliance
+
+### Interactive Mode Workflow
+
+When you run with `--interactive`, you'll see:
+
+```
+Found 3 package(s) with problematic licenses.
+Would you like to review them interactively? [Y/n]
+
+┌─ Problematic Package ──────────────────────┐
+│ some-gpl-package v2.3.1                    │
+│ License: GPL-3.0                           │
+│ Reason: License 'GPL-3.0' is explicitly... │
+│ Published: 2023-05-15                      │
+└────────────────────────────────────────────┘
+
+What would you like to do?
+> Safelist this package (won't fail build)
+  Allow 'GPL-3.0' license globally
+  Disallow 'GPL-3.0' license globally
+  Skip this package in future scans
+  View more details
+  Skip decision (keep as problematic)
+  Quit interactive mode
+```
+
+After reviewing all packages, you'll see a summary and can save your changes:
+
+```
+┌─ Summary of Changes ───────────────────────┐
+│ Safelisted packages: 2                     │
+│   • some-gpl-package: Approved by legal... │
+│   • old-library: Legacy support until...  │
+│                                            │
+│ Allowed licenses: 1                        │
+│   • LGPL-2.1                               │
+└────────────────────────────────────────────┘
+
+Save these changes to license-check.json? [Y/n]
+✓ Configuration saved to license-check.json
+
+Re-run license check with new configuration? [Y/n]
 ```
 
 ## Configuration
@@ -82,16 +184,9 @@ Here is an example configuration:
 
 ```json
 {
-  "allowedLicenses": [
-    "MIT",
-    "Apache-2.0",
-    "BSD-3-Clause",
-    "ISC"
-  ],
-  "skiplist": [
-    "my-internal-package",
-    "another-ignored-package"
-  ],
+  "allowedLicenses": ["MIT", "Apache-2.0", "BSD-3-Clause", "ISC"],
+  "disallowedLicenses": ["GPL-3.0", "AGPL-3.0"],
+  "skiplist": ["my-internal-package", "another-ignored-package"],
   "safelist": {
     "some-legacy-package": "Approved for legacy support until Q4. See JIRA-456."
   }
@@ -99,8 +194,11 @@ Here is an example configuration:
 ```
 
 - `allowedLicenses`: A list of license identifiers that are considered compliant. If a package's license is not in this list, it will be marked as problematic. The tool includes a default list of common permissive licenses if this is not provided.
+- `disallowedLicenses`: A list of license identifiers that are explicitly forbidden. Packages with these licenses will always be marked as problematic, even if they appear in `allowedLicenses`.
 - `skiplist`: A list of package names to completely exclude from the scan.
 - `safelist`: A dictionary of package names that should not cause the build to fail, even if they have a non-allowed license. The value is a string explaining the reason for safelisting.
+
+**Note:** Command-line arguments (`--allowed-license`, `--disallowed-license`, `--skiplist`, `--safelist`) override values from the configuration file.
 
 ## Output Reports
 
@@ -111,6 +209,7 @@ The tool generates reports in the specified output directory.
 - `license-report.xlsx`: An Excel workbook containing sheets for both .NET and npm/Rush dependencies.
 
 The reports include the following columns:
+
 - `PackageId` / `PackageName`
 - `PackageVersion` / `Version`
 - `License`
@@ -126,6 +225,7 @@ The reports include the following columns:
 The tool is designed for use in CI/CD pipelines. It will exit with a non-zero exit code (specifically, `2`) if it finds any packages that are marked as `Problematic` but are not `Safelisted`. You can use this exit code to fail your build or pipeline step.
 
 **Example (generic CI script):**
+
 ```yaml
 - name: Run License Check
   run: astrolabe-license-check

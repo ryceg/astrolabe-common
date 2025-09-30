@@ -22,13 +22,30 @@ public class LicenseValidatorService
             return;
         }
 
-        // Check license against allowed list
+        // Parse license string into individual licenses
         var license = licenseInfo.License ?? "UNKNOWN";
         var licenses = license
             .Split(new[] { " OR ", "/", " AND " }, StringSplitOptions.RemoveEmptyEntries)
             .Select(l => l.Trim().Replace("(", "").Replace(")", ""))
             .ToArray();
 
+        // Check if any license is explicitly disallowed
+        if (_config.DisallowedLicenses.Any())
+        {
+            var disallowedLicense = licenses.FirstOrDefault(l =>
+                _config.DisallowedLicenses.Contains(l, StringComparer.OrdinalIgnoreCase)
+            );
+
+            if (disallowedLicense != null)
+            {
+                licenseInfo.IsProblematic = true;
+                licenseInfo.ProblemReason =
+                    $"License '{disallowedLicense}' is explicitly disallowed.";
+                return;
+            }
+        }
+
+        // Check license against allowed list
         var isAllowed = licenses.Any(l =>
             _config.AllowedLicenses.Contains(l, StringComparer.OrdinalIgnoreCase)
         );

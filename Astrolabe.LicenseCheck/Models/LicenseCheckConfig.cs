@@ -7,6 +7,9 @@ public class LicenseCheckConfig
     [JsonPropertyName("allowedLicenses")]
     public List<string> AllowedLicenses { get; set; } = new();
 
+    [JsonPropertyName("disallowedLicenses")]
+    public List<string> DisallowedLicenses { get; set; } = new();
+
     [JsonPropertyName("skiplist")]
     public List<string> Skiplist { get; set; } = new();
 

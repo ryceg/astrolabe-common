@@ -4,7 +4,9 @@ public class ReportOptions
 {
     public string OutputDirectory { get; set; } = "./license-reports";
     public bool IncludeTransitive { get; set; }
-    public OutputFormat Format { get; set; } = OutputFormat.All;
+    public bool OutputJson { get; set; }
+    public bool OutputCsv { get; set; } = true;
+    public bool OutputExcel { get; set; }
     public bool Verbose { get; set; }
     public bool ExcludePrivatePackages { get; set; }
     public bool ProductionOnly { get; set; }
