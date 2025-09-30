@@ -9,6 +9,7 @@ public class NpmRegistryService
     private readonly HttpClient _httpClient;
     private readonly Dictionary<string, DateTime> _packageDateCache;
     private readonly SemaphoreSlim _rateLimiter;
+    private readonly string _cacheFilePath;
 
     public NpmRegistryService()
     {
@@ -16,6 +17,52 @@ public class NpmRegistryService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Astrolabe-LicenseCheck/1.0.0");
         _packageDateCache = new Dictionary<string, DateTime>();
         _rateLimiter = new SemaphoreSlim(5, 5); // Limit concurrent requests
+
+        // Use a cache file in temp directory
+        var cacheDir = Path.Combine(Path.GetTempPath(), "astrolabe-license-check");
+        Directory.CreateDirectory(cacheDir);
+        _cacheFilePath = Path.Combine(cacheDir, "npm-package-dates-cache.json");
+
+        LoadCacheFromDisk();
+    }
+
+    private void LoadCacheFromDisk()
+    {
+        try
+        {
+            if (File.Exists(_cacheFilePath))
+            {
+                var json = File.ReadAllText(_cacheFilePath);
+                var cache = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                if (cache != null)
+                {
+                    foreach (var kvp in cache)
+                    {
+                        _packageDateCache[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Ignore cache load errors, will just refetch
+        }
+    }
+
+    private void SaveCacheToDisk()
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(_packageDateCache, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            File.WriteAllText(_cacheFilePath, json);
+        }
+        catch
+        {
+            // Ignore cache save errors
+        }
     }
 
     public async Task<DateTime?> GetPackagePublishDateAsync(string packageName, string version)
@@ -86,14 +133,38 @@ public class NpmRegistryService
         if (!packages.Any())
             return packages;
 
-        var totalPackages = packages.Count;
+        // Filter to only packages that need date fetching
+        var packagesNeedingDates = packages.Where(p => !p.PublishDate.HasValue).ToList();
+
+        if (!packagesNeedingDates.Any())
+        {
+            if (verbose)
+            {
+                AnsiConsole.MarkupLine(
+                    $"[grey]All {packages.Count} packages already have publish dates (using cached data)[/]"
+                );
+            }
+            return packages;
+        }
+
+        var totalPackages = packagesNeedingDates.Count;
         var processedCount = 0;
 
         if (verbose)
         {
-            AnsiConsole.MarkupLine(
-                $"[yellow]Fetching publish dates for {totalPackages} packages...[/]"
-            );
+            var cachedCount = packages.Count - packagesNeedingDates.Count;
+            if (cachedCount > 0)
+            {
+                AnsiConsole.MarkupLine(
+                    $"[grey]Using cached dates for {cachedCount} package(s), fetching {packagesNeedingDates.Count} new package(s)...[/]"
+                );
+            }
+            else
+            {
+                AnsiConsole.MarkupLine(
+                    $"[yellow]Fetching publish dates for {totalPackages} packages...[/]"
+                );
+            }
         }
 
         var action = new Func<ProgressTask, Task>(
@@ -102,7 +173,7 @@ public class NpmRegistryService
                 task.MaxValue = totalPackages;
 
                 // Process packages in batches to avoid overwhelming the registry
-                var batches = packages.Chunk(10);
+                var batches = packagesNeedingDates.Chunk(10);
 
                 foreach (var batch in batches)
                 {
@@ -152,11 +223,20 @@ public class NpmRegistryService
             });
         }
 
+        // Save cache to disk after fetching new dates
+        SaveCacheToDisk();
+
+        // Analyze age for packages that already had dates cached
+        foreach (var package in packages.Where(p => p.PublishDate.HasValue && p.AgeStatus == PackageAgeStatus.Unknown))
+        {
+            AnalyzePackageAge(package);
+        }
+
         if (verbose)
         {
             var enrichedCount = packages.Count(p => p.PublishDate.HasValue);
             AnsiConsole.MarkupLine(
-                $"[green]Successfully enriched {enrichedCount}/{totalPackages} packages with publish dates[/]"
+                $"[green]Successfully enriched {enrichedCount}/{packages.Count} packages with publish dates[/]"
             );
 
             // Show security analysis summary

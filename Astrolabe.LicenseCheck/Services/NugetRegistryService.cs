@@ -9,6 +9,7 @@ public class NugetRegistryService
     private readonly HttpClient _httpClient;
     private readonly Dictionary<string, DateTime> _packageDateCache;
     private readonly SemaphoreSlim _rateLimiter;
+    private readonly string _cacheFilePath;
 
     public NugetRegistryService()
     {
@@ -16,6 +17,52 @@ public class NugetRegistryService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Astrolabe-LicenseCheck/1.0.0");
         _packageDateCache = new Dictionary<string, DateTime>();
         _rateLimiter = new SemaphoreSlim(10, 10); // Limit concurrent requests
+
+        // Use a cache file in temp directory
+        var cacheDir = Path.Combine(Path.GetTempPath(), "astrolabe-license-check");
+        Directory.CreateDirectory(cacheDir);
+        _cacheFilePath = Path.Combine(cacheDir, "package-dates-cache.json");
+
+        LoadCacheFromDisk();
+    }
+
+    private void LoadCacheFromDisk()
+    {
+        try
+        {
+            if (File.Exists(_cacheFilePath))
+            {
+                var json = File.ReadAllText(_cacheFilePath);
+                var cache = JsonSerializer.Deserialize<Dictionary<string, DateTime>>(json);
+                if (cache != null)
+                {
+                    foreach (var kvp in cache)
+                    {
+                        _packageDateCache[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Ignore cache load errors, will just refetch
+        }
+    }
+
+    private void SaveCacheToDisk()
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(_packageDateCache, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            File.WriteAllText(_cacheFilePath, json);
+        }
+        catch
+        {
+            // Ignore cache save errors
+        }
     }
 
     public async Task<DateTime?> GetPackagePublishDateAsync(string packageId, string version)
@@ -74,18 +121,42 @@ public class NugetRegistryService
         if (!licenses.Any())
             return licenses;
 
+        // Filter to only packages that need date fetching
+        var packagesNeedingDates = licenses.Where(l => !l.PublishDate.HasValue).ToList();
+
+        if (!packagesNeedingDates.Any())
+        {
+            if (verbose)
+            {
+                AnsiConsole.MarkupLine(
+                    $"[grey]All {licenses.Count} packages already have publish dates (using cached data)[/]"
+                );
+            }
+            return licenses;
+        }
+
         if (verbose)
         {
-            AnsiConsole.MarkupLine(
-                $"[yellow]Fetching publish dates for {licenses.Count} NuGet packages...[/]"
-            );
+            var cachedCount = licenses.Count - packagesNeedingDates.Count;
+            if (cachedCount > 0)
+            {
+                AnsiConsole.MarkupLine(
+                    $"[grey]Using cached dates for {cachedCount} package(s), fetching {packagesNeedingDates.Count} new package(s)...[/]"
+                );
+            }
+            else
+            {
+                AnsiConsole.MarkupLine(
+                    $"[yellow]Fetching publish dates for {packagesNeedingDates.Count} NuGet packages...[/]"
+                );
+            }
         }
 
         var action = new Func<ProgressTask, Task>(
             async (task) =>
             {
-                task.MaxValue = licenses.Count;
-                var tasks = licenses.Select(async license =>
+                task.MaxValue = packagesNeedingDates.Count;
+                var tasks = packagesNeedingDates.Select(async license =>
                 {
                     var publishDate = await GetPackagePublishDateAsync(
                         license.PackageId,
@@ -114,6 +185,15 @@ public class NugetRegistryService
                 var task = ctx.AddTask("[green]Fetching NuGet package dates[/]");
                 await action(task);
             });
+        }
+
+        // Save cache to disk after fetching new dates
+        SaveCacheToDisk();
+
+        // Analyze age for packages that already had dates cached
+        foreach (var license in licenses.Where(l => l.PublishDate.HasValue && l.AgeStatus == PackageAgeStatus.Unknown))
+        {
+            AnalyzePackageAge(license);
         }
 
         if (verbose)
