@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Astrolabe.Annotation;
 
@@ -12,6 +13,10 @@ public enum ValidatorType
     Length
 }
 
+[KnownType(typeof(SimpleValidator))]
+[KnownType(typeof(JsonataValidator))]
+[KnownType(typeof(DateValidator))]
+[KnownType(typeof(LengthValidator))]
 [JsonBaseType("type", typeof(SimpleValidator))]
 [JsonSubType("Jsonata", typeof(JsonataValidator))]
 [JsonSubType("Date", typeof(DateValidator))]
@@ -27,7 +32,7 @@ public record SimpleValidator(string Type) : SchemaValidator(Type);
 public record JsonataValidator(string Expression) : SchemaValidator(ValidatorType.Jsonata.ToString());
 
 [JsonString]
-
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum DateComparison
 {
     [Display(Name = "Not Before")]

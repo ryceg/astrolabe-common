@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Astrolabe.Annotation;
 
@@ -316,6 +317,11 @@ public enum DisplayDataType
     Custom,
 }
 
+[KnownType(typeof(SimpleDisplayData))]
+[KnownType(typeof(TextDisplay))]
+[KnownType(typeof(HtmlDisplay))]
+[KnownType(typeof(IconDisplay))]
+[KnownType(typeof(CustomDisplay))]
 [JsonBaseType("type", typeof(SimpleDisplayData))]
 [JsonSubType("Text", typeof(TextDisplay))]
 [JsonSubType("Html", typeof(HtmlDisplay))]

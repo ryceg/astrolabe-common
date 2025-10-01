@@ -15,7 +15,7 @@ public class CodeGenController : ControllerBase
     public string GetSchemas()
     {
         var gen = new SchemaFieldsGenerator(
-            new SchemaFieldsGeneratorOptions( EditorTsImporter.MakeImporter("../client"))
+            new SchemaFieldsGeneratorOptions(EditorTsImporter.MakeImporter("../client"))
         );
         var allGenSchemas = gen.CollectDataForTypes(typeof(SchemaField), typeof(ControlDefinition))
             .ToList();
@@ -40,7 +40,7 @@ public class CodeGenController : ControllerBase
             JsonSerializer.Serialize(formData, new JsonSerializerOptions { WriteIndented = true })
         );
     }
-    
+
     [HttpPut("SchemaField")]
     public async Task EditSchemaFieldDefinition(
         JsonElement formData,
@@ -57,4 +57,9 @@ public class CodeGenController : ControllerBase
         );
     }
 
+    [HttpGet("JsonSchema")]
+    public string GetJsonSchema()
+    {
+        return GenerateJsonSchema.GenerateFormSchema();
+    }
 }

@@ -1,8 +1,12 @@
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Astrolabe.Annotation;
 
 namespace Astrolabe.Schemas;
 
+[KnownType(typeof(SimpleSchemaField))]
+[KnownType(typeof(CompoundField))]
+[KnownType(typeof(EntityRefField))]
 [JsonBaseType("type", typeof(SimpleSchemaField))]
 [JsonSubType("EntityRef", typeof(EntityRefField))]
 [JsonSubType("Compound", typeof(CompoundField))]

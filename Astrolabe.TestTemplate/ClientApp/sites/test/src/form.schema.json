@@ -1,0 +1,2509 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Astrolabe Form Definition",
+  "type": "object",
+  "description": "JSON Schema for validating Astrolabe form definition files",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "controls": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/definitions/ControlDefinition"
+      }
+    },
+    "fields": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/definitions/SchemaField"
+      }
+    },
+    "config": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "description": "Form-specific configuration object",
+      "additionalProperties": {}
+    }
+  },
+  "definitions": {
+    "ControlDefinition": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/DataControlDefinition"
+        },
+        {
+          "$ref": "#/definitions/GroupedControlsDefinition"
+        },
+        {
+          "$ref": "#/definitions/DisplayControlDefinition"
+        },
+        {
+          "$ref": "#/definitions/ActionControlDefinition"
+        }
+      ]
+    },
+    "DynamicProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "expr": {
+          "$ref": "#/definitions/EntityExpression"
+        }
+      }
+    },
+    "EntityExpression": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/DataMatchExpression"
+        },
+        {
+          "$ref": "#/definitions/JsonataExpression"
+        },
+        {
+          "$ref": "#/definitions/UserMatchExpression"
+        },
+        {
+          "$ref": "#/definitions/DataExpression"
+        },
+        {
+          "$ref": "#/definitions/NotEmptyExpression"
+        },
+        {
+          "$ref": "#/definitions/SimpleExpression"
+        }
+      ]
+    },
+    "ControlAdornment": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/TooltipAdornment"
+        },
+        {
+          "$ref": "#/definitions/AccordionAdornment"
+        },
+        {
+          "$ref": "#/definitions/HelpTextAdornment"
+        },
+        {
+          "$ref": "#/definitions/IconAdornment"
+        },
+        {
+          "$ref": "#/definitions/SetFieldAdornment"
+        },
+        {
+          "$ref": "#/definitions/OptionalAdornment"
+        }
+      ]
+    },
+    "SchemaField": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/EntityRefField"
+        },
+        {
+          "$ref": "#/definitions/CompoundField"
+        }
+      ]
+    },
+    "FieldOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {},
+        "description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "disabled": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "group": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "SchemaValidator": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/JsonataValidator"
+        },
+        {
+          "$ref": "#/definitions/DateValidator"
+        },
+        {
+          "$ref": "#/definitions/LengthValidator"
+        }
+      ]
+    },
+    "SimpleValidator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "JsonataValidator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "expression": {
+          "type": "string"
+        }
+      }
+    },
+    "DateValidator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "comparison": {
+          "$ref": "#/definitions/DateComparison"
+        },
+        "fixedDate": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date"
+        },
+        "daysFromCurrent": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      }
+    },
+    "DateComparison": {
+      "type": "string",
+      "description": "",
+      "x-enumNames": [
+        "NotBefore",
+        "NotAfter"
+      ],
+      "enum": [
+        "NotBefore",
+        "NotAfter"
+      ]
+    },
+    "LengthValidator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "min": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "max": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        }
+      }
+    },
+    "SimpleSchemaField": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "system": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "meta": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tags": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "onlyForTypes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "required": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "notNullable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "collection": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "defaultValue": {
+          "oneOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isTypeField": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "searchable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "singularName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "requiredText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "options": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/FieldOption"
+          }
+        },
+        "validators": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/SchemaValidator"
+          }
+        }
+      }
+    },
+    "CompoundField": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "system": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "meta": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tags": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "onlyForTypes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "required": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "notNullable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "collection": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "defaultValue": {
+          "oneOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isTypeField": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "searchable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "singularName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "requiredText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "options": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/FieldOption"
+          }
+        },
+        "validators": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/SchemaValidator"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchemaField"
+          }
+        },
+        "treeChildren": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "schemaRef": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "EntityRefField": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "system": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "meta": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tags": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "onlyForTypes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "required": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "notNullable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "collection": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "defaultValue": {
+          "oneOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isTypeField": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "searchable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "singularName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "requiredText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "options": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/FieldOption"
+          }
+        },
+        "validators": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/SchemaValidator"
+          }
+        },
+        "entityRefType": {
+          "type": "string"
+        },
+        "parentField": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "DataControlDefinition": {
+      "title": "DataControlDefinition",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childRefId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "disabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "hidden": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "readonly": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "dynamic": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/DynamicProperty"
+          }
+        },
+        "adornments": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlAdornment"
+          }
+        },
+        "styleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "textClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "layoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelTextClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "placement": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "children": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlDefinition"
+          }
+        },
+        "field": {
+          "type": "string"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "required": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "renderOptions": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/RenderOptions"
+            }
+          ]
+        },
+        "defaultValue": {
+          "oneOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dontClearHidden": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "requiredErrorText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "validators": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/SchemaValidator"
+          }
+        }
+      }
+    },
+    "RenderOptions": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/HtmlEditorRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/IconListRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/SynchronisedRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/UserSelectionRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/DateTimeRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/DisplayOnlyRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/DataGroupRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/TextfieldRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/JsonataRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/ArrayRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/RadioButtonRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/CheckListRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/AutocompleteRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/ArrayElementRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/ElementSelectedRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/ScrollListRenderOptions"
+        }
+      ]
+    },
+    "GroupedControlsDefinition": {
+      "title": "GroupedControlsDefinition",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childRefId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "disabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "hidden": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "readonly": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "dynamic": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/DynamicProperty"
+          }
+        },
+        "adornments": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlAdornment"
+          }
+        },
+        "styleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "textClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "layoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelTextClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "placement": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "children": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlDefinition"
+          }
+        },
+        "compoundField": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "groupOptions": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/GroupRenderOptions"
+            }
+          ]
+        }
+      }
+    },
+    "GroupRenderOptions": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/SimpleGroupRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/GroupElementRenderer"
+        },
+        {
+          "$ref": "#/definitions/GridRenderer"
+        },
+        {
+          "$ref": "#/definitions/FlexRenderer"
+        },
+        {
+          "$ref": "#/definitions/TabsRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/SelectChildRenderer"
+        },
+        {
+          "$ref": "#/definitions/SimpleGroupRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/SimpleGroupRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/SimpleGroupRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/DialogRenderOptions"
+        },
+        {
+          "$ref": "#/definitions/AccordionRenderer"
+        }
+      ]
+    },
+    "DisplayControlDefinition": {
+      "title": "DisplayControlDefinition",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childRefId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "disabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "hidden": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "readonly": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "dynamic": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/DynamicProperty"
+          }
+        },
+        "adornments": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlAdornment"
+          }
+        },
+        "styleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "textClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "layoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelTextClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "placement": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "children": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlDefinition"
+          }
+        },
+        "displayData": {
+          "$ref": "#/definitions/DisplayData"
+        }
+      }
+    },
+    "DisplayData": {
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/TextDisplay"
+        },
+        {
+          "$ref": "#/definitions/HtmlDisplay"
+        },
+        {
+          "$ref": "#/definitions/IconDisplay"
+        },
+        {
+          "$ref": "#/definitions/CustomDisplay"
+        }
+      ]
+    },
+    "SimpleDisplayData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "TextDisplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "HtmlDisplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "html": {
+          "type": "string"
+        }
+      }
+    },
+    "IconDisplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "iconClass": {
+          "type": "string"
+        },
+        "icon": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/IconReference"
+            }
+          ]
+        }
+      }
+    },
+    "IconReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "library": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "CustomDisplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "customId": {
+          "type": "string"
+        }
+      }
+    },
+    "ActionControlDefinition": {
+      "title": "ActionControlDefinition",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childRefId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "disabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "hidden": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "readonly": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "dynamic": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/DynamicProperty"
+          }
+        },
+        "adornments": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlAdornment"
+          }
+        },
+        "styleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "textClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "layoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "labelTextClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "placement": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "children": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ControlDefinition"
+          }
+        },
+        "actionId": {
+          "type": "string"
+        },
+        "actionData": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "icon": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/IconReference"
+            }
+          ]
+        },
+        "actionStyle": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/ActionStyle"
+            }
+          ]
+        },
+        "iconPlacement": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/IconPlacement"
+            }
+          ]
+        },
+        "disableType": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/ControlDisableType"
+            }
+          ]
+        }
+      }
+    },
+    "ActionStyle": {
+      "type": "integer",
+      "description": "0 = Button\n1 = Secondary\n2 = Link\n3 = Group",
+      "x-enumNames": [
+        "Button",
+        "Secondary",
+        "Link",
+        "Group"
+      ],
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "IconPlacement": {
+      "type": "integer",
+      "description": "0 = BeforeText\n1 = AfterText\n2 = ReplaceText",
+      "x-enumNames": [
+        "BeforeText",
+        "AfterText",
+        "ReplaceText"
+      ],
+      "enum": [
+        0,
+        1,
+        2
+      ]
+    },
+    "ControlDisableType": {
+      "type": "integer",
+      "description": "0 = None\n1 = Self\n2 = Global",
+      "x-enumNames": [
+        "None",
+        "Self",
+        "Global"
+      ],
+      "enum": [
+        0,
+        1,
+        2
+      ]
+    },
+    "HtmlEditorRenderOptions": {
+      "title": "HtmlEditorRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "allowImages": {
+          "type": "boolean"
+        }
+      }
+    },
+    "IconListRenderOptions": {
+      "title": "IconListRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "iconMappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IconMapping"
+          }
+        }
+      }
+    },
+    "IconMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "materialIcon": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "SynchronisedRenderOptions": {
+      "title": "SynchronisedRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "fieldToSync": {
+          "type": "string"
+        },
+        "syncType": {
+          "$ref": "#/definitions/SyncTextType"
+        }
+      }
+    },
+    "SyncTextType": {
+      "type": "integer",
+      "description": "0 = Camel\n1 = Snake\n2 = Pascal",
+      "x-enumNames": [
+        "Camel",
+        "Snake",
+        "Pascal"
+      ],
+      "enum": [
+        0,
+        1,
+        2
+      ]
+    },
+    "UserSelectionRenderOptions": {
+      "title": "UserSelectionRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "noGroups": {
+          "type": "boolean"
+        },
+        "noUsers": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DateTimeRenderOptions": {
+      "title": "DateTimeRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "format": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "forceMidnight": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "forceStandard": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "DisplayOnlyRenderOptions": {
+      "title": "DisplayOnlyRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "emptyText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sampleText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "DataGroupRenderOptions": {
+      "title": "DataGroupRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "groupOptions": {
+          "$ref": "#/definitions/GroupRenderOptions"
+        }
+      }
+    },
+    "TextfieldRenderOptions": {
+      "title": "TextfieldRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "placeholder": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "multiline": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "JsonataRenderOptions": {
+      "title": "JsonataRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "expression": {
+          "type": "string"
+        }
+      }
+    },
+    "ArrayRenderOptions": {
+      "title": "ArrayRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "addText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "removeText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "addActionId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "removeActionId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "editText": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "editActionId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "noAdd": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "noRemove": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "noReorder": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "editExternal": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "RadioButtonRenderOptions": {
+      "title": "RadioButtonRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "entryWrapperClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "selectedClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "notSelectedClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "CheckListRenderOptions": {
+      "title": "CheckListRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "entryWrapperClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "selectedClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "notSelectedClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "AutocompleteRenderOptions": {
+      "title": "AutocompleteRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "listContainerClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "listEntryClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "chipContainerClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "chipCloseButtonClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "placeholder": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "ArrayElementRenderOptions": {
+      "title": "ArrayElementRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "showInline": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "ElementSelectedRenderOptions": {
+      "title": "ElementSelectedRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "elementExpression": {
+          "$ref": "#/definitions/EntityExpression"
+        }
+      }
+    },
+    "ScrollListRenderOptions": {
+      "title": "ScrollListRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "bottomActionId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "refreshActionId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "SimpleGroupRenderOptions": {
+      "title": "SimpleGroupRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "GroupElementRenderer": {
+      "title": "GroupElementRenderer",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "value": {}
+      }
+    },
+    "GridRenderer": {
+      "title": "GridRenderer",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "columns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "rowClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cellClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "FlexRenderer": {
+      "title": "FlexRenderer",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "direction": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "gap": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "TabsRenderOptions": {
+      "title": "TabsRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "contentClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "SelectChildRenderer": {
+      "title": "SelectChildRenderer",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childIndexExpression": {
+          "$ref": "#/definitions/EntityExpression"
+        }
+      }
+    },
+    "DialogRenderOptions": {
+      "title": "DialogRenderOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "portalHost": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "AccordionRenderer": {
+      "title": "AccordionRenderer",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "Standard"
+        },
+        "hideTitle": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "childStyleClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLayoutClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "childLabelClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "defaultExpanded": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "expandStateField": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "TooltipAdornment": {
+      "title": "TooltipAdornment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "tooltip": {
+          "type": "string"
+        }
+      }
+    },
+    "AccordionAdornment": {
+      "title": "AccordionAdornment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "defaultExpanded": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "HelpTextAdornment": {
+      "title": "HelpTextAdornment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "helpText": {
+          "type": "string"
+        },
+        "placement": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/AdornmentPlacement"
+            }
+          ]
+        }
+      }
+    },
+    "AdornmentPlacement": {
+      "type": "integer",
+      "description": "0 = ControlStart\n1 = ControlEnd\n2 = LabelStart\n3 = LabelEnd",
+      "x-enumNames": [
+        "ControlStart",
+        "ControlEnd",
+        "LabelStart",
+        "LabelEnd"
+      ],
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "IconAdornment": {
+      "title": "IconAdornment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "iconClass": {
+          "type": "string"
+        },
+        "icon": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/IconReference"
+            }
+          ]
+        },
+        "placement": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/AdornmentPlacement"
+            }
+          ]
+        }
+      }
+    },
+    "SetFieldAdornment": {
+      "title": "SetFieldAdornment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "defaultOnly": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "field": {
+          "type": "string"
+        },
+        "expression": {
+          "$ref": "#/definitions/EntityExpression"
+        }
+      }
+    },
+    "OptionalAdornment": {
+      "title": "OptionalAdornment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "placement": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/AdornmentPlacement"
+            }
+          ]
+        },
+        "allowNull": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "editSelectable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "DataMatchExpression": {
+      "title": "DataMatchExpression",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "value": {}
+      }
+    },
+    "JsonataExpression": {
+      "title": "JsonataExpression",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "expression": {
+          "type": "string"
+        }
+      }
+    },
+    "UserMatchExpression": {
+      "title": "UserMatchExpression",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "userMatch": {
+          "type": "string"
+        }
+      }
+    },
+    "DataExpression": {
+      "title": "DataExpression",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        }
+      }
+    },
+    "NotEmptyExpression": {
+      "title": "NotEmptyExpression",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "empty": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "SimpleExpression": {
+      "title": "SimpleExpression",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
