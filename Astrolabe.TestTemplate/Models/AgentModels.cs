@@ -9,6 +9,7 @@ public class ProcessCommandRequest
     public JsonElement[] Schema { get; set; } = Array.Empty<JsonElement>();
     public ConversationMessage[] ConversationHistory { get; set; } = Array.Empty<ConversationMessage>();
     public string? SystemPrompt { get; set; }
+    public JsonElement? SelectedControl { get; set; }
 }
 
 public class ConversationMessage

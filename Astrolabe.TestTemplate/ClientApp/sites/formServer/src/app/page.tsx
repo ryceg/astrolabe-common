@@ -329,7 +329,7 @@ export default function Editor() {
       <BasicFormEditor
         formRenderer={StdFormRenderer}
         loadSchema={readOnlySchemas(schemaLookup)}
-        claudeApiUrl={"/api/anthropic"}
+        claudeApiUrl={"/api"}
         // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {
           if (c in FormDefinitions)
