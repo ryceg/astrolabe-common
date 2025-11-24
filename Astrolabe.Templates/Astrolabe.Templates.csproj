@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Template Package Configuration -->
+    <PackageType>Template</PackageType>
+    <PackageVersion>1.0.0</PackageVersion>
+    <PackageId>Astrolabe.Templates</PackageId>
+    <Title>Astrolabe Full Stack Application Templates</Title>
+    <Authors>Astrolabe Team</Authors>
+    <Description>Official .NET templates for creating Astrolabe full-stack applications</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Required for template packages -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="content/**/*" />
+    <Compile Remove="**/*" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

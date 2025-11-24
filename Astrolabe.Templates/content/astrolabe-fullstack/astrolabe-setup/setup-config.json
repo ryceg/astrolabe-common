@@ -1,0 +1,11 @@
+{
+  "projectName": "AstrolabeApp",
+  "solutionName": "__SolutionName__",
+  "httpPort": "__HttpPort__",
+  "httpsPort": "__HttpsPort__",
+  "spaPort": "__SpaPort__",
+  "siteName": "__SiteName__",
+  "includeDemoData": "__IncludeDemoDataJson__"
+}
+
+

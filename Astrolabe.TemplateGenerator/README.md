@@ -80,6 +80,8 @@ YourSolution/
 │   ├── Forms/
 │   └── Migrations/
 └── ClientApp/                      # Frontend
+    ├── astrolabe-ui/    # Shared UI components and styles
+    ├── client-common/   # NSwag, form definitions, shared frontend components and utilities
     └── sites/
         └── your-site/              # Next.js app
             ├── app/

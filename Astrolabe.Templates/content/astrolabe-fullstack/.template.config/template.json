@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Astrolabe Team",
+  "classifications": ["Web", "Full Stack", "React", "ASP.NET Core", "Next.js"],
+  "identity": "Astrolabe.FullStack.Template",
+  "name": "Astrolabe Full Stack Application",
+  "shortName": "astrolabe",
+  "description": "A full-stack application template with ASP.NET Core backend and Next.js frontend using the Astrolabe framework",
+  "sourceName": "AstrolabeApp",
+  "preferNameDirectory": true,
+
+  "symbols": {
+    "ProjectName": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "AstrolabeApp",
+      "replaces": "__ProjectName__",
+      "fileRename": "__ProjectName__",
+      "description": "The name of the project"
+    },
+    "SolutionName": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "",
+      "description": "The name of the solution (defaults to ProjectName if empty)"
+    },
+    "SolutionNameComputed": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "SolutionName",
+        "fallbackVariableName": "ProjectName"
+      },
+      "replaces": "__SolutionName__"
+    },
+    "ProjectNameSanitized": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "ProjectName",
+        "steps": [
+          { "regex": "[^a-zA-Z0-9_]", "replacement": "_" },
+          { "regex": "^([0-9])", "replacement": "_$1" }
+        ]
+      },
+      "replaces": "__Namespace__"
+    },
+    "IncludeDemoData": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include demo data (Tea model, controller, and UI pages)"
+    },
+    "IncludeDemoDataLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "IncludeDemoData",
+        "toLower": true
+      },
+      "replaces": "__IncludeDemoDataJson__"
+    },
+    "SiteName": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "dashboard",
+      "fileRename": "__SiteName__",
+      "replaces": "__SiteName__"
+    },
+    "HttpPort": {
+      "type": "parameter",
+      "datatype": "integer",
+      "defaultValue": "5000",
+      "replaces": "__HttpPort__"
+    },
+    "HttpsPort": {
+      "type": "parameter",
+      "datatype": "integer",
+      "defaultValue": "5001",
+      "replaces": "__HttpsPort__"
+    },
+    "SpaPort": {
+      "type": "parameter",
+      "datatype": "integer",
+      "defaultValue": "8000",
+      "replaces": "__SpaPort__"
+    },
+    "SkipSetup": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Skip automatic setup orchestration"
+    },
+    "ConnectionString": {
+        "type": "parameter",
+        "datatype": "text",
+        "defaultValue": "Server=localhost;Database=AstrolabeAppDb;User=sa;Password=databasePassword1234;MultipleActiveResultSets=true;TrustServerCertificate=true;",
+        "replaces": "__ConnectionString__"
+    }
+  },
+
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/node_modules/**",
+            "**/.next/**"
+          ]
+        },
+        {
+          "condition": "(!IncludeDemoData)",
+          "exclude": [
+            "Models/Tea.cs",
+            "Controllers/TeasController.cs",
+            "Data/DbSeeder.cs",
+            "Forms/TeaEdit.cs",
+            "Forms/TeaSearchPage.cs",
+            "Forms/FieldOption.cs",
+            "Services/TeaService.cs",
+            "ClientApp/sites/__SiteName__/src/app/tea/**",
+            "ClientApp/sites/__SiteName__/src/app/form-demo/**",
+            "ClientApp/sites/__SiteName__/src/app/search/**"
+          ]
+        },
+        {
+          "condition": "(SkipSetup)",
+          "exclude": ["astrolabe-setup/**/*"]
+        }
+      ],
+      "rename": {
+        "AstrolabeApp.csproj": "__ProjectName__.csproj"
+      }
+    }
+  ],
+
+  "postActions": [
+    {
+      "condition": "(!SkipSetup)",
+      "description": "Running Astrolabe project setup (build, Rush init, code generation, etc.)",
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "continueOnError": false,
+      "args": {
+        "executable": "dotnet",
+        "args": "run astrolabe-setup/Setup.cs"
+      }
+    }
+  ]
+}

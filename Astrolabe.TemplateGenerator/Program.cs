@@ -13,7 +13,25 @@ class Program
         );
         AnsiConsole.WriteLine();
 
-        var config = await GatherConfiguration();
+        AppConfiguration config;
+        if (args.Contains("--auto"))
+        {
+             config = new AppConfiguration(
+                "MyApp",
+                "MyApp",
+                "My Description",
+                5010,
+                5011,
+                8010,
+                "my-site",
+                "Server=localhost;Database=MyAppDb;User=sa;Password=Password123!;MultipleActiveResultSets=true;TrustServerCertificate=true;",
+                true
+            );
+        }
+        else 
+        {
+            config = await GatherConfiguration();
+        }
 
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine(
