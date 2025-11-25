@@ -46,7 +46,14 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddDbContext<AppDbContext>(op =>
-    op.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
+    op.UseSqlServer(
+        builder.Configuration.GetConnectionString("Default"),
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null
+        )
+    )
 );
 
 var app = builder.Build();

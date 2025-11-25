@@ -37,11 +37,14 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # Rush
-common/temp/
-common/deploy/
-common/autoinstallers/*/.npmrc
+**/common/temp/
+**/common/deploy/
+**/common/scripts/
+**/common/autoinstallers/*/.npmrc
 **/.rush/temp/
-common/config/rush/rush.lock
+**/common/config/rush/rush.lock
+**/common/config/rush/repo-state.json
+**/common/config/rush/pnpm-lock.yaml
 
 # Environment
 .env

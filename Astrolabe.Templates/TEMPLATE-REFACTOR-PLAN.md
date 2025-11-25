@@ -40,8 +40,9 @@ The .NET SDK includes a robust templating engine at `dotnet new` that provides:
 
 A complete application template consisting of:
 
-**Backend (.NET 8)**
+**Backend (.NET 10)**
 
+- No need for a .csproj for the setup, it can run .cs files directly
 - ASP.NET Core Web API
 - Entity Framework Core with SQL Server
 - Astrolabe forms framework for declarative forms

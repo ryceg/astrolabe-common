@@ -3,29 +3,40 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+
+
 Console.WriteLine("Initializing setup...");
 Console.Out.Flush();
 
-var configPath = Path.Combine(AppContext.BaseDirectory, "setup-config.json");
+// When running with "dotnet run Setup.cs", we need to find setup-config.json
+// It will be in the same directory as Setup.cs
+var scriptDirectory = Path.GetDirectoryName(typeof(Program).Assembly.Location) ?? Directory.GetCurrentDirectory();
+var configPath = Path.Combine(scriptDirectory, "setup-config.json");
 
 if (!File.Exists(configPath))
 {
+    // Try relative to the current working directory (running from project root)
     configPath = Path.Combine(Directory.GetCurrentDirectory(), "astrolabe-setup", "setup-config.json");
 }
 
 if (!File.Exists(configPath))
 {
-    Console.Error.WriteLine($"Setup failed: Could not find file '{configPath}'.");
+    // Try current directory (in case we're running from astrolabe-setup folder)
+    configPath = Path.Combine(Directory.GetCurrentDirectory(), "setup-config.json");
+}
+
+if (!File.Exists(configPath))
+{
+    Console.Error.WriteLine($"Setup failed: Could not find setup-config.json");
+    Console.Error.WriteLine($"Searched in:");
+    Console.Error.WriteLine($"  - {Path.Combine(scriptDirectory, "setup-config.json")}");
+    Console.Error.WriteLine($"  - {Path.Combine(Directory.GetCurrentDirectory(), "astrolabe-setup", "setup-config.json")}");
+    Console.Error.WriteLine($"  - {Path.Combine(Directory.GetCurrentDirectory(), "setup-config.json")}");
     return 1;
 }
 
 var configJson = await File.ReadAllTextAsync(configPath);
-var jsonOptions = new JsonSerializerOptions
-{
-    NumberHandling = JsonNumberHandling.AllowReadingFromString,
-    PropertyNameCaseInsensitive = true
-};
-var config = JsonSerializer.Deserialize<SetupConfig>(configJson, jsonOptions);
+var config = JsonSerializer.Deserialize(configJson, SetupConfigJsonContext.Default.SetupConfig);
 
 if (config == null)
 {
@@ -48,7 +59,38 @@ catch (Exception ex)
 }
 
 Console.WriteLine("Setup completed successfully.");
+
+// Self-destruct: Delete setup folder after successful completion
+try
+{
+    // Give processes time to release file handles
+    await Task.Delay(1000);
+
+    // Get the setup directory path
+    var currentDir = Directory.GetCurrentDirectory();
+    var setupDir = Path.GetFileName(currentDir) == "astrolabe-setup"
+        ? currentDir
+        : Path.Combine(currentDir, "astrolabe-setup");
+
+    if (Directory.Exists(setupDir))
+    {
+        Console.WriteLine("Cleaning up setup files...");
+
+        // Delete the setup directory
+        Directory.Delete(setupDir, recursive: true);
+        Console.WriteLine("Setup files removed successfully.");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Warning: Could not remove setup folder: {ex.Message}");
+    Console.WriteLine("You can manually delete the 'astrolabe-setup' folder if desired.");
+}
+
 return 0;
+
+// Implicit Program class for top-level statements
+partial class Program { }
 
 public class SetupConfig
 {
@@ -69,7 +111,11 @@ public class SetupOrchestrator
     public SetupOrchestrator(SetupConfig config)
     {
         _config = config;
-        _projectRoot = Directory.GetCurrentDirectory();
+        // If we're running from astrolabe-setup folder, go up one level to project root
+        var currentDir = Directory.GetCurrentDirectory();
+        _projectRoot = Path.GetFileName(currentDir) == "astrolabe-setup"
+            ? Path.GetDirectoryName(currentDir) ?? currentDir
+            : currentDir;
     }
 
     public async Task RunSetup()
@@ -132,9 +178,26 @@ public class SetupOrchestrator
         }
         finally
         {
-            if (backendProcess != null && !backendProcess.HasExited)
+            if (backendProcess != null)
             {
-                backendProcess.Kill(entireProcessTree: true);
+                try
+                {
+                    // Cancel async output reading before killing process
+                    backendProcess.CancelOutputRead();
+                    backendProcess.CancelErrorRead();
+                }
+                catch
+                {
+                    // Ignore errors during cleanup
+                }
+
+                if (!backendProcess.HasExited)
+                {
+                    backendProcess.Kill(entireProcessTree: true);
+                    backendProcess.WaitForExit(5000); // Wait up to 5 seconds for clean exit
+                }
+
+                backendProcess.Dispose();
             }
         }
     }
@@ -161,29 +224,25 @@ public class SetupOrchestrator
             CreateNoWindow = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true,
         };
 
         var process = Process.Start(processStartInfo);
 
         if (process != null)
         {
-             Task.Run(async () =>
+            process.StandardInput.Close();
+            // Use BeginOutputReadLine/BeginErrorReadLine instead of Task.Run to avoid hanging
+            process.OutputDataReceived += (sender, e) =>
             {
-                while (!process.StandardOutput.EndOfStream)
-                {
-                    var line = await process.StandardOutput.ReadLineAsync();
-                    if (line != null) Console.WriteLine($"[Backend] {line}");
-                }
-            });
-
-            Task.Run(async () =>
+                if (e.Data != null) Console.WriteLine($"[Backend] {e.Data}");
+            };
+            process.ErrorDataReceived += (sender, e) =>
             {
-                while (!process.StandardError.EndOfStream)
-                {
-                    var line = await process.StandardError.ReadLineAsync();
-                    if (line != null) Console.Error.WriteLine($"[Backend Error] {line}");
-                }
-            });
+                if (e.Data != null) Console.Error.WriteLine($"[Backend Error] {e.Data}");
+            };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
         }
 
         return process;
@@ -194,7 +253,7 @@ public class SetupOrchestrator
         using var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromSeconds(2);
         var url = $"http://127.0.0.1:{_config.HttpPort}/swagger/v1/swagger.json";
-        
+
         for (int i = 0; i < 60; i++)
         {
             if (backendProcess != null && backendProcess.HasExited)
@@ -251,6 +310,7 @@ public class SetupOrchestrator
             WorkingDirectory = workingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true,
             UseShellExecute = false,
             CreateNoWindow = false,
         };
@@ -259,36 +319,20 @@ public class SetupOrchestrator
         if (process == null)
             throw new Exception($"Failed to start process: {fileName} {args}");
 
-        var outputBuilder = new StringBuilder();
-        var errorBuilder = new StringBuilder();
+        process.StandardInput.Close();
 
-        var outputTask = Task.Run(async () =>
+        // Use BeginOutputReadLine/BeginErrorReadLine instead of Task.Run to avoid hanging
+        process.OutputDataReceived += (sender, e) =>
         {
-            while (!process.StandardOutput.EndOfStream)
-            {
-                var line = await process.StandardOutput.ReadLineAsync();
-                if (line != null)
-                {
-                    Console.WriteLine(line);
-                    outputBuilder.AppendLine(line);
-                }
-            }
-        });
-
-        var errorTask = Task.Run(async () =>
+            if (e.Data != null) Console.WriteLine(e.Data);
+        };
+        process.ErrorDataReceived += (sender, e) =>
         {
-            while (!process.StandardError.EndOfStream)
-            {
-                var line = await process.StandardError.ReadLineAsync();
-                if (line != null)
-                {
-                    Console.Error.WriteLine(line);
-                    errorBuilder.AppendLine(line);
-                }
-            }
-        });
+            if (e.Data != null) Console.Error.WriteLine(e.Data);
+        };
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
 
-        await Task.WhenAll(outputTask, errorTask);
         await process.WaitForExitAsync();
 
         if (process.ExitCode != 0)
@@ -299,3 +343,14 @@ public class SetupOrchestrator
         }
     }
 }
+
+[JsonSerializable(typeof(SetupConfig))]
+[JsonSourceGenerationOptions(
+    PropertyNameCaseInsensitive = true,
+    NumberHandling = JsonNumberHandling.AllowReadingFromString
+)]
+internal partial class SetupConfigJsonContext : JsonSerializerContext
+{
+}
+
+

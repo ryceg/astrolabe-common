@@ -8,15 +8,21 @@
   "description": "A full-stack application template with ASP.NET Core backend and Next.js frontend using the Astrolabe framework",
   "sourceName": "AstrolabeApp",
   "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
 
   "symbols": {
     "ProjectName": {
-      "type": "parameter",
-      "datatype": "text",
-      "defaultValue": "AstrolabeApp",
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "name",
+        "toLower": false
+      },
       "replaces": "__ProjectName__",
-      "fileRename": "__ProjectName__",
-      "description": "The name of the project"
+      "fileRename": "__ProjectName__"
     },
     "SolutionName": {
       "type": "parameter",
@@ -139,13 +145,14 @@
   "postActions": [
     {
       "condition": "(!SkipSetup)",
-      "description": "Running Astrolabe project setup (build, Rush init, code generation, etc.)",
-      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
-      "continueOnError": false,
-      "args": {
-        "executable": "dotnet",
-        "args": "run astrolabe-setup/Setup.cs"
-      }
+      "description": "Complete project setup by running the setup script",
+      "actionId": "AC1156F7-BB77-4DB8-B28F-24EEBCCA1E5C",
+      "continueOnError": true,
+      "manualInstructions": [
+        {
+          "text": "====================================================================\n\n  To complete setup, run the following commands:\n\n    cd <YourProjectName>\n    dotnet run --project astrolabe-setup/Setup.csproj\n\n  This will:\n    1. Build the backend\n    2. Initialize Rush (monorepo package manager)\n    3. Generate TypeScript client from API\n    4. Install frontend dependencies\n\n  Setup takes approximately 2-3 minutes to complete.\n\n===================================================================="
+        }
+      ]
     }
   ]
 }

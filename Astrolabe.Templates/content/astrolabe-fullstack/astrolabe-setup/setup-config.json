@@ -5,7 +5,7 @@
   "httpsPort": "__HttpsPort__",
   "spaPort": "__SpaPort__",
   "siteName": "__SiteName__",
-  "includeDemoData": "__IncludeDemoDataJson__"
+  "includeDemoData": __IncludeDemoDataJson__
 }
 
 
