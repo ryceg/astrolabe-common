@@ -13,7 +13,15 @@ import {
   OrderStatus,
   BrewingState,
 } from "client-common/client";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { createStdFormRenderer } from "@/renderers";
+import { TeaOrderForm } from "client-common/formdefs";
+import {
+  TeaOrderFormSchema,
+  defaultTeaOrderForm,
+  TeaOrderForm as TeaOrderFormType,
+} from "client-common/schemas";
+import { RenderFormData } from "@/RenderFormData";
 
 // Parse TimeSpan string format (e.g., "00:00:15.1234567") to seconds
 function formatBrewDuration(duration: string): string {
@@ -35,11 +43,13 @@ export default function TeaRoomPage() {
   const myOrders = useControl<TeaOrder[]>([]);
   const orderHistory = useControl<TeaOrder[]>([]);
   const teaTypes = useControl<TeaType[]>([]);
-  const selectedTeaType = useControl<TeaType | null>(null);
-  const customerName = useControl("");
+  const formData = useControl<TeaOrderFormType>({ ...defaultTeaOrderForm });
   const isOrdering = useControl(false);
   const collectedTeas = useControl<BrewedTea[]>([]);
   const error = useControl<string | null>(null);
+
+  // Create form renderer
+  const renderer = useMemo(() => createStdFormRenderer(), []);
 
   // Fetch tea types and room status on mount
   useControlEffect(
@@ -49,8 +59,8 @@ export default function TeaRoomPage() {
       try {
         const types = await client.getTeaTypes();
         teaTypes.value = types;
-        if (types.length > 0 && selectedTeaType.value === null) {
-          selectedTeaType.value = types[0];
+        if (types.length > 0 && !formData.fields.teaType.value) {
+          formData.fields.teaType.value = types[0];
         }
       } catch (e) {
         console.error("Failed to fetch tea types:", e);
@@ -90,11 +100,11 @@ export default function TeaRoomPage() {
   }, [client, myOrders, roomStatus, orderHistory]);
 
   const orderTea = useCallback(async () => {
-    if (!customerName.value.trim()) {
+    if (!formData.fields.customerName.value.trim()) {
       error.value = "Please enter your name";
       return;
     }
-    if (selectedTeaType.value === null) {
+    if (!formData.fields.teaType.value) {
       error.value = "Please select a tea type";
       return;
     }
@@ -104,8 +114,8 @@ export default function TeaRoomPage() {
 
     try {
       const order = await client.orderTeaDefault({
-        teaType: selectedTeaType.value,
-        customerName: customerName.value.trim(),
+        teaType: formData.fields.teaType.value,
+        customerName: formData.fields.customerName.value.trim(),
       });
       myOrders.value = [...myOrders.value, order];
       await refreshStatus();
@@ -115,7 +125,7 @@ export default function TeaRoomPage() {
     } finally {
       isOrdering.value = false;
     }
-  }, [client, customerName, selectedTeaType, myOrders, isOrdering, error, refreshStatus]);
+  }, [client, formData, myOrders, isOrdering, error, refreshStatus]);
 
   const collectOrder = useCallback(
     async (orderId: string) => {
@@ -151,37 +161,12 @@ export default function TeaRoomPage() {
             </h2>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  value={customerName.value}
-                  onChange={(e) => (customerName.value = e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  placeholder="Enter your name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tea Type
-                </label>
-                <select
-                  value={selectedTeaType.value ?? ""}
-                  onChange={(e) =>
-                    (selectedTeaType.value = e.target.value as TeaType)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                  {teaTypes.value.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <RenderFormData
+                data={formData}
+                controls={TeaOrderForm.controls}
+                schema={TeaOrderFormSchema}
+                renderer={renderer}
+              />
 
               {error.value && (
                 <p className="text-red-600 text-sm">{error.value}</p>

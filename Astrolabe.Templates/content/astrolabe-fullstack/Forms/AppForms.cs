@@ -16,5 +16,9 @@ public class AppForms : FormBuilder<object?>
         // Tea Search Form - for searching and listing teas
         Form<TeaSearchForm>("TeaSearchForm", "Tea Search", null),
 //#endif
+//#if (IncludeOrleans)
+        // Tea Order Form - for ordering tea in the tea room
+        Form<TeaOrderForm>("TeaOrderForm", "Order Tea", null),
+//#endif
     ];
 }

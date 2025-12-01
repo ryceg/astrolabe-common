@@ -43,3 +43,13 @@ public class TeaSearchForm
     public TeaType? FilterByType { get; set; }
     public List<TeaInfo> Results { get; set; } = new();
 }
+//#endif
+
+//#if (IncludeOrleans)
+// AppForm for ordering tea in the tea room
+public class TeaOrderForm
+{
+    public TeaType TeaType { get; set; }
+    public string CustomerName { get; set; } = "";
+}
+//#endif
