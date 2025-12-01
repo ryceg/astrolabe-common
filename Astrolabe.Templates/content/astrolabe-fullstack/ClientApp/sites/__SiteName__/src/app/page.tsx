@@ -55,6 +55,18 @@ export default function Home() {
             </p>
           </Link>
           #endif*/}
+
+          {/*#if (IncludeOrleans)
+          <Link
+            href="/tearoom"
+            className="block p-6 bg-amber-50 border border-amber-200 rounded-lg shadow hover:bg-amber-100"
+          >
+            <h2 className="text-2xl font-semibold mb-2">🍵 Tea Room →</h2>
+            <p className="text-gray-700">
+              Orleans-powered tea brewing demonstration
+            </p>
+          </Link>
+          #endif*/}
         </div>
       </div>
     </main>

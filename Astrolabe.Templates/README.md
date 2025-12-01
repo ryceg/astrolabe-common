@@ -26,6 +26,7 @@ dotnet new astrolabe -n MyProject -o ./MyProject \
 - `--SpaPort` - SPA dev server port (default: 8000)
 - `--ConnectionString` - Database connection string
 - `--IncludeDemoData` - Include Tea CRUD demo (default: true)
+- `--IncludeOrleans` - Include Orleans distributed actor framework with tea-themed demo (default: false)
 - `--SkipSetup` - Skip automatic setup (default: false)
 
 ## Examples
@@ -34,6 +35,12 @@ dotnet new astrolabe -n MyProject -o ./MyProject \
 
 ```bash
 dotnet new astrolabe -n MyApp --IncludeDemoData false
+```
+
+**Create with Orleans support**:
+
+```bash
+dotnet new astrolabe -n MyApp --IncludeOrleans true
 ```
 
 **Create with custom ports**:

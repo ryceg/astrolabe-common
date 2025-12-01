@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace AstrolabeApp.Exceptions;
 
 /// <summary>
@@ -18,7 +20,7 @@ public class NotFoundException : Exception
     /// <summary>
     /// Helper method to throw NotFoundException if the value is null
     /// </summary>
-    public static void ThrowIfNull<T>(T? value, string? message = null) where T : class
+    public static void ThrowIfNull<T>([NotNull] T? value, string? message = null) where T : class
     {
         if (value == null)
         {

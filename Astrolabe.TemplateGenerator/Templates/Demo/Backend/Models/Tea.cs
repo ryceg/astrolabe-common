@@ -11,6 +11,8 @@ public class Tea
     public MilkAmount MilkAmount { get; set; }
     public bool IncludeSpoon { get; set; }
     public string? BrewNotes { get; set; }
+    public string? FlavorNotes { get; set; }
+    public int BrewTimeSeconds { get; set; } = 180; // Default 3 minutes
 }
 
 [JsonString]

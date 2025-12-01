@@ -22,6 +22,12 @@
     <PackageReference Include="Astrolabe.SearchState" Version="*" />
   </ItemGroup>
 
+  <!--#if (IncludeOrleans) -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Orleans.Server" Version="9.0.0" />
+  </ItemGroup>
+  <!--#endif -->
+
   <ItemGroup>
     <Compile Remove="ClientApp\**" />
     <EmbeddedResource Remove="ClientApp\**" />

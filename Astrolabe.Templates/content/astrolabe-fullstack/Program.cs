@@ -1,5 +1,6 @@
 using System.Reflection;
 using Astrolabe.JSON.Extensions;
+using Astrolabe.Web.Common;
 using AstrolabeApp.Data.EF;
 using AstrolabeApp.Exceptions;
 //#if (IncludeDemoData)
@@ -10,11 +11,28 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+//#if (IncludeOrleans)
+using Orleans.Configuration;
+//#endif
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<FormService>();
 //#if (IncludeDemoData)
 builder.Services.AddScoped<TeaService>();
+//#endif
+
+//#if (IncludeOrleans)
+// Configure Orleans Silo
+builder.Host.UseOrleans(siloBuilder =>
+{
+    siloBuilder.UseLocalhostClustering();
+    siloBuilder.AddMemoryGrainStorage("teaRoomStore");
+    siloBuilder.Configure<ClusterOptions>(options =>
+    {
+        options.ClusterId = "dev";
+        options.ServiceId = "AstrolabeApp";
+    });
+});
 //#endif
 
 // Add exception handling
@@ -73,8 +91,18 @@ else
 
 app.UseRouting();
 app.UseAuthorization();
+#pragma warning disable ASP0014 // Suggest using top level route registrations instead of UseEndpoints
 app.UseEndpoints(e => e.MapControllers());
-app.UseSpa(b => b.UseProxyToSpaDevelopmentServer("http://localhost:__SpaPort__"));
+#pragma warning restore ASP0014
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSpa(b => b.UseProxyToSpaDevelopmentServer("http://localhost:__SpaPort__"));
+}
+else
+{
+    app.UseDomainSpa(app.Environment, "__SiteName__", fallback: true);
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -83,44 +111,17 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        Console.WriteLine("Ensuring database exists...");
+        Console.WriteLine("Ensuring database exists and applying migrations...");
 
-        // Always apply pending migrations
-        Console.WriteLine("Checking for pending migrations...");
-        var pendingMigrations = (await db.Database.GetPendingMigrationsAsync()).ToList();
-        var appliedMigrations = (await db.Database.GetAppliedMigrationsAsync()).ToList();
+        // MigrateAsync will create the database if it doesn't exist and apply pending migrations
+        await db.Database.MigrateAsync();
+        Console.WriteLine("Database migrations applied successfully.");
 
-        Console.WriteLine($"Applied migrations: {appliedMigrations.Count}");
-        if (appliedMigrations.Any())
-        {
-            foreach (var migration in appliedMigrations)
-            {
-                Console.WriteLine($"  - {migration}");
-            }
-        }
-
-        Console.WriteLine($"Pending migrations: {pendingMigrations.Count}");
-        if (pendingMigrations.Any())
-        {
-            foreach (var migration in pendingMigrations)
-            {
-                Console.WriteLine($"  - {migration}");
-            }
-
-            Console.WriteLine("Applying migrations...");
-            await db.Database.MigrateAsync();
-            Console.WriteLine("Migrations applied successfully.");
-        }
-        else
-        {
-            Console.WriteLine("Database schema is up to date.");
-        }
-
-//#if (IncludeDemoData)
+        //#if (IncludeDemoData)
         // Seed database with initial data
         await AstrolabeApp.Data.DbSeeder.SeedAsync(db);
         Console.WriteLine("Database seeding completed.");
-//#endif
+        //#endif
     }
     catch (Exception e)
     {

@@ -15,12 +15,9 @@
 
   "symbols": {
     "ProjectName": {
-      "type": "generated",
-      "generator": "casing",
-      "parameters": {
-        "source": "name",
-        "toLower": false
-      },
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "identity",
       "replaces": "__ProjectName__",
       "fileRename": "__ProjectName__"
     },
@@ -97,11 +94,20 @@
       "defaultValue": "false",
       "description": "Skip automatic setup orchestration"
     },
-    "ConnectionString": {
-        "type": "parameter",
-        "datatype": "text",
-        "defaultValue": "Server=localhost;Database=AstrolabeAppDb;User=sa;Password=databasePassword1234;MultipleActiveResultSets=true;TrustServerCertificate=true;",
-        "replaces": "__ConnectionString__"
+    "IncludeOrleans": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Include Orleans distributed actor framework with tea-themed demo grains"
+    },
+    "IncludeOrleansLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "IncludeOrleans",
+        "toLower": true
+      },
+      "replaces": "__IncludeOrleansJson__"
     }
   },
 
@@ -134,6 +140,14 @@
         {
           "condition": "(SkipSetup)",
           "exclude": ["astrolabe-setup/**/*"]
+        },
+        {
+          "condition": "(!IncludeOrleans)",
+          "exclude": [
+            "Grains/**",
+            "Controllers/TeaRoomController.cs",
+            "ClientApp/sites/__SiteName__/src/app/tearoom/**"
+          ]
         }
       ],
       "rename": {
@@ -152,7 +166,11 @@
         {
           "text": "====================================================================\n\n  To complete setup, run the following commands:\n\n    cd <YourProjectName>\n    dotnet run --project astrolabe-setup/Setup.csproj\n\n  This will:\n    1. Build the backend\n    2. Initialize Rush (monorepo package manager)\n    3. Generate TypeScript client from API\n    4. Install frontend dependencies\n\n  Setup takes approximately 2-3 minutes to complete.\n\n===================================================================="
         }
-      ]
+      ],
+      "args": {
+        "executable": "dotnet",
+        "args": "run --project astrolabe-setup/Setup.csproj"
+      }
     }
   ]
 }

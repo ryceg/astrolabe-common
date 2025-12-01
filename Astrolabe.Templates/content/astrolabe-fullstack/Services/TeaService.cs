@@ -1,7 +1,7 @@
+using Astrolabe.SearchState;
 using AstrolabeApp.Data.EF;
 using AstrolabeApp.Forms;
 using AstrolabeApp.Models;
-using Astrolabe.SearchState;
 using Microsoft.EntityFrameworkCore;
 
 namespace AstrolabeApp.Services;
@@ -33,22 +33,26 @@ public class TeaService(AppDbContext dbContext)
             {
                 var types = v.Select(Enum.Parse<TeaType>).ToList();
                 return q.Where(x => types.Contains(x.Type));
-            },
+            }
+            ,
             "milkAmount" => (q, v) =>
             {
                 var amounts = v.Select(Enum.Parse<MilkAmount>).ToList();
                 return q.Where(x => amounts.Contains(x.MilkAmount));
-            },
+            }
+            ,
             "includeSpoon" => (q, v) =>
             {
                 var include = v.Contains("yes") || v.Contains("true");
                 return q.Where(x => x.IncludeSpoon == include);
-            },
+            }
+            ,
             "numberOfSugars" => (q, v) =>
             {
                 var sugars = v.Select(int.Parse).ToList();
                 return q.Where(x => sugars.Contains(x.NumberOfSugars));
-            },
+            }
+            ,
             _ => null,
         };
     }
@@ -68,7 +72,14 @@ public class TeaService(AppDbContext dbContext)
     private static async Task<List<TeaInfo>> GetSearchPage(IQueryable<Tea> query)
     {
         return await query
-            .Select(t => new TeaInfo(t.Id, t.Type, t.NumberOfSugars, t.MilkAmount))
+            .Select(t => new TeaInfo(
+                t.Id,
+                t.Type,
+                t.NumberOfSugars,
+                t.MilkAmount,
+                t.FlavorNotes,
+                t.BrewTimeSeconds
+            ))
             .AsNoTracking()
             .ToListAsync();
     }
@@ -84,6 +95,7 @@ public class TeaService(AppDbContext dbContext)
             || x.MilkAmount.ToString().ToLower().Contains(searchLower)
             || x.NumberOfSugars.ToString().Contains(searchLower)
             || (x.BrewNotes != null && x.BrewNotes.ToLower().Contains(searchLower))
+            || (x.FlavorNotes != null && x.FlavorNotes.ToLower().Contains(searchLower))
         );
     }
 

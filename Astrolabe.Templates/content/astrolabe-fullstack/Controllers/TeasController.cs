@@ -17,7 +17,7 @@ public class TeasController(AppDbContext dbContext, TeaService teaService) : Con
     public async Task<List<TeaInfo>> GetAll()
     {
         return await dbContext
-            .Teas.Select(t => new TeaInfo(t.Id, t.Type, t.NumberOfSugars, t.MilkAmount))
+            .Teas.Select(t => new TeaInfo(t.Id, t.Type, t.NumberOfSugars, t.MilkAmount, t.FlavorNotes, t.BrewTimeSeconds))
             .ToListAsync();
     }
 
@@ -50,6 +50,8 @@ public class TeasController(AppDbContext dbContext, TeaService teaService) : Con
             MilkAmount = tea.MilkAmount,
             IncludeSpoon = tea.IncludeSpoon,
             BrewNotes = tea.BrewNotes,
+            FlavorNotes = tea.FlavorNotes,
+            BrewTimeSeconds = tea.BrewTimeSeconds,
         };
     }
 
@@ -64,6 +66,8 @@ public class TeasController(AppDbContext dbContext, TeaService teaService) : Con
             MilkAmount = edit.MilkAmount,
             IncludeSpoon = edit.IncludeSpoon,
             BrewNotes = edit.BrewNotes,
+            FlavorNotes = edit.FlavorNotes,
+            BrewTimeSeconds = edit.BrewTimeSeconds,
         };
 
         dbContext.Teas.Add(tea);
@@ -77,6 +81,8 @@ public class TeasController(AppDbContext dbContext, TeaService teaService) : Con
             MilkAmount = tea.MilkAmount,
             IncludeSpoon = tea.IncludeSpoon,
             BrewNotes = tea.BrewNotes,
+            FlavorNotes = tea.FlavorNotes,
+            BrewTimeSeconds = tea.BrewTimeSeconds,
         };
     }
 
@@ -91,6 +97,8 @@ public class TeasController(AppDbContext dbContext, TeaService teaService) : Con
         tea.MilkAmount = edit.MilkAmount;
         tea.IncludeSpoon = edit.IncludeSpoon;
         tea.BrewNotes = edit.BrewNotes;
+        tea.FlavorNotes = edit.FlavorNotes;
+        tea.BrewTimeSeconds = edit.BrewTimeSeconds;
 
         await dbContext.SaveChangesAsync();
 
@@ -102,6 +110,8 @@ public class TeasController(AppDbContext dbContext, TeaService teaService) : Con
             MilkAmount = tea.MilkAmount,
             IncludeSpoon = tea.IncludeSpoon,
             BrewNotes = tea.BrewNotes,
+            FlavorNotes = tea.FlavorNotes,
+            BrewTimeSeconds = tea.BrewTimeSeconds,
         };
     }
 

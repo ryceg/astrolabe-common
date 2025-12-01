@@ -3,7 +3,7 @@ using AstrolabeApp.Models;
 namespace AstrolabeApp.Forms;
 
 // Used for GET operations in lists - lightweight summary information
-public record TeaInfo(Guid Id, TeaType Type, int NumberOfSugars, MilkAmount MilkAmount);
+public record TeaInfo(Guid Id, TeaType Type, int NumberOfSugars, MilkAmount MilkAmount, string? FlavorNotes, int BrewTimeSeconds);
 
 // Used for POST and PUT operations - contains editable fields
 public class TeaEdit
@@ -13,6 +13,8 @@ public class TeaEdit
     public MilkAmount MilkAmount { get; set; }
     public bool IncludeSpoon { get; set; }
     public string? BrewNotes { get; set; }
+    public string? FlavorNotes { get; set; }
+    public int BrewTimeSeconds { get; set; } = 180; // Default 3 minutes
 }
 
 // Used for GET operations for full entity details - extends TeaEdit

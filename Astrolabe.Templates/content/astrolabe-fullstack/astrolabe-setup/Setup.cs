@@ -51,6 +51,9 @@ var orchestrator = new SetupOrchestrator(config);
 try
 {
     await orchestrator.RunSetup();
+
+    // Remove setup instructions from README.md to indicate setup is complete
+    RemoveSetupInstructionsFromReadme();
 }
 catch (Exception ex)
 {
@@ -60,31 +63,49 @@ catch (Exception ex)
 
 Console.WriteLine("Setup completed successfully.");
 
-// Self-destruct: Delete setup folder after successful completion
-try
+void RemoveSetupInstructionsFromReadme()
 {
-    // Give processes time to release file handles
-    await Task.Delay(1000);
-
-    // Get the setup directory path
+    // Find project root (go up from astrolabe-setup if needed)
     var currentDir = Directory.GetCurrentDirectory();
-    var setupDir = Path.GetFileName(currentDir) == "astrolabe-setup"
-        ? currentDir
-        : Path.Combine(currentDir, "astrolabe-setup");
+    var projectRoot = Path.GetFileName(currentDir) == "astrolabe-setup"
+        ? Path.GetDirectoryName(currentDir) ?? currentDir
+        : currentDir;
 
-    if (Directory.Exists(setupDir))
+    var readmePath = Path.Combine(projectRoot, "README.md");
+
+    if (!File.Exists(readmePath))
     {
-        Console.WriteLine("Cleaning up setup files...");
-
-        // Delete the setup directory
-        Directory.Delete(setupDir, recursive: true);
-        Console.WriteLine("Setup files removed successfully.");
+        Console.WriteLine("README.md not found, skipping setup instructions removal.");
+        return;
     }
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Warning: Could not remove setup folder: {ex.Message}");
-    Console.WriteLine("You can manually delete the 'astrolabe-setup' folder if desired.");
+
+    try
+    {
+        var content = File.ReadAllText(readmePath);
+        const string startMarker = "<!-- SETUP_INSTRUCTIONS_START -->";
+        const string endMarker = "<!-- SETUP_INSTRUCTIONS_END -->";
+
+        var startIndex = content.IndexOf(startMarker);
+        var endIndex = content.IndexOf(endMarker);
+
+        if (startIndex >= 0 && endIndex > startIndex)
+        {
+            // Remove the section including markers and any trailing newlines
+            var endOfSection = endIndex + endMarker.Length;
+            while (endOfSection < content.Length && (content[endOfSection] == '\r' || content[endOfSection] == '\n'))
+            {
+                endOfSection++;
+            }
+
+            content = content.Substring(0, startIndex) + content.Substring(endOfSection);
+            File.WriteAllText(readmePath, content);
+            Console.WriteLine("✓ Removed setup instructions from README.md");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Could not update README.md: {ex.Message}");
+    }
 }
 
 return 0;
@@ -101,6 +122,7 @@ public class SetupConfig
     public int SpaPort { get; set; }
     public string SiteName { get; set; } = "";
     public bool IncludeDemoData { get; set; }
+    public bool IncludeOrleans { get; set; }
 }
 
 public class SetupOrchestrator
@@ -264,23 +286,19 @@ public class SetupOrchestrator
             try
             {
                 var response = await httpClient.GetAsync(url);
-
                 if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"Connected to backend at {url}");
+                    Console.WriteLine("Backend is ready!");
                     return;
                 }
-                else
-                {
-                    if (i % 5 == 0) Console.WriteLine($"Backend returned {response.StatusCode} at {url}");
-                }
             }
-            catch (Exception ex)
+            catch
             {
-                if (i % 5 == 0) Console.WriteLine($"Failed to connect to backend: {ex.Message}");
+                // Backend not ready yet
             }
 
-            if (i % 5 == 0) {
+            if (i % 5 == 0)
+            {
                 Console.WriteLine("Waiting for backend to be ready...");
                 Console.Out.Flush();
             }
