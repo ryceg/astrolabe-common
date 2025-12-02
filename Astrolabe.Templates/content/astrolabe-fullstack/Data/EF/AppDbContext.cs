@@ -1,4 +1,4 @@
-//#if (IncludeDemoData)
+//#if (IncludeDemoData || IncludeLocalUsers)
 using AstrolabeApp.Models;
 //#endif
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +16,10 @@ public class AppDbContext : DbContext
     public DbSet<Tea> Teas { get; set; }
 //#endif
 
+//#if (IncludeLocalUsers)
+    public DbSet<User> Users { get; set; }
+//#endif
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -29,6 +33,18 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Tea>()
             .Property(t => t.MilkAmount)
             .HasConversion<string>();
+//#endif
+
+//#if (IncludeLocalUsers)
+        // Configure User entity
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasIndex(u => u.Email).IsUnique();
+            entity.Property(u => u.Email).HasMaxLength(255);
+            entity.Property(u => u.FirstName).HasMaxLength(100);
+            entity.Property(u => u.LastName).HasMaxLength(100);
+            entity.Property(u => u.MfaNumber).HasMaxLength(20);
+        });
 //#endif
     }
 }

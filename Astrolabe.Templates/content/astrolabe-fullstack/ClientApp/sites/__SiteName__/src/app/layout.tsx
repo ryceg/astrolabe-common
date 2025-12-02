@@ -5,6 +5,34 @@ import "react-quill-new/dist/quill.snow.css";
 import { useNextNavigationService } from "@astroapps/client-nextjs";
 import { AppContextProvider } from "@astroapps/client";
 import { useControlTokenSecurity } from "@astroapps/client";
+//#if (IncludeLocalUsers)
+import { AuthPageSetupContext, defaultUserAuthPageSetup } from "@astroapps/client-localusers";
+
+const authSetup = {
+  ...defaultUserAuthPageSetup,
+  hrefs: {
+    login: "/login",
+    signup: "/signup",
+    forgotPassword: "/forgotPassword",
+    resetPassword: "/resetPassword",
+    mfa: "/mfa",
+  },
+};
+//#endif
+
+//#if (IncludeLocalUsers)
+function AuthWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthPageSetupContext.Provider value={authSetup}>
+      {children}
+    </AuthPageSetupContext.Provider>
+  );
+}
+//#else
+function AuthWrapper({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+//#endif
 
 export default function RootLayout({
   children,
@@ -23,7 +51,9 @@ export default function RootLayout({
         />
       </head>
       <AppContextProvider value={{ navigation, security }}>
-        <body className="h-screen">{children}</body>
+        <AuthWrapper>
+          <body className="h-screen">{children}</body>
+        </AuthWrapper>
       </AppContextProvider>
     </html>
   );

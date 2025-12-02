@@ -13,6 +13,43 @@
     "type": "project"
   },
 
+  "specialCustomOperations": {
+    "**/*.tsx": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["//#if"],
+            "else": ["//#else"],
+            "elseif": ["//#elseif"],
+            "endif": ["//#endif"],
+            "actionableIf": ["//#if"],
+            "actionableElse": ["//#else"],
+            "actionableElseif": ["//#elseif"],
+            "actions": ["cStyleBlock"]
+          }
+        }
+      ]
+    },
+    "**/*.ts": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["//#if"],
+            "else": ["//#else"],
+            "elseif": ["//#elseif"],
+            "endif": ["//#endif"],
+            "actionableIf": ["//#if"],
+            "actionableElse": ["//#else"],
+            "actionableElseif": ["//#elseif"],
+            "actions": ["cStyleBlock"]
+          }
+        }
+      ]
+    }
+  },
+
   "symbols": {
     "ProjectName": {
       "type": "derived",
@@ -108,6 +145,21 @@
         "toLower": true
       },
       "replaces": "__IncludeOrleansJson__"
+    },
+    "IncludeLocalUsers": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include local user authentication with email/password login, signup, password reset, and MFA support"
+    },
+    "IncludeLocalUsersLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "IncludeLocalUsers",
+        "toLower": true
+      },
+      "replaces": "__IncludeLocalUsersJson__"
     }
   },
 
@@ -147,6 +199,22 @@
             "Grains/**",
             "Controllers/TeaRoomController.cs",
             "ClientApp/sites/__SiteName__/src/app/tearoom/**"
+          ]
+        },
+        {
+          "condition": "(!IncludeLocalUsers)",
+          "exclude": [
+            "Models/User.cs",
+            "Models/NewUser.cs",
+            "Services/LocalUserService.cs",
+            "Controllers/UsersController.cs",
+            "ClientApp/sites/__SiteName__/src/app/login/**",
+            "ClientApp/sites/__SiteName__/src/app/logout/**",
+            "ClientApp/sites/__SiteName__/src/app/signup/**",
+            "ClientApp/sites/__SiteName__/src/app/forgotPassword/**",
+            "ClientApp/sites/__SiteName__/src/app/resetPassword/**",
+            "ClientApp/sites/__SiteName__/src/app/mfa/**",
+            "ClientApp/sites/__SiteName__/src/app/verify/**"
           ]
         }
       ],

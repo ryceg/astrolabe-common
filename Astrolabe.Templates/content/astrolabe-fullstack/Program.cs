@@ -3,7 +3,7 @@ using Astrolabe.JSON.Extensions;
 using Astrolabe.Web.Common;
 using AstrolabeApp.Data.EF;
 using AstrolabeApp.Exceptions;
-//#if (IncludeDemoData)
+//#if (IncludeDemoData || IncludeLocalUsers)
 using AstrolabeApp.Models;
 //#endif
 using AstrolabeApp.Services;
@@ -14,11 +14,48 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 //#if (IncludeOrleans)
 using Orleans.Configuration;
 //#endif
+//#if (IncludeLocalUsers)
+using System.Text;
+using Astrolabe.LocalUsers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+//#endif
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<FormService>();
 //#if (IncludeDemoData)
 builder.Services.AddScoped<TeaService>();
+//#endif
+
+//#if (IncludeLocalUsers)
+// Configure Local User Authentication
+builder.Services.AddSingleton<IPasswordHasher, SaltedSha256PasswordHasher>();
+builder.Services.AddScoped<ILocalUserService<NewUser, Guid>, LocalUserService>();
+builder.Services.AddScoped<LocalUserService>();
+
+// Configure JWT Authentication
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "DefaultDevKeyThatShouldBeChanged123!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AstrolabeApp";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AstrolabeApp";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
 //#endif
 
 //#if (IncludeOrleans)
@@ -66,11 +103,12 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<AppDbContext>(op =>
     op.UseSqlServer(
         builder.Configuration.GetConnectionString("Default"),
-        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null
-        )
+        sqlServerOptions =>
+            sqlServerOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null
+            )
     )
 );
 
@@ -90,6 +128,9 @@ else
 }
 
 app.UseRouting();
+//#if (IncludeLocalUsers)
+app.UseAuthentication();
+//#endif
 app.UseAuthorization();
 #pragma warning disable ASP0014 // Suggest using top level route registrations instead of UseEndpoints
 app.UseEndpoints(e => e.MapControllers());

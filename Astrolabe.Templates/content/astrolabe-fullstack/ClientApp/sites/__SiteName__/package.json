@@ -14,6 +14,7 @@
 		"@astrolabe/ui": "workspace:*",
     "@astroapps/client": "^2.5.2",
     "@astroapps/client-nextjs": "^2.1.0",
+    "@astroapps/client-localusers": "^1.0.0",
     "@astroapps/controls": "^1.4.0",
     "@astroapps/schemas-editor": "^18.0.0",
     "@astroapps/schemas-datepicker": "^9.0.0",

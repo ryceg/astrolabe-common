@@ -28,6 +28,13 @@
   </ItemGroup>
   <!--#endif -->
 
+  <!--#if (IncludeLocalUsers) -->
+  <ItemGroup>
+    <PackageReference Include="Astrolabe.LocalUsers" Version="*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+  </ItemGroup>
+  <!--#endif -->
+
   <ItemGroup>
     <Compile Remove="ClientApp\**" />
     <EmbeddedResource Remove="ClientApp\**" />

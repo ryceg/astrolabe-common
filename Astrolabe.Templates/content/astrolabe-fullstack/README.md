@@ -71,9 +71,13 @@ __ProjectName__/
 ### Available Endpoints
 
 - `https://localhost:__HttpsPort__/swagger` - Swagger API documentation
-- `http://localhost:__SpaPort__` - Frontend development server
+- `http://localhost:__HttpsPort__` - Frontend development server
 <!--#if (IncludeOrleans) -->
-- `http://localhost:__SpaPort__/tearoom` - Orleans Tea Room demo
+- `http://localhost:__HttpsPort__/tearoom` - Orleans Tea Room demo
+  <!--#endif -->
+  <!--#if (IncludeLocalUsers) -->
+- `http://localhost:__HttpsPort__/login` - Login page
+- `http://localhost:__HttpsPort__/signup` - User registration
 <!--#endif -->
 
 ### Database
@@ -148,6 +152,80 @@ siloBuilder.AddAdoNetGrainStorage("teaRoomStore", options =>
 ```
 
 For clustering in production, replace `UseLocalhostClustering()` with Azure Table Storage or Redis clustering.
+
+<!--#endif -->
+
+<!--#if (IncludeLocalUsers) -->
+
+## Local User Authentication
+
+This project includes built-in local user authentication with:
+
+- **Email/Password Login**: Standard credential-based authentication
+- **User Registration**: Self-service account creation with email verification
+- **Password Reset**: Forgot password flow with email reset links
+- **MFA Support**: Optional multi-factor authentication via SMS/phone codes
+- **JWT Tokens**: Secure token-based authentication
+
+### Authentication Pages
+
+| Route             | Description                            |
+| ----------------- | -------------------------------------- |
+| `/login`          | Sign in with email/password            |
+| `/signup`         | Create a new account                   |
+| `/logout`         | Sign out                               |
+| `/forgotPassword` | Request password reset email           |
+| `/resetPassword`  | Reset password with code               |
+| `/mfa`            | Two-factor authentication verification |
+| `/verify`         | Email verification after signup        |
+
+### API Endpoints
+
+All authentication endpoints are under `/api/users`:
+
+| Endpoint                | Method | Description                     |
+| ----------------------- | ------ | ------------------------------- |
+| `/create`               | POST   | Create new account              |
+| `/verify`               | POST   | Verify email with code          |
+| `/authenticate`         | POST   | Login with credentials          |
+| `/forgotPassword`       | POST   | Request password reset          |
+| `/resetPassword`        | POST   | Reset password                  |
+| `/changePassword`       | POST   | Change password (authenticated) |
+| `/changeEmail`          | POST   | Change email (authenticated)    |
+| `/mfaCode/authenticate` | POST   | Send MFA code                   |
+| `/mfaAuthenticate`      | POST   | Verify MFA code                 |
+
+### Configuration
+
+Configure JWT settings in `appsettings.json`:
+
+```json
+{
+  "Jwt": {
+    "Key": "YourSecretKeyAtLeast32CharactersLong!",
+    "Issuer": "YourAppName",
+    "Audience": "YourAppName"
+  }
+}
+```
+
+⚠️ **Important**: Change the JWT key for production! Use environment variables or Azure Key Vault for secrets.
+
+### Email Service Integration
+
+The template logs verification codes and reset links to the console in development. For production, implement email sending in `LocalUserService.cs`:
+
+```csharp
+protected override async Task SendVerificationEmail(NewUser newUser, string verificationCode)
+{
+    await _emailService.SendEmail(new EmailMessage
+    {
+        To = newUser.Email,
+        Subject = "Verify your email",
+        Body = $"Your verification link: {_configuration["AppUrl"]}/verify?verificationCode={verificationCode}"
+    });
+}
+```
 
 <!--#endif -->
 
