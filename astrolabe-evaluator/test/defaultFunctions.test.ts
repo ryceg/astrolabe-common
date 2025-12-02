@@ -1,37 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
-import { toNative } from "../src/ast";
+import {
+  evalExpr,
+  evalExprNative,
+  evalToArray,
+  evalWithErrors,
+} from "./testHelpers";
 
 /**
  * Comprehensive tests for all default functions in the TypeScript evaluator.
  * Tests the actual behavior and edge cases of each of the 37 default functions.
  */
-
-function evalExpr(expr: string, data: unknown = {}): unknown {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  return result.value;
-}
-
-function evalExprNative(expr: string, data: unknown = {}): unknown {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  return toNative(result);
-}
-
-function evalToArray(expr: string, data: unknown = {}): unknown[] {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  const nativeResult = toNative(result);
-  if (!Array.isArray(nativeResult)) {
-    throw new Error("Expected array result");
-  }
-  return nativeResult as unknown[];
-}
 
 describe("Mathematical Operations", () => {
   test("Addition with integers", () => {
@@ -523,6 +503,13 @@ describe("Array Mapping Functions", () => {
     });
     expect(result).toEqual([1, 2, 3]);
   });
+
+  test("FlatMap - preserves null values", () => {
+    const result = evalToArray("items . value", {
+      items: [{ value: 1 }, { value: null }, { value: 3 }],
+    });
+    expect(result).toEqual([1, null, 3]);
+  });
 });
 
 describe("String Functions", () => {
@@ -677,9 +664,9 @@ describe("Object Functions", () => {
   test("Merge - no arguments returns error", () => {
     const env = basicEnv({});
     const parsed = parseEval("$merge()");
-    const [nextEnv, result] = env.evaluate(parsed);
+    const { result, errors } = evalWithErrors(env, parsed);
     expect(result.value).toBeNull();
-    expect(nextEnv.errors.length).toBeGreaterThan(0);
+    expect(errors.length).toBeGreaterThan(0);
   });
 
   test("Merge - skips non-object arguments", () => {
@@ -826,5 +813,67 @@ describe("Let Expression Variable References", () => {
       "let $base := 5, $arr := $array($base, $base * 2, $base * 3) in $arr",
     );
     expect(result).toEqual([5, 10, 15]);
+  });
+});
+
+describe("Math Rounding Functions", () => {
+  test("Floor - positive double", () => {
+    const result = evalExpr("$floor(num)", { num: 3.7 });
+    expect(result).toBe(3);
+  });
+
+  test("Floor - negative double", () => {
+    const result = evalExpr("$floor(num)", { num: -3.7 });
+    expect(result).toBe(-4);
+  });
+
+  test("Floor - integer unchanged", () => {
+    const result = evalExpr("$floor(num)", { num: 5 });
+    expect(result).toBe(5);
+  });
+
+  test("Floor - zero", () => {
+    const result = evalExpr("$floor(num)", { num: 0.0 });
+    expect(result).toBe(0);
+  });
+
+  test("Floor - multiple returns null", () => {
+    const result = evalExpr("$floor(num1, num2)", { num1: 2.2, num2: 3.3 });
+    expect(result).toBeNull();
+  });
+
+  test("Floor - null returns null", () => {
+    const result = evalExpr("$floor(missing)", { num: null });
+    expect(result).toBeNull();
+  });
+
+  test("Ceil - positive double", () => {
+    const result = evalExpr("$ceil(num)", { num: 3.2 });
+    expect(result).toBe(4);
+  });
+
+  test("Ceil - negative double", () => {
+    const result = evalExpr("$ceil(num)", { num: -3.2 });
+    expect(result).toBe(-3);
+  });
+
+  test("Ceil - integer unchanged", () => {
+    const result = evalExpr("$ceil(num)", { num: 5 });
+    expect(result).toBe(5);
+  });
+
+  test("Ceil - zero", () => {
+    const result = evalExpr("$ceil(num)", { num: 0.0 });
+    expect(result).toBe(0);
+  });
+
+  test("Ceil - multiple returns null", () => {
+    const result = evalExpr("$ceil(num1, num2)", { num1: 2.2, num2: 3.3 });
+    expect(result).toBeNull();
+  });
+
+  test("Ceil - null returns null", () => {
+    const result = evalExpr("$ceil(missing)", {});
+    expect(result).toBeNull();
   });
 });
