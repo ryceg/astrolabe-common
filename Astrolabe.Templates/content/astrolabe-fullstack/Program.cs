@@ -29,7 +29,9 @@ builder.Services.AddScoped<TeaService>();
 
 //#if (IncludeLocalUsers)
 // Configure Local User Authentication
-builder.Services.AddSingleton<IPasswordHasher, SaltedSha256PasswordHasher>();
+var passwordSalt = builder.Configuration["Auth:PasswordSalt"]
+    ?? throw new InvalidOperationException("Auth:PasswordSalt is not configured. Run the setup script or add it to appsettings.json.");
+builder.Services.AddSingleton<IPasswordHasher>(new SaltedSha256PasswordHasher(passwordSalt));
 builder.Services.AddScoped<ILocalUserService<NewUser, Guid>, LocalUserService>();
 builder.Services.AddScoped<LocalUserService>();
 

@@ -144,6 +144,7 @@ public class SetupOrchestrator
     {
         var steps = new List<(string Name, Func<Task> Action)>
         {
+            ("Generating secrets", GenerateSecrets),
             ("Building backend", BuildBackend),
             ("Initializing Rush", InitializeRush),
             ("Generating TypeScript client", GenerateTypeScriptClient),
@@ -174,6 +175,37 @@ public class SetupOrchestrator
     }
 
     private string ClientAppPath => Path.Combine(_projectRoot, "ClientApp");
+
+    private Task GenerateSecrets()
+    {
+        var appSettingsPath = Path.Combine(_projectRoot, "appsettings.json");
+        if (!File.Exists(appSettingsPath))
+        {
+            Console.WriteLine("Warning: appsettings.json not found, skipping secret generation.");
+            return Task.CompletedTask;
+        }
+
+        var content = File.ReadAllText(appSettingsPath);
+
+        // Generate secrets only if placeholders exist
+        if (content.Contains("__PasswordSalt__") || content.Contains("__JwtKey__"))
+        {
+            var passwordSalt = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+            var jwtKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+
+            content = content.Replace("__PasswordSalt__", passwordSalt);
+            content = content.Replace("__JwtKey__", jwtKey);
+
+            File.WriteAllText(appSettingsPath, content);
+            Console.WriteLine("Generated secure password salt and JWT key.");
+        }
+        else
+        {
+            Console.WriteLine("Secrets already configured, skipping generation.");
+        }
+
+        return Task.CompletedTask;
+    }
 
     private async Task BuildBackend()
     {
