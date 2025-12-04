@@ -1,6 +1,6 @@
-//#if (IncludeDemoData || IncludeLocalUsers)
+#if IncludeDemoData || IncludeLocalUsers
 using AstrolabeApp.Models;
-//#endif
+#endif
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -12,19 +12,19 @@ public class AppDbContext : DbContext
     {
     }
 
-//#if (IncludeDemoData)
+#if IncludeDemoData
     public DbSet<Tea> Teas { get; set; }
-//#endif
+#endif
 
-//#if (IncludeLocalUsers)
+#if IncludeLocalUsers
     public DbSet<User> Users { get; set; }
-//#endif
+#endif
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-//#if (IncludeDemoData)
+#if IncludeDemoData
         // Configure Tea entity to use string conversion for enums
         modelBuilder.Entity<Tea>()
             .Property(t => t.Type)
@@ -33,9 +33,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Tea>()
             .Property(t => t.MilkAmount)
             .HasConversion<string>();
-//#endif
+#endif
 
-//#if (IncludeLocalUsers)
+#if IncludeLocalUsers
         // Configure User entity
         modelBuilder.Entity<User>(entity =>
         {
@@ -45,6 +45,6 @@ public class AppDbContext : DbContext
             entity.Property(u => u.LastName).HasMaxLength(100);
             entity.Property(u => u.MfaNumber).HasMaxLength(20);
         });
-//#endif
+#endif
     }
 }

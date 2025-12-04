@@ -1,31 +1,27 @@
 "use client";
 
 import { useLoginPage, LoginFormData } from "@astroapps/client-localusers";
-import { useSecurityService, useNavigationService } from "@astroapps/client";
+import {
+  useSecurityService,
+  useNavigationService,
+  useApiClient,
+  TokenSecurityService,
+} from "@astroapps/client";
 import { Finput } from "@react-typed-forms/core";
-import { config } from "../../config";
+import { UsersClient } from "client-common";
 
 export default function LoginPage() {
   const { push, Link } = useNavigationService();
-  const security = useSecurityService();
+  const security = useSecurityService<TokenSecurityService>();
+  const usersClient = useApiClient(UsersClient);
 
   const { control, authenticate } = useLoginPage(
     async (loginData: LoginFormData) => {
-      const response = await fetch(`${config.apiUrl}/api/users/authenticate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: loginData.username,
-          password: loginData.password,
-          rememberMe: loginData.rememberMe,
-        }),
+      const token = await usersClient.authenticate({
+        username: loginData.username,
+        password: loginData.password,
+        rememberMe: loginData.rememberMe,
       });
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      const token = await response.text();
 
       // Check if MFA is required
       if (token.startsWith("mfa:")) {
@@ -34,10 +30,7 @@ export default function LoginPage() {
       }
 
       // Update security service with logged-in user
-      security.currentUser.value = {
-        loggedIn: true,
-        accessToken: token,
-      };
+      await security.setToken(token);
     }
   );
 
@@ -69,7 +62,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 control={fields.username}
               />
@@ -85,7 +78,7 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 autoComplete="current-password"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 control={fields.password}
               />
@@ -100,7 +93,7 @@ export default function LoginPage() {
               <Finput
                 id="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 control={fields.rememberMe}
               />
               <label
@@ -114,7 +107,7 @@ export default function LoginPage() {
             <div className="text-sm">
               <Link
                 href="/forgotPassword"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-primary-600 hover:text-primary-500"
               >
                 Forgot your password?
               </Link>
@@ -128,7 +121,7 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               Sign in
             </button>
@@ -137,7 +130,7 @@ export default function LoginPage() {
           <div className="text-center">
             <Link
               href="/signup"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary-600 hover:text-primary-500"
             >
               Don't have an account? Sign up
             </Link>

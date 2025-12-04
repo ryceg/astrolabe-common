@@ -1,32 +1,20 @@
 "use client";
 
 import { useResetPasswordPage } from "@astroapps/client-localusers";
-import { useNavigationService } from "@astroapps/client";
+import { useNavigationService, useApiClient } from "@astroapps/client";
 import { Finput } from "@react-typed-forms/core";
-import { config } from "../../config";
+import { UsersClient } from "client-common";
 
 export default function ResetPasswordPage() {
   const { push, Link } = useNavigationService();
+  const usersClient = useApiClient(UsersClient);
 
   const { control, resetPassword } = useResetPasswordPage(
     async (resetCode: string, passwordData) => {
-      const response = await fetch(
-        `${config.apiUrl}/api/users/resetPassword?resetCode=${encodeURIComponent(resetCode)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            password: passwordData.password,
-            confirm: passwordData.confirm,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      return response.json();
+      await usersClient.resetPassword(resetCode, {
+        password: passwordData.password,
+        confirm: passwordData.confirm,
+      });
     }
   );
 
@@ -61,7 +49,7 @@ export default function ResetPasswordPage() {
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 control={fields.password}
               />
               {fields.password.error && (
@@ -82,7 +70,7 @@ export default function ResetPasswordPage() {
                 id="confirm"
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 control={fields.confirm}
               />
               {fields.confirm.error && (
@@ -100,7 +88,7 @@ export default function ResetPasswordPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               Reset Password
             </button>
@@ -109,7 +97,7 @@ export default function ResetPasswordPage() {
           <div className="text-center">
             <Link
               href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary-600 hover:text-primary-500"
             >
               Back to login
             </Link>

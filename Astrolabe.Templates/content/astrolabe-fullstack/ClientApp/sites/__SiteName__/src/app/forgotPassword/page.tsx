@@ -1,29 +1,19 @@
 "use client";
 
 import { useForgotPasswordPage } from "@astroapps/client-localusers";
-import { useNavigationService } from "@astroapps/client";
+import { useNavigationService, useApiClient } from "@astroapps/client";
 import { Finput } from "@react-typed-forms/core";
 import { useState } from "react";
-import { config } from "../../config";
+import { UsersClient } from "client-common";
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const { Link } = useNavigationService();
+  const usersClient = useApiClient(UsersClient);
 
   const { control, requestResetPassword } = useForgotPasswordPage(
     async (email: string) => {
-      const response = await fetch(
-        `${config.apiUrl}/api/users/forgotPassword?email=${encodeURIComponent(email)}`,
-        {
-          method: "POST",
-        }
-      );
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      return response.json();
+      await usersClient.forgotPassword(email);
     }
   );
 
@@ -52,7 +42,7 @@ export default function ForgotPasswordPage() {
           </div>
           <Link
             href="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
+            className="font-medium text-primary-600 hover:text-primary-500"
           >
             Return to login
           </Link>
@@ -82,7 +72,7 @@ export default function ForgotPasswordPage() {
               id="email"
               type="email"
               autoComplete="email"
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
               placeholder="Email address"
               control={fields.email}
             />
@@ -98,7 +88,7 @@ export default function ForgotPasswordPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               Send reset link
             </button>
@@ -107,7 +97,7 @@ export default function ForgotPasswordPage() {
           <div className="text-center">
             <Link
               href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary-600 hover:text-primary-500"
             >
               Back to login
             </Link>

@@ -8,12 +8,10 @@ export default function LogoutPage() {
   const security = useSecurityService();
 
   useEffect(() => {
-    // Clear the security state for local users
-    security.currentUser.value = {
-      loggedIn: false,
-      accessToken: undefined,
-    };
-    push("/login");
+    // Clear the security state using the logout method
+    security.logout().then(() => {
+      push("/login");
+    });
   }, []);
 
   return (

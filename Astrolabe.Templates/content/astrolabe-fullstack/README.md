@@ -211,9 +211,24 @@ Configure JWT settings in `appsettings.json`:
 
 ⚠️ **Important**: Change the JWT key for production! Use environment variables or Azure Key Vault for secrets.
 
-### Email Service Integration
+### Development: Email Verification
 
-The template logs verification codes and reset links to the console in development. For production, implement email sending in `LocalUserService.cs`:
+In development mode, verification codes are logged to the backend console instead of being emailed. After signing up:
+
+1. Check the backend console for the verification code:
+
+   ```
+   info: YourProject.Services.LocalUserService[0]
+         Verification email for user@example.com: abc123-verification-code
+   ```
+
+2. Navigate to `/verify?verificationCode=abc123-verification-code` to verify your email
+
+3. Alternatively, after signup you'll be redirected to the verify page where you can enter the code manually
+
+### Email Service Integration (Production)
+
+For production, implement email sending in `LocalUserService.cs`:
 
 ```csharp
 protected override async Task SendVerificationEmail(NewUser newUser, string verificationCode)

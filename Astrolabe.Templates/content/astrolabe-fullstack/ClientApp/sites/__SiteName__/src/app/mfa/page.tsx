@@ -1,45 +1,36 @@
 "use client";
 
 import { useMfaPage, MfaFormData } from "@astroapps/client-localusers";
-import { useNavigationService, useSecurityService } from "@astroapps/client";
+import {
+  useNavigationService,
+  useSecurityService,
+  useApiClient,
+  TokenSecurityService,
+} from "@astroapps/client";
 import { Finput } from "@react-typed-forms/core";
-import { config } from "../../config";
+import { UsersClient } from "client-common";
 
 export default function MfaPage() {
   const { push } = useNavigationService();
-  const security = useSecurityService();
+  const security = useSecurityService<TokenSecurityService>();
+  const usersClient = useApiClient(UsersClient);
 
   const { control, authenticate, send } = useMfaPage(
     async (mfaData: MfaFormData) => {
-      const response = await fetch(`${config.apiUrl}/api/users/mfaAuthenticate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mfaData),
+      const token = await usersClient.mfaAuthenticate({
+        token: mfaData.token,
+        code: mfaData.code,
+        number: mfaData.number,
       });
 
-      if (!response.ok) {
-        throw response;
-      }
-
-      const token = await response.text();
-
-      security.currentUser.value = {
-        loggedIn: true,
-        accessToken: token,
-      };
+      await security.setToken(token);
     },
     async (mfaData: MfaFormData) => {
-      const response = await fetch(`${config.apiUrl}/api/users/mfaCode/authenticate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: mfaData.token }),
+      await usersClient.sendMfaCode({
+        token: mfaData.token,
+        updateNumber: mfaData.updateNumber,
+        number: mfaData.number,
       });
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      return response.json();
     }
   );
 
@@ -80,7 +71,7 @@ export default function MfaPage() {
               id="code"
               type="text"
               autoComplete="one-time-code"
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-center text-2xl tracking-widest"
+              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-center text-2xl tracking-widest"
               placeholder="000000"
               control={fields.code}
               maxLength={6}
@@ -99,7 +90,7 @@ export default function MfaPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               Verify
             </button>
@@ -109,7 +100,7 @@ export default function MfaPage() {
             <button
               type="button"
               onClick={handleResendCode}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary-600 hover:text-primary-500"
             >
               Resend code
             </button>

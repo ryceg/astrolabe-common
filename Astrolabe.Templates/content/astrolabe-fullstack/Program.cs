@@ -3,34 +3,38 @@ using Astrolabe.JSON.Extensions;
 using Astrolabe.Web.Common;
 using AstrolabeApp.Data.EF;
 using AstrolabeApp.Exceptions;
-//#if (IncludeDemoData || IncludeLocalUsers)
-using AstrolabeApp.Models;
-//#endif
 using AstrolabeApp.Services;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-//#if (IncludeOrleans)
+#if (IncludeDemoData || IncludeLocalUsers)
+using AstrolabeApp.Models;
+#endif
+
+#if (IncludeOrleans)
 using Orleans.Configuration;
-//#endif
-//#if (IncludeLocalUsers)
+#endif
+#if (IncludeLocalUsers)
 using System.Text;
 using Astrolabe.LocalUsers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-//#endif
+#endif
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<FormService>();
-//#if (IncludeDemoData)
+#if (IncludeDemoData)
 builder.Services.AddScoped<TeaService>();
-//#endif
+#endif
 
-//#if (IncludeLocalUsers)
+#if (IncludeLocalUsers)
 // Configure Local User Authentication
-var passwordSalt = builder.Configuration["Auth:PasswordSalt"]
-    ?? throw new InvalidOperationException("Auth:PasswordSalt is not configured. Run the setup script or add it to appsettings.json.");
+var passwordSalt =
+    builder.Configuration["Auth:PasswordSalt"]
+    ?? throw new InvalidOperationException(
+        "Auth:PasswordSalt is not configured. Run the setup script or add it to appsettings.json."
+    );
 builder.Services.AddSingleton<IPasswordHasher>(new SaltedSha256PasswordHasher(passwordSalt));
 builder.Services.AddScoped<ILocalUserService<NewUser, Guid>, LocalUserService>();
 builder.Services.AddScoped<LocalUserService>();
@@ -40,27 +44,28 @@ var jwtKey = builder.Configuration["Jwt:Key"] ?? "DefaultDevKeyThatShouldBeChang
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AstrolabeApp";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AstrolabeApp";
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+builder
+    .Services.AddAuthentication(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-    };
-});
-//#endif
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        };
+    });
+#endif
 
-//#if (IncludeOrleans)
+#if (IncludeOrleans)
 // Configure Orleans Silo
 builder.Host.UseOrleans(siloBuilder =>
 {
@@ -72,7 +77,7 @@ builder.Host.UseOrleans(siloBuilder =>
         options.ServiceId = "AstrolabeApp";
     });
 });
-//#endif
+#endif
 
 // Add exception handling
 builder.Services.AddExceptionHandler<ExceptionHandler>();
@@ -130,9 +135,9 @@ else
 }
 
 app.UseRouting();
-//#if (IncludeLocalUsers)
+#if (IncludeLocalUsers)
 app.UseAuthentication();
-//#endif
+#endif
 app.UseAuthorization();
 #pragma warning disable ASP0014 // Suggest using top level route registrations instead of UseEndpoints
 app.UseEndpoints(e => e.MapControllers());
@@ -160,11 +165,11 @@ using (var scope = app.Services.CreateScope())
         await db.Database.MigrateAsync();
         Console.WriteLine("Database migrations applied successfully.");
 
-        //#if (IncludeDemoData)
+#if (IncludeDemoData)
         // Seed database with initial data
         await AstrolabeApp.Data.DbSeeder.SeedAsync(db);
         Console.WriteLine("Database seeding completed.");
-        //#endif
+#endif
     }
     catch (Exception e)
     {

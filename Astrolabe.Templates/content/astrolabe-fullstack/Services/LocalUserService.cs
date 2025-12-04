@@ -21,7 +21,8 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
         IConfiguration configuration,
         IPasswordHasher passwordHasher,
         ILogger<LocalUserService> logger,
-        LocalUserMessages? messages = null)
+        LocalUserMessages? messages = null
+    )
         : base(passwordHasher, messages)
     {
         _context = context;
@@ -36,7 +37,8 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
         _logger.LogInformation(
             "Verification email for {Email}: {VerificationCode}",
             newUser.Email,
-            verificationCode);
+            verificationCode
+        );
 
         // Example implementation with an email service:
         // await _emailService.SendEmail(new EmailMessage
@@ -52,7 +54,8 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
     protected override async Task CreateUnverifiedAccount(
         NewUser newUser,
         string hashedPassword,
-        string verificationCode)
+        string verificationCode
+    )
     {
         var user = new User
         {
@@ -63,7 +66,7 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
             HashedPassword = hashedPassword,
             VerificationCode = verificationCode,
             EmailVerified = false,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         _context.Users.Add(user);
@@ -77,10 +80,10 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
 
     protected override async Task<string?> VerifyAccountCode(string code)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.VerificationCode == code);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.VerificationCode == code);
 
-        if (user == null) return null;
+        if (user == null)
+            return null;
 
         user.EmailVerified = true;
         user.VerificationCode = null;
@@ -89,16 +92,19 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
         return GenerateToken(user);
     }
 
-    protected override async Task<string?> MfaVerifyAccountForUserId(MfaAuthenticateRequest mfaAuthenticateRequest)
+    protected override async Task<string?> MfaVerifyAccountForUserId(
+        MfaAuthenticateRequest mfaAuthenticateRequest
+    )
     {
         // Find user by token (in this case, we use email stored in token during signup)
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == mfaAuthenticateRequest.Token);
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Email == mfaAuthenticateRequest.Token
+        );
 
-        if (user == null) return null;
+        if (user == null)
+            return null;
 
-        if (user.MfaCode != mfaAuthenticateRequest.Code ||
-            user.MfaCodeExpiry < DateTime.UtcNow)
+        if (user.MfaCode != mfaAuthenticateRequest.Code || user.MfaCodeExpiry < DateTime.UtcNow)
             return null;
 
         user.MfaCode = null;
@@ -111,14 +117,16 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
 
     protected override async Task<string?> AuthenticatedHashed(
         AuthenticateRequest authenticateRequest,
-        string hashedPassword)
+        string hashedPassword
+    )
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u =>
-                u.Email == authenticateRequest.Username.ToLowerInvariant() &&
-                u.HashedPassword == hashedPassword);
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Email == authenticateRequest.Username.ToLowerInvariant()
+            && u.HashedPassword == hashedPassword
+        );
 
-        if (user == null || !user.EmailVerified) return null;
+        if (user == null || !user.EmailVerified)
+            return null;
 
         // Check if MFA is required
         if (!string.IsNullOrEmpty(user.MfaNumber))
@@ -136,10 +144,12 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
 
     protected override async Task<bool> SendCode(MfaCodeRequest mfaCodeRequest)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == mfaCodeRequest.Token.ToLowerInvariant());
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Email == mfaCodeRequest.Token.ToLowerInvariant()
+        );
 
-        if (user == null || string.IsNullOrEmpty(user.MfaNumber)) return false;
+        if (user == null || string.IsNullOrEmpty(user.MfaNumber))
+            return false;
 
         var code = GenerateMfaCode();
         user.MfaCode = code;
@@ -155,10 +165,12 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
     protected override async Task<bool> SendCode(Guid userId, string? number = null)
     {
         var user = await _context.Users.FindAsync(userId);
-        if (user == null) return false;
+        if (user == null)
+            return false;
 
         var phoneNumber = number ?? user.MfaNumber;
-        if (string.IsNullOrEmpty(phoneNumber)) return false;
+        if (string.IsNullOrEmpty(phoneNumber))
+            return false;
 
         var code = GenerateMfaCode();
         user.MfaCode = code;
@@ -173,10 +185,12 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
 
     protected override async Task<string?> VerifyMfaCode(string token, string code, string? number)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == token.ToLowerInvariant());
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Email == token.ToLowerInvariant()
+        );
 
-        if (user == null) return null;
+        if (user == null)
+            return null;
 
         if (user.MfaCode != code || user.MfaCodeExpiry < DateTime.UtcNow)
             return null;
@@ -192,7 +206,8 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
     protected override async Task<bool> VerifyMfaCode(Guid userId, string code, string? number)
     {
         var user = await _context.Users.FindAsync(userId);
-        if (user == null) return false;
+        if (user == null)
+            return false;
 
         if (user.MfaCode != code || user.MfaCodeExpiry < DateTime.UtcNow)
             return false;
@@ -206,7 +221,9 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
 
     protected override async Task SetResetCodeAndEmail(string email, string resetCode)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email.ToLowerInvariant());
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Email == email.ToLowerInvariant()
+        );
 
         if (user != null)
         {
@@ -215,24 +232,26 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
             await _context.SaveChangesAsync();
 
             // TODO: Send password reset email
-            _logger.LogInformation(
-                "Password reset for {Email}: {ResetCode}",
-                email,
-                resetCode);
+            _logger.LogInformation("Password reset for {Email}: {ResetCode}", email, resetCode);
         }
     }
 
     protected override async Task<bool> EmailChangeForUserId(
         Guid userId,
         string hashedPassword,
-        string newEmail)
+        string newEmail
+    )
     {
         var user = await _context.Users.FindAsync(userId);
-        if (user == null || user.HashedPassword != hashedPassword) return false;
+        if (user == null || user.HashedPassword != hashedPassword)
+            return false;
 
         // Check if new email already exists
-        var existingEmail = await _context.Users.AnyAsync(u => u.Email == newEmail.ToLowerInvariant() && u.Id != userId);
-        if (existingEmail) return false;
+        var existingEmail = await _context.Users.AnyAsync(u =>
+            u.Email == newEmail.ToLowerInvariant() && u.Id != userId
+        );
+        if (existingEmail)
+            return false;
 
         user.Email = newEmail.ToLowerInvariant();
         await _context.SaveChangesAsync();
@@ -242,7 +261,8 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
 
     protected override async Task<(bool, Func<string, Task<string>>?)> PasswordChangeForUserId(
         Guid userId,
-        string oldHashedPassword)
+        string oldHashedPassword
+    )
     {
         var user = await _context.Users.FindAsync(userId);
 
@@ -251,20 +271,25 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
 
         var passwordOk = user.HashedPassword == oldHashedPassword;
 
-        return (passwordOk, async (newHashedPassword) =>
-        {
-            user.HashedPassword = newHashedPassword;
-            await _context.SaveChangesAsync();
-            return GenerateToken(user);
-        });
+        return (
+            passwordOk,
+            async (newHashedPassword) =>
+            {
+                user.HashedPassword = newHashedPassword;
+                await _context.SaveChangesAsync();
+                return GenerateToken(user);
+            }
+        );
     }
 
     protected override async Task<Func<string, Task>?> PasswordResetForResetCode(string resetCode)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.ResetCode == resetCode && u.ResetCodeExpiry > DateTime.UtcNow);
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.ResetCode == resetCode && u.ResetCodeExpiry > DateTime.UtcNow
+        );
 
-        if (user == null) return null;
+        if (user == null)
+            return null;
 
         return async (newHashedPassword) =>
         {
@@ -278,10 +303,12 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
     protected override async Task<bool> ChangeMfaNumberForUserId(
         Guid userId,
         string hashedPassword,
-        string newNumber)
+        string newNumber
+    )
     {
         var user = await _context.Users.FindAsync(userId);
-        if (user == null || user.HashedPassword != hashedPassword) return false;
+        if (user == null || user.HashedPassword != hashedPassword)
+            return false;
 
         user.MfaNumber = newNumber;
         await _context.SaveChangesAsync();
@@ -304,7 +331,7 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}".Trim()),
             new Claim("firstName", user.FirstName),
-            new Claim("lastName", user.LastName)
+            new Claim("lastName", user.LastName),
         };
 
         var token = new JwtSecurityToken(
@@ -312,7 +339,8 @@ public class LocalUserService : AbstractLocalUserService<NewUser, Guid>
             audience: audience,
             claims: claims,
             expires: DateTime.UtcNow.AddHours(24),
-            signingCredentials: credentials);
+            signingCredentials: credentials
+        );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

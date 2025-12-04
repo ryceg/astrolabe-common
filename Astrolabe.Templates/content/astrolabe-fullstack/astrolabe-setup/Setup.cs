@@ -3,20 +3,23 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-
-
 Console.WriteLine("Initializing setup...");
 Console.Out.Flush();
 
 // When running with "dotnet run Setup.cs", we need to find setup-config.json
 // It will be in the same directory as Setup.cs
-var scriptDirectory = Path.GetDirectoryName(typeof(Program).Assembly.Location) ?? Directory.GetCurrentDirectory();
+var scriptDirectory =
+    Path.GetDirectoryName(typeof(Program).Assembly.Location) ?? Directory.GetCurrentDirectory();
 var configPath = Path.Combine(scriptDirectory, "setup-config.json");
 
 if (!File.Exists(configPath))
 {
     // Try relative to the current working directory (running from project root)
-    configPath = Path.Combine(Directory.GetCurrentDirectory(), "astrolabe-setup", "setup-config.json");
+    configPath = Path.Combine(
+        Directory.GetCurrentDirectory(),
+        "astrolabe-setup",
+        "setup-config.json"
+    );
 }
 
 if (!File.Exists(configPath))
@@ -30,8 +33,12 @@ if (!File.Exists(configPath))
     Console.Error.WriteLine($"Setup failed: Could not find setup-config.json");
     Console.Error.WriteLine($"Searched in:");
     Console.Error.WriteLine($"  - {Path.Combine(scriptDirectory, "setup-config.json")}");
-    Console.Error.WriteLine($"  - {Path.Combine(Directory.GetCurrentDirectory(), "astrolabe-setup", "setup-config.json")}");
-    Console.Error.WriteLine($"  - {Path.Combine(Directory.GetCurrentDirectory(), "setup-config.json")}");
+    Console.Error.WriteLine(
+        $"  - {Path.Combine(Directory.GetCurrentDirectory(), "astrolabe-setup", "setup-config.json")}"
+    );
+    Console.Error.WriteLine(
+        $"  - {Path.Combine(Directory.GetCurrentDirectory(), "setup-config.json")}"
+    );
     return 1;
 }
 
@@ -54,6 +61,9 @@ try
 
     // Remove setup instructions from README.md to indicate setup is complete
     RemoveSetupInstructionsFromReadme();
+
+    // Delete the astrolabe-setup folder
+    DeleteSetupFolder();
 }
 catch (Exception ex)
 {
@@ -63,13 +73,78 @@ catch (Exception ex)
 
 Console.WriteLine("Setup completed successfully.");
 
+void DeleteSetupFolder()
+{
+    // Find project root and setup folder
+    var currentDir = Directory.GetCurrentDirectory();
+    var projectRoot =
+        Path.GetFileName(currentDir) == "astrolabe-setup"
+            ? Path.GetDirectoryName(currentDir) ?? currentDir
+            : currentDir;
+
+    var setupFolder = Path.Combine(projectRoot, "astrolabe-setup");
+
+    if (!Directory.Exists(setupFolder))
+    {
+        return;
+    }
+
+    // Change to project root so we're not inside the folder we're deleting
+    Directory.SetCurrentDirectory(projectRoot);
+
+    try
+    {
+        // Try direct deletion first (works on Unix, may work on Windows if files aren't locked)
+        Directory.Delete(setupFolder, recursive: true);
+        Console.WriteLine("✓ Removed astrolabe-setup folder");
+    }
+    catch (UnauthorizedAccessException) when (OperatingSystem.IsWindows())
+    {
+        // On Windows, the running process locks its DLLs - schedule deletion after exit
+        ScheduleWindowsDeletion(projectRoot, setupFolder);
+    }
+    catch (IOException) when (OperatingSystem.IsWindows())
+    {
+        // File is in use - schedule deletion after exit
+        ScheduleWindowsDeletion(projectRoot, setupFolder);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Note: Could not remove setup folder: {ex.Message}");
+        Console.WriteLine("You can manually delete the 'astrolabe-setup' folder.");
+    }
+}
+
+void ScheduleWindowsDeletion(string projectRoot, string setupFolder)
+{
+    try
+    {
+        // Use cmd /c start /min to run cleanup in background after this process exits
+        var psi = new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c ping 127.0.0.1 -n 2 >nul & rmdir /s /q \"{setupFolder}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = projectRoot,
+        };
+        Process.Start(psi);
+        Console.WriteLine("✓ Setup folder will be removed shortly");
+    }
+    catch
+    {
+        Console.WriteLine("Note: You can manually delete the 'astrolabe-setup' folder.");
+    }
+}
+
 void RemoveSetupInstructionsFromReadme()
 {
     // Find project root (go up from astrolabe-setup if needed)
     var currentDir = Directory.GetCurrentDirectory();
-    var projectRoot = Path.GetFileName(currentDir) == "astrolabe-setup"
-        ? Path.GetDirectoryName(currentDir) ?? currentDir
-        : currentDir;
+    var projectRoot =
+        Path.GetFileName(currentDir) == "astrolabe-setup"
+            ? Path.GetDirectoryName(currentDir) ?? currentDir
+            : currentDir;
 
     var readmePath = Path.Combine(projectRoot, "README.md");
 
@@ -92,7 +167,10 @@ void RemoveSetupInstructionsFromReadme()
         {
             // Remove the section including markers and any trailing newlines
             var endOfSection = endIndex + endMarker.Length;
-            while (endOfSection < content.Length && (content[endOfSection] == '\r' || content[endOfSection] == '\n'))
+            while (
+                endOfSection < content.Length
+                && (content[endOfSection] == '\r' || content[endOfSection] == '\n')
+            )
             {
                 endOfSection++;
             }
@@ -135,9 +213,10 @@ public class SetupOrchestrator
         _config = config;
         // If we're running from astrolabe-setup folder, go up one level to project root
         var currentDir = Directory.GetCurrentDirectory();
-        _projectRoot = Path.GetFileName(currentDir) == "astrolabe-setup"
-            ? Path.GetDirectoryName(currentDir) ?? currentDir
-            : currentDir;
+        _projectRoot =
+            Path.GetFileName(currentDir) == "astrolabe-setup"
+                ? Path.GetDirectoryName(currentDir) ?? currentDir
+                : currentDir;
     }
 
     public async Task RunSetup()
@@ -148,7 +227,7 @@ public class SetupOrchestrator
             ("Building backend", BuildBackend),
             ("Initializing Rush", InitializeRush),
             ("Generating TypeScript client", GenerateTypeScriptClient),
-            ("Installing frontend dependencies", InstallFrontendDependencies)
+            ("Installing frontend dependencies", InstallFrontendDependencies),
         };
 
         if (_config.IncludeDemoData)
@@ -190,8 +269,12 @@ public class SetupOrchestrator
         // Generate secrets only if placeholders exist
         if (content.Contains("__PasswordSalt__") || content.Contains("__JwtKey__"))
         {
-            var passwordSalt = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
-            var jwtKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+            var passwordSalt = Convert.ToBase64String(
+                System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)
+            );
+            var jwtKey = Convert.ToBase64String(
+                System.Security.Cryptography.RandomNumberGenerator.GetBytes(64)
+            );
 
             content = content.Replace("__PasswordSalt__", passwordSalt);
             content = content.Replace("__JwtKey__", jwtKey);
@@ -289,11 +372,13 @@ public class SetupOrchestrator
             // Use BeginOutputReadLine/BeginErrorReadLine instead of Task.Run to avoid hanging
             process.OutputDataReceived += (sender, e) =>
             {
-                if (e.Data != null) Console.WriteLine($"[Backend] {e.Data}");
+                if (e.Data != null)
+                    Console.WriteLine($"[Backend] {e.Data}");
             };
             process.ErrorDataReceived += (sender, e) =>
             {
-                if (e.Data != null) Console.Error.WriteLine($"[Backend Error] {e.Data}");
+                if (e.Data != null)
+                    Console.Error.WriteLine($"[Backend Error] {e.Data}");
             };
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
@@ -312,7 +397,9 @@ public class SetupOrchestrator
         {
             if (backendProcess != null && backendProcess.HasExited)
             {
-                throw new Exception($"Backend process exited unexpectedly with code {backendProcess.ExitCode}");
+                throw new Exception(
+                    $"Backend process exited unexpectedly with code {backendProcess.ExitCode}"
+                );
             }
 
             try
@@ -374,11 +461,13 @@ public class SetupOrchestrator
         // Use BeginOutputReadLine/BeginErrorReadLine instead of Task.Run to avoid hanging
         process.OutputDataReceived += (sender, e) =>
         {
-            if (e.Data != null) Console.WriteLine(e.Data);
+            if (e.Data != null)
+                Console.WriteLine(e.Data);
         };
         process.ErrorDataReceived += (sender, e) =>
         {
-            if (e.Data != null) Console.Error.WriteLine(e.Data);
+            if (e.Data != null)
+                Console.Error.WriteLine(e.Data);
         };
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
@@ -399,8 +488,4 @@ public class SetupOrchestrator
     PropertyNameCaseInsensitive = true,
     NumberHandling = JsonNumberHandling.AllowReadingFromString
 )]
-internal partial class SetupConfigJsonContext : JsonSerializerContext
-{
-}
-
-
+internal partial class SetupConfigJsonContext : JsonSerializerContext { }

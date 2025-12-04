@@ -1,9 +1,9 @@
 "use client";
 
 import { useSignupPage, SignupFormData } from "@astroapps/client-localusers";
-import { useNavigationService } from "@astroapps/client";
+import { useNavigationService, useApiClient } from "@astroapps/client";
 import { Finput } from "@react-typed-forms/core";
-import { config } from "../../config";
+import { UsersClient } from "client-common";
 
 interface ExtendedSignupForm extends SignupFormData {
   firstName: string;
@@ -20,21 +20,18 @@ const emptyExtendedSignupForm: ExtendedSignupForm = {
 
 export default function SignupPage() {
   const { push, Link } = useNavigationService();
+  const usersClient = useApiClient(UsersClient);
 
   const { control, createAccount } = useSignupPage(
     emptyExtendedSignupForm,
     async (signupData: ExtendedSignupForm) => {
-      const response = await fetch(`${config.apiUrl}/api/users/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signupData),
+      await usersClient.createAccount({
+        email: signupData.email,
+        password: signupData.password,
+        confirm: signupData.confirm,
+        firstName: signupData.firstName,
+        lastName: signupData.lastName,
       });
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      return response.json();
     }
   );
 
@@ -44,7 +41,13 @@ export default function SignupPage() {
     e.preventDefault();
     const success = await createAccount();
     if (success) {
-      push("/login?message=Account created! Please check your email to verify.");
+      // In development, redirect to verify page since emails are logged to console
+      // In production, redirect to login with a message to check email
+      if (process.env.NODE_ENV === "development") {
+        push("/verify?email=" + encodeURIComponent(fields.email.value));
+      } else {
+        push("/login?message=Account created! Please check your email to verify.");
+      }
     }
   };
 
@@ -67,7 +70,7 @@ export default function SignupPage() {
                   id="firstName"
                   type="text"
                   autoComplete="given-name"
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                   control={fields.firstName}
                 />
               </div>
@@ -79,7 +82,7 @@ export default function SignupPage() {
                   id="lastName"
                   type="text"
                   autoComplete="family-name"
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                   control={fields.lastName}
                 />
               </div>
@@ -93,7 +96,7 @@ export default function SignupPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 control={fields.email}
               />
               {fields.email.error && (
@@ -109,7 +112,7 @@ export default function SignupPage() {
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 control={fields.password}
               />
               {fields.password.error && (
@@ -125,7 +128,7 @@ export default function SignupPage() {
                 id="confirm"
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 control={fields.confirm}
               />
               {fields.confirm.error && (
@@ -141,7 +144,7 @@ export default function SignupPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               Create account
             </button>
@@ -150,7 +153,7 @@ export default function SignupPage() {
           <div className="text-center">
             <Link
               href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary-600 hover:text-primary-500"
             >
               Already have an account? Sign in
             </Link>

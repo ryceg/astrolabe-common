@@ -6,7 +6,7 @@ export default function Home() {
   const { Link } = useNavigationService();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+    <div className="flex flex-col items-center justify-center p-8 md:p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
         <h1 className="text-4xl font-bold mb-8">Welcome to AstrolabeApp</h1>
         <p className="mb-8">__Description__</p>
@@ -69,6 +69,6 @@ export default function Home() {
           #endif*/}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
