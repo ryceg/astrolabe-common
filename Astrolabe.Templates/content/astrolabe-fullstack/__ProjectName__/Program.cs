@@ -6,7 +6,7 @@ using AstrolabeApp.Exceptions;
 using AstrolabeApp.Services;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 #if (IncludeDemoData || IncludeLocalUsers)
 using AstrolabeApp.Models;
@@ -23,6 +23,49 @@ using Microsoft.IdentityModel.Tokens;
 #endif
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Find solution root for appsettings.json
+// The solution structure is:
+// SolutionRoot/
+//   appsettings.json
+//   ProjectName/
+//     Program.cs (this file)
+var currentDir = Directory.GetCurrentDirectory();
+var solutionRoot = currentDir;
+
+// If appsettings.json exists in parent directory, use that as solution root
+var parentDir = Path.GetDirectoryName(currentDir);
+if (parentDir != null && File.Exists(Path.Combine(parentDir, "appsettings.json")))
+{
+    solutionRoot = parentDir;
+}
+
+// Add appsettings.json from solution root if not already added
+var appSettingsPath = Path.Combine(solutionRoot, "appsettings.json");
+if (File.Exists(appSettingsPath))
+{
+    builder.Configuration.AddJsonFile(
+        appSettingsPath,
+        optional: false,
+        reloadOnChange: true
+    );
+
+    var envAppSettingsPath = Path.Combine(solutionRoot, $"appsettings.{builder.Environment.EnvironmentName}.json");
+    if (File.Exists(envAppSettingsPath))
+    {
+        builder.Configuration.AddJsonFile(
+            envAppSettingsPath,
+            optional: true,
+            reloadOnChange: true
+        );
+    }
+}
+
+#if (IncludeAspire)
+// Add Aspire service defaults (OpenTelemetry, health checks, resilience)
+builder.AddServiceDefaults();
+#endif
+
 builder.Services.AddSingleton<FormService>();
 #if (IncludeDemoData)
 builder.Services.AddScoped<TeaService>();
@@ -107,6 +150,10 @@ builder.Services.AddSwaggerGen(c =>
     c.UseAllOfToExtendReferenceSchemas();
 });
 
+#if (IncludeAspire)
+// Aspire manages connection string injection
+builder.AddSqlServerDbContext<AppDbContext>("Default");
+#else
 builder.Services.AddDbContext<AppDbContext>(op =>
     op.UseSqlServer(
         builder.Configuration.GetConnectionString("Default"),
@@ -118,6 +165,7 @@ builder.Services.AddDbContext<AppDbContext>(op =>
             )
     )
 );
+#endif
 
 var app = builder.Build();
 
@@ -142,6 +190,10 @@ app.UseAuthorization();
 #pragma warning disable ASP0014 // Suggest using top level route registrations instead of UseEndpoints
 app.UseEndpoints(e => e.MapControllers());
 #pragma warning restore ASP0014
+
+#if (IncludeAspire)
+app.MapDefaultEndpoints(); // Health check endpoints
+#endif
 
 if (app.Environment.IsDevelopment())
 {

@@ -76,22 +76,31 @@ Console.WriteLine("Setup completed successfully.");
 
 void DeleteSetupFolder()
 {
-    // Find project root and setup folder
+    // Find solution root and setup folder
+    // Setup is now in __ProjectName__/astrolabe-setup
     var currentDir = Directory.GetCurrentDirectory();
-    var projectRoot =
+
+    // If we're in astrolabe-setup, go up to __ProjectName__
+    var apiProjectRoot =
         Path.GetFileName(currentDir) == "astrolabe-setup"
             ? Path.GetDirectoryName(currentDir) ?? currentDir
             : currentDir;
 
-    var setupFolder = Path.Combine(projectRoot, "astrolabe-setup");
+    // If we're in __ProjectName__, the solution root is one level up
+    var solutionRoot =
+        Directory.GetFiles(apiProjectRoot, "__ProjectName__.csproj").Length > 0
+            ? Path.GetDirectoryName(apiProjectRoot) ?? apiProjectRoot
+            : apiProjectRoot;
+
+    var setupFolder = Path.Combine(solutionRoot, "__ProjectName__", "astrolabe-setup");
 
     if (!Directory.Exists(setupFolder))
     {
         return;
     }
 
-    // Change to project root so we're not inside the folder we're deleting
-    Directory.SetCurrentDirectory(projectRoot);
+    // Change to solution root so we're not inside the folder we're deleting
+    Directory.SetCurrentDirectory(solutionRoot);
 
     try
     {
@@ -140,14 +149,21 @@ void ScheduleWindowsDeletion(string projectRoot, string setupFolder)
 
 void RemoveSetupInstructionsFromReadme()
 {
-    // Find project root (go up from astrolabe-setup if needed)
+    // README is now in __ProjectName__/ directory
     var currentDir = Directory.GetCurrentDirectory();
-    var projectRoot =
+
+    // If we're in astrolabe-setup, go up to __ProjectName__
+    var apiProjectRoot =
         Path.GetFileName(currentDir) == "astrolabe-setup"
             ? Path.GetDirectoryName(currentDir) ?? currentDir
             : currentDir;
 
-    var readmePath = Path.Combine(projectRoot, "README.md");
+    // If we're in solution root, look in __ProjectName__/
+    var readmePath = Path.Combine(apiProjectRoot, "README.md");
+    if (!File.Exists(readmePath))
+    {
+        readmePath = Path.Combine(apiProjectRoot, "__ProjectName__", "README.md");
+    }
 
     if (!File.Exists(readmePath))
     {
@@ -202,6 +218,7 @@ public class SetupConfig
     public string SiteName { get; set; } = "";
     public bool IncludeDemoData { get; set; }
     public bool IncludeOrleans { get; set; }
+    public bool IncludeAspire { get; set; }
 }
 
 public class SetupOrchestrator
@@ -212,12 +229,27 @@ public class SetupOrchestrator
     public SetupOrchestrator(SetupConfig config)
     {
         _config = config;
-        // If we're running from astrolabe-setup folder, go up one level to project root
+        // Find solution root
+        // If running from astrolabe-setup, go up to __ProjectName__, then to solution root
         var currentDir = Directory.GetCurrentDirectory();
-        _projectRoot =
-            Path.GetFileName(currentDir) == "astrolabe-setup"
-                ? Path.GetDirectoryName(currentDir) ?? currentDir
-                : currentDir;
+
+        if (Path.GetFileName(currentDir) == "astrolabe-setup")
+        {
+            // Go up one level to __ProjectName__
+            var apiProjectRoot = Path.GetDirectoryName(currentDir) ?? currentDir;
+            // Go up one more level to solution root
+            _projectRoot = Path.GetDirectoryName(apiProjectRoot) ?? apiProjectRoot;
+        }
+        else if (Directory.GetFiles(currentDir, "*.csproj").Length > 0)
+        {
+            // We're in __ProjectName__ directory, go up to solution root
+            _projectRoot = Path.GetDirectoryName(currentDir) ?? currentDir;
+        }
+        else
+        {
+            // Assume we're already at solution root
+            _projectRoot = currentDir;
+        }
     }
 
     public async Task RunSetup()
@@ -294,7 +326,9 @@ public class SetupOrchestrator
 
     private async Task BuildBackend()
     {
-        await RunCommand("dotnet", "build", _projectRoot);
+        // Build the API project from solution root
+        var apiProjectPath = Path.Combine(_projectRoot, _config.ProjectName);
+        await RunCommand("dotnet", $"build \"{apiProjectPath}\"", _projectRoot);
     }
 
     private async Task InitializeRush()
@@ -474,11 +508,13 @@ public class SetupOrchestrator
 
     private Process? StartBackendProcess()
     {
+        // Run the API project from the nested __ProjectName__ directory
+        var apiProjectPath = Path.Combine(_projectRoot, _config.ProjectName);
         var processStartInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
             Arguments = "run",
-            WorkingDirectory = _projectRoot,
+            WorkingDirectory = apiProjectPath,
             UseShellExecute = false,
             CreateNoWindow = false,
             RedirectStandardOutput = true,

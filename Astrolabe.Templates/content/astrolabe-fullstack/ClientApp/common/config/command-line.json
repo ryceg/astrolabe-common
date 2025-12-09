@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
+  "commands": [
+    {
+      "commandKind": "global",
+      "name": "start",
+      "summary": "Start the frontend dev server",
+      "description": "Runs the frontend site dev server. Used by Aspire AppHost for orchestration.",
+      "shellCommand": "cd sites/__SiteName__ && pnpm run dev"
+    }
+  ]
+}

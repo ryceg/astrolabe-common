@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(find:*)",
+      "Bash(for dir in astrolabe-setup Controllers Data Exceptions Forms Grains Migrations Models Properties Services)",
+      "Bash(do mv \"$dir\" __ProjectName__/)",
+      "Bash(done)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet pack:*)",
+      "Bash(npx:*)",
+      "Bash(cat:*)"
+    ]
+  }
+}

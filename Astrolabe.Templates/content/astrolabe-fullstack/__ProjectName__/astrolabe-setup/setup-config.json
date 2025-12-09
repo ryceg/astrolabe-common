@@ -6,7 +6,6 @@
   "spaPort": "__SpaPort__",
   "siteName": "__SiteName__",
   "includeDemoData": __IncludeDemoDataJson__,
-  "includeOrleans": __IncludeOrleansJson__
+  "includeOrleans": __IncludeOrleansJson__,
+  "includeAspire": __IncludeAspireJson__
 }
-
-

@@ -160,6 +160,27 @@
         "toLower": true
       },
       "replaces": "__IncludeLocalUsersJson__"
+    },
+    "IncludeAspire": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include .NET Aspire for orchestration, service discovery, and observability"
+    },
+    "IncludeAspireLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "IncludeAspire",
+        "toLower": true
+      },
+      "replaces": "__IncludeAspireJson__"
+    },
+    "ManagedSql": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Use Aspire-managed SQL Server container instead of connection string (requires Docker)"
     }
   },
 
@@ -177,13 +198,13 @@
         {
           "condition": "(!IncludeDemoData)",
           "exclude": [
-            "Models/Tea.cs",
-            "Controllers/TeasController.cs",
-            "Data/DbSeeder.cs",
-            "Forms/TeaEdit.cs",
-            "Forms/TeaSearchPage.cs",
-            "Forms/FieldOption.cs",
-            "Services/TeaService.cs",
+            "__ProjectName__/Models/Tea.cs",
+            "__ProjectName__/Controllers/TeasController.cs",
+            "__ProjectName__/Data/DbSeeder.cs",
+            "__ProjectName__/Forms/TeaEdit.cs",
+            "__ProjectName__/Forms/TeaSearchPage.cs",
+            "__ProjectName__/Forms/FieldOption.cs",
+            "__ProjectName__/Services/TeaService.cs",
             "ClientApp/sites/__SiteName__/src/app/tea/**",
             "ClientApp/sites/__SiteName__/src/app/form-demo/**",
             "ClientApp/sites/__SiteName__/src/app/search/**"
@@ -191,23 +212,23 @@
         },
         {
           "condition": "(SkipSetup)",
-          "exclude": ["astrolabe-setup/**/*"]
+          "exclude": ["__ProjectName__/astrolabe-setup/**/*"]
         },
         {
           "condition": "(!IncludeOrleans)",
           "exclude": [
-            "Grains/**",
-            "Controllers/TeaRoomController.cs",
+            "__ProjectName__/Grains/**",
+            "__ProjectName__/Controllers/TeaRoomController.cs",
             "ClientApp/sites/__SiteName__/src/app/tearoom/**"
           ]
         },
         {
           "condition": "(!IncludeLocalUsers)",
           "exclude": [
-            "Models/User.cs",
-            "Models/NewUser.cs",
-            "Services/LocalUserService.cs",
-            "Controllers/UsersController.cs",
+            "__ProjectName__/Models/User.cs",
+            "__ProjectName__/Models/NewUser.cs",
+            "__ProjectName__/Services/LocalUserService.cs",
+            "__ProjectName__/Controllers/UsersController.cs",
             "ClientApp/sites/__SiteName__/src/app/login/**",
             "ClientApp/sites/__SiteName__/src/app/logout/**",
             "ClientApp/sites/__SiteName__/src/app/signup/**",
@@ -216,11 +237,15 @@
             "ClientApp/sites/__SiteName__/src/app/mfa/**",
             "ClientApp/sites/__SiteName__/src/app/verify/**"
           ]
+        },
+        {
+          "condition": "(!IncludeAspire)",
+          "exclude": [
+            "__ProjectName__.AppHost/**",
+            "__ProjectName__.ServiceDefaults/**"
+          ]
         }
-      ],
-      "rename": {
-        "AstrolabeApp.csproj": "__ProjectName__.csproj"
-      }
+      ]
     }
   ],
 
@@ -232,12 +257,12 @@
       "continueOnError": true,
       "manualInstructions": [
         {
-          "text": "Run 'dotnet run --project astrolabe-setup' to complete project setup.\n\nThis will:\n  1. Generate secrets\n  2. Build the backend\n  3. Initialize Rush (monorepo package manager)\n  4. Generate TypeScript client from API\n  5. Install frontend dependencies\n\nSetup takes approximately 2-3 minutes to complete."
+          "text": "Run 'dotnet run --project __ProjectName__/astrolabe-setup' to complete project setup.\n\nThis will:\n  1. Generate secrets\n  2. Build the backend\n  3. Initialize Rush (monorepo package manager)\n  4. Generate TypeScript client from API\n  5. Install frontend dependencies\n\nSetup takes approximately 2-3 minutes to complete."
         }
       ],
       "args": {
         "executable": "dotnet",
-        "args": "run --project astrolabe-setup",
+        "args": "run --project __ProjectName__/astrolabe-setup",
         "redirectStandardOutput": "false",
         "redirectStandardError": "false"
       }

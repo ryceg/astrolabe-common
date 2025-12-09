@@ -1,0 +1,46 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Microsoft packages -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.3.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Orleans.Server" Version="9.0.0" />
+
+    <!-- Aspire packages -->
+    <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.0.2" />
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.0.2" />
+    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.0.2" />
+    <PackageVersion Include="Aspire.Hosting.Orleans" Version="13.0.2" />
+
+    <!-- Service Defaults packages -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.1.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.1.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.2" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.11.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.11.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.11.0" />
+
+    <!-- Third-party packages -->
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.0.1" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="NSwag.AspNetCore" Version="14.6.3" />
+
+    <!-- Astrolabe packages -->
+    <PackageVersion Include="Astrolabe.JSON" Version="1.2.1" />
+    <PackageVersion Include="Astrolabe.Common" Version="1.1.0" />
+    <PackageVersion Include="Astrolabe.Schemas" Version="*" />
+    <PackageVersion Include="Astrolabe.Validation" Version="*" />
+    <PackageVersion Include="Astrolabe.Web.Common" Version="*" />
+    <PackageVersion Include="Astrolabe.CodeGen" Version="*" />
+    <PackageVersion Include="Astrolabe.SearchState" Version="*" />
+    <PackageVersion Include="Astrolabe.LocalUsers" Version="*" />
+  </ItemGroup>
+</Project>
