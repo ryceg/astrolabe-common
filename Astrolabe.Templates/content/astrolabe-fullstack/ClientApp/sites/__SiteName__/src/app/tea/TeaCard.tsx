@@ -1,4 +1,4 @@
-import { Button } from "@astrolabe/ui";
+import { Button } from "@astrolabe/ui/Button";
 import { TeaInfo, TeaType, MilkAmount } from "client-common/client";
 
 interface TeaCardProps {

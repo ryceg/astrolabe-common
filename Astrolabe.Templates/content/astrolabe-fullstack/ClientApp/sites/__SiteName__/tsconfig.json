@@ -20,6 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
+      "@astrolabe/ui/*": ["../../astrolabe-ui/src/*"]
     },
     "target": "esnext"
   },

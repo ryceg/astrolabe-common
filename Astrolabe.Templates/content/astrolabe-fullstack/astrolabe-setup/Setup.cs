@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using System.Text;
+using System.Formats.Tar;
+using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -225,6 +226,7 @@ public class SetupOrchestrator
         {
             ("Generating secrets", GenerateSecrets),
             ("Building backend", BuildBackend),
+            ("Fetching Astrolabe UI components", FetchAstrolabeUI),
             ("Initializing Rush", InitializeRush),
             ("Generating TypeScript client", GenerateTypeScriptClient),
             ("Installing frontend dependencies", InstallFrontendDependencies),
@@ -299,6 +301,126 @@ public class SetupOrchestrator
     {
         Console.WriteLine("Installing Rush dependencies...");
         await RunCommand("npx", "-y @microsoft/rush@5.153.2 update --bypass-policy", ClientAppPath);
+    }
+
+    private async Task FetchAstrolabeUI()
+    {
+        const string repoOwner = "astrolabe-apps";
+        const string repoName = "astrolabe-common";
+        const string branch = "main";
+        const string sourcePath = "astrolabe-ui";
+
+        var astrolabeUiPath = Path.Combine(ClientAppPath, "astrolabe-ui");
+        var srcPath = Path.Combine(astrolabeUiPath, "src");
+        var tempDir = Path.Combine(Path.GetTempPath(), $"astrolabe-ui-{Guid.NewGuid():N}");
+
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+
+            // Download tarball from GitHub
+            var tarballUrl = $"https://github.com/{repoOwner}/{repoName}/archive/refs/heads/{branch}.tar.gz";
+            var tarballPath = Path.Combine(tempDir, "repo.tar.gz");
+
+            Console.WriteLine($"Downloading astrolabe-ui from {repoOwner}/{repoName}...");
+
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "astrolabe-setup");
+                var response = await httpClient.GetAsync(tarballUrl);
+                response.EnsureSuccessStatusCode();
+                await using var fs = File.Create(tarballPath);
+                await response.Content.CopyToAsync(fs);
+            }
+
+            // Extract tarball using .NET native APIs (cross-platform)
+            Console.WriteLine("Extracting components...");
+            await ExtractTarGzAsync(tarballPath, tempDir);
+
+            // Find the extracted folder (it will be named like astrolabe-common-main)
+            var extractedDir = Directory.GetDirectories(tempDir)
+                .FirstOrDefault(d => Path.GetFileName(d).StartsWith($"{repoName}-"));
+
+            if (extractedDir == null)
+            {
+                throw new Exception("Failed to find extracted repository folder");
+            }
+
+            var sourceUiPath = Path.Combine(extractedDir, sourcePath);
+
+            if (!Directory.Exists(sourceUiPath))
+            {
+                throw new Exception($"Source path {sourcePath} not found in repository");
+            }
+
+
+            // Copy entire astrolabe-ui folder (src, package.json, tsconfig.json)
+            Console.WriteLine("Copying astrolabe-ui components...");
+            CopyDirectoryContents(sourceUiPath, astrolabeUiPath, preserveExisting: false);
+
+
+
+            Console.WriteLine($"Fetched {CountFiles(srcPath)} component files from upstream.");
+        }
+        finally
+        {
+            // Cleanup temp directory
+            try
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, recursive: true);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+    }
+
+    private static async Task ExtractTarGzAsync(string tarGzPath, string destinationDir)
+    {
+        // Open the .tar.gz file and decompress the gzip layer
+        await using var fileStream = File.OpenRead(tarGzPath);
+        await using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
+
+        // Extract tar entries
+        await TarFile.ExtractToDirectoryAsync(gzipStream, destinationDir, overwriteFiles: true);
+    }
+
+    private void CopyDirectoryContents(string sourceDir, string targetDir, bool preserveExisting)
+    {
+        Directory.CreateDirectory(targetDir);
+
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var fileName = Path.GetFileName(file);
+            var targetPath = Path.Combine(targetDir, fileName);
+
+            // Skip if file exists and we want to preserve existing
+            if (preserveExisting && File.Exists(targetPath))
+            {
+                Console.WriteLine($"  Keeping existing: {fileName}");
+                continue;
+            }
+
+            File.Copy(file, targetPath, overwrite: true);
+            Console.WriteLine($"  Copied: {fileName}");
+        }
+
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+        {
+            var dirName = Path.GetFileName(dir);
+            CopyDirectoryContents(dir, Path.Combine(targetDir, dirName), preserveExisting);
+        }
+    }
+
+
+
+    private int CountFiles(string directory)
+    {
+        return Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories).Length;
     }
 
     private async Task GenerateTypeScriptClient()

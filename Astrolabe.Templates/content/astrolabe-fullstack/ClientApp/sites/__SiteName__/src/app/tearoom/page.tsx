@@ -2,7 +2,7 @@
 
 import { useControl, useControlEffect } from "@react-typed-forms/core";
 import { useApiClient } from "@astroapps/client";
-import { Button } from "@astrolabe/ui";
+import { Button } from "@astrolabe/ui/Button";
 import {
   TeaRoomClient,
   TeaRoomStatus,

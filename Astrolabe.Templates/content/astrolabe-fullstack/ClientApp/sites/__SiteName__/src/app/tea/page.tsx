@@ -7,7 +7,7 @@ import {
   useSyncParam,
   makeOptStringParam,
 } from "@astroapps/client";
-import { Button } from "@astrolabe/ui";
+import { Button } from "@astrolabe/ui/Button";
 import {
   TeasClient,
   TeaInfo,
