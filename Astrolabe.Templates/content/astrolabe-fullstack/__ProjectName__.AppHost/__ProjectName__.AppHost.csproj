@@ -14,6 +14,8 @@
     <!--#if (IncludeOrleans) -->
     <PackageReference Include="Aspire.Hosting.Orleans" />
     <!--#endif -->
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" />
   </ItemGroup>
 
   <ItemGroup>

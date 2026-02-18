@@ -35,7 +35,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         {/* Logo/Brand */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            AstrolabeApp
+            __SiteName__
           </Link>
           {onClose && (
             <button
@@ -74,8 +74,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <div className="space-y-3">
               <div className="flex items-center px-2">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <i className="fa fa-user text-indigo-600" />
+                  <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                    <i className="fa fa-user text-primary-600" />
                   </div>
                 </div>
                 <div className="ml-3 overflow-hidden">
@@ -101,14 +101,14 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <div className="space-y-2">
               <Link
                 href="/login"
-                className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <i className="fa fa-sign-in-alt mr-2" />
                 Log in
               </Link>
               <Link
                 href="/signup"
-                className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
               >
                 <i className="fa fa-user-plus mr-2" />
                 Sign up

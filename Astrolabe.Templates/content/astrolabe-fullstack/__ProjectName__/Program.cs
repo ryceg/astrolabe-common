@@ -30,17 +30,29 @@ var builder = WebApplication.CreateBuilder(args);
 //   appsettings.json
 //   ProjectName/
 //     Program.cs (this file)
+// When running under Aspire, use AppContext.BaseDirectory to find the project location
 var currentDir = Directory.GetCurrentDirectory();
+var projectDir = AppContext.BaseDirectory; // This is more reliable under Aspire
 var solutionRoot = currentDir;
 
-// If appsettings.json exists in parent directory, use that as solution root
+// Try multiple locations to find appsettings.json
+// 1. Check parent of current directory
 var parentDir = Path.GetDirectoryName(currentDir);
 if (parentDir != null && File.Exists(Path.Combine(parentDir, "appsettings.json")))
 {
     solutionRoot = parentDir;
 }
+// 2. Check parent of project directory (for Aspire scenarios)
+else
+{
+    var projectParent = Path.GetDirectoryName(Path.GetDirectoryName(projectDir));
+    if (projectParent != null && File.Exists(Path.Combine(projectParent, "appsettings.json")))
+    {
+        solutionRoot = projectParent;
+    }
+}
 
-// Add appsettings.json from solution root if not already added
+// Add appsettings.json from solution root if found
 var appSettingsPath = Path.Combine(solutionRoot, "appsettings.json");
 if (File.Exists(appSettingsPath))
 {
@@ -139,7 +151,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SupportNonNullableReferenceTypes();
+#if (!IncludeAspire)
     c.AddServer(new OpenApiServer() { Url = "https://localhost:__HttpsPort__" });
+#endif
     c.CustomOperationIds(apiDesc =>
         apiDesc.TryGetMethodInfo(out var methodInfo)
             ? $"{((ControllerActionDescriptor)apiDesc.ActionDescriptor).ControllerName}_{methodInfo.Name}"

@@ -32,7 +32,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <i className="fa fa-bars" />
           </button>
           <span className="ml-4 text-lg font-semibold text-gray-900">
-            AstrolabeApp
+            __SiteName__
           </span>
         </div>
 

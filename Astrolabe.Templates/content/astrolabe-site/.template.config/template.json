@@ -1,0 +1,193 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Astrolabe Team",
+  "classifications": ["Web", "Frontend", "React", "Next.js"],
+  "identity": "Astrolabe.Site.Template",
+  "name": "Astrolabe Next.js Site",
+  "shortName": "astrolabe-site",
+  "description": "Add a new Next.js site to an existing Astrolabe project",
+  "tags": {
+    "language": "TypeScript",
+    "type": "item"
+  },
+
+  "specialCustomOperations": {
+    "**/*.tsx": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["//#if", "{/*#if"],
+            "else": ["//#else", "#else"],
+            "elseif": ["//#elseif", "#elseif"],
+            "endif": ["//#endif", "#endif*/}"],
+            "actionableIf": ["//#if", "{/*#if"],
+            "actionableElse": ["//#else", "#else"],
+            "actionableElseif": ["//#elseif", "#elseif"],
+            "actions": ["cStyleBlock"]
+          }
+        }
+      ]
+    },
+    "**/*.ts": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["//#if"],
+            "else": ["//#else"],
+            "elseif": ["//#elseif"],
+            "endif": ["//#endif"],
+            "actionableIf": ["//#if"],
+            "actionableElse": ["//#else"],
+            "actionableElseif": ["//#elseif"],
+            "actions": ["cStyleBlock"]
+          }
+        }
+      ]
+    }
+  },
+
+  "symbols": {
+    "SiteName": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "admin",
+      "description": "Name of the new site (also the folder name and rush package name)",
+      "fileRename": "__SiteName__",
+      "replaces": "__SiteName__"
+    },
+    "SpaPort": {
+      "type": "parameter",
+      "datatype": "integer",
+      "defaultValue": "8001",
+      "description": "Dev server port for this site",
+      "replaces": "__SpaPort__"
+    },
+    "HttpsPort": {
+      "type": "parameter",
+      "datatype": "integer",
+      "defaultValue": "5001",
+      "description": "Backend HTTPS port (must match your existing backend)",
+      "replaces": "__HttpsPort__"
+    },
+    "IncludeDemoData": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Include Tea demo pages (requires Tea backend endpoints)"
+    },
+    "IncludeDemoDataLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "IncludeDemoData",
+        "toLower": true
+      },
+      "replaces": "__IncludeDemoDataJson__"
+    },
+    "IncludeOrleans": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Include Orleans tearoom page (requires Orleans backend)"
+    },
+    "IncludeOrleansLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "IncludeOrleans",
+        "toLower": true
+      },
+      "replaces": "__IncludeOrleansJson__"
+    },
+    "IncludeLocalUsers": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include authentication pages (login, signup, etc.)"
+    },
+    "IncludeLocalUsersLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": {
+        "source": "IncludeLocalUsers",
+        "toLower": true
+      },
+      "replaces": "__IncludeLocalUsersJson__"
+    },
+    "SkipSetup": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Skip automatic registration in rush.json and dependency installation"
+    }
+  },
+
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/node_modules/**",
+            "**/.next/**"
+          ]
+        },
+        {
+          "condition": "(!IncludeDemoData)",
+          "exclude": [
+            "__SiteName__/src/app/tea/**",
+            "__SiteName__/src/app/form-demo/**",
+            "__SiteName__/src/app/search/**"
+          ]
+        },
+        {
+          "condition": "(!IncludeOrleans)",
+          "exclude": [
+            "__SiteName__/src/app/tearoom/**"
+          ]
+        },
+        {
+          "condition": "(!IncludeLocalUsers)",
+          "exclude": [
+            "__SiteName__/src/app/login/**",
+            "__SiteName__/src/app/logout/**",
+            "__SiteName__/src/app/signup/**",
+            "__SiteName__/src/app/forgotPassword/**",
+            "__SiteName__/src/app/resetPassword/**",
+            "__SiteName__/src/app/mfa/**",
+            "__SiteName__/src/app/verify/**"
+          ]
+        },
+        {
+          "condition": "(SkipSetup)",
+          "exclude": [
+            "site-setup/**"
+          ]
+        }
+      ]
+    }
+  ],
+
+  "postActions": [
+    {
+      "condition": "(!SkipSetup)",
+      "description": "Register new site in rush.json and install dependencies",
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "continueOnError": true,
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet run --project site-setup' from the output directory to complete setup.\n\nThis will:\n  1. Register the new site in rush.json\n  2. Run rush update to install dependencies\n\nAlternatively, manually:\n  1. Add {\"packageName\": \"<SiteName>\", \"projectFolder\": \"sites/<SiteName>\"} to ClientApp/rush.json projects array\n  2. Run 'rush update' from ClientApp/\n  3. Add the frontend executable to your AppHost Program.cs"
+        }
+      ],
+      "args": {
+        "executable": "dotnet",
+        "args": "run --project site-setup",
+        "redirectStandardOutput": "false",
+        "redirectStandardError": "false"
+      }
+    }
+  ]
+}

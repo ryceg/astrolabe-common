@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center p-8 md:p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-        <h1 className="text-4xl font-bold mb-8">Welcome to AstrolabeApp</h1>
-        <p className="mb-8">__Description__</p>
+        <h1 className="text-4xl font-bold mb-8">Welcome to __SiteName__</h1>
+        <p className="mb-8">Your new Astrolabe frontend site</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/*#if (IncludeDemoData)

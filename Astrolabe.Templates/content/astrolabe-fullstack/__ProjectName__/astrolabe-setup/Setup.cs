@@ -111,12 +111,12 @@ void DeleteSetupFolder()
     catch (UnauthorizedAccessException) when (OperatingSystem.IsWindows())
     {
         // On Windows, the running process locks its DLLs - schedule deletion after exit
-        ScheduleWindowsDeletion(projectRoot, setupFolder);
+        ScheduleWindowsDeletion(solutionRoot, setupFolder);
     }
     catch (IOException) when (OperatingSystem.IsWindows())
     {
         // File is in use - schedule deletion after exit
-        ScheduleWindowsDeletion(projectRoot, setupFolder);
+        ScheduleWindowsDeletion(solutionRoot, setupFolder);
     }
     catch (Exception ex)
     {

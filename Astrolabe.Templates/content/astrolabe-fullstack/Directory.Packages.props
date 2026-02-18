@@ -18,6 +18,8 @@
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.0.2" />
     <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.0.2" />
     <PackageVersion Include="Aspire.Hosting.Orleans" Version="13.0.2" />
+    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.0.2" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.9.0" />
 
     <!-- Service Defaults packages -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.1.0" />

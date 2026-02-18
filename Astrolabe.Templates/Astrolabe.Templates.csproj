@@ -21,5 +21,11 @@
     <Content Include="content/**/*" />
     <Compile Remove="**/*" />
     <None Include="README.md" Pack="true" PackagePath="\" />
+
+    <!-- Map site files from full-stack template into the astrolabe-site template within the package.
+         This keeps the full-stack template as the single source of truth for site files. -->
+    <None Include="content\astrolabe-fullstack\ClientApp\sites\__SiteName__\**\*"
+          Pack="true"
+          PackagePath="content\content\astrolabe-site\__SiteName__\" />
   </ItemGroup>
 </Project>
